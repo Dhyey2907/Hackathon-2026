@@ -57,14 +57,19 @@ Answering is an **intent-routed agent**, not one RAG chain — the eight require
 
 | Role | Model | Why |
 |---|---|---|
-| Answering | `llama-3.3-70b-versatile` (Groq) | fast inference, 131k context |
-| Fallback | `openai/gpt-oss-120b` (Groq) | survives rate limits mid-demo |
-| Routing | `llama-3.1-8b-instant` (Groq) | ~200 ms intent classification |
+| Answering | `openai/gpt-oss-120b` (Groq) | strongest available, 131k context |
+| Fallback | `qwen/qwen3.8-27b` (Groq) | different family, so one provider-side fault can't take out both; strong Hindi |
+| Routing | `openai/gpt-oss-20b` (Groq) | ~0.4 s intent classification, clean JSON |
 | Speech | `whisper-large-v3` (Groq) | multilingual voice input |
 | Embeddings | `BAAI/bge-m3` (**local**) | multilingual — a Hindi question matches English source text |
 | Reranking | `BAAI/bge-reranker-v2-m3` (**local**) | biggest single jump in answer quality |
 
-**Groq has no embeddings endpoint**, so embedding and reranking run locally. This is the main consequence of choosing Groq and is worth knowing before you swap providers.
+Two things worth knowing before changing providers:
+
+- **Groq has no embeddings endpoint**, so embedding and reranking run locally.
+- **Groq no longer serves the Llama chat models.** Any tutorial or blog post referencing `llama-3.3-70b-versatile` or `llama-3.1-8b-instant` will 404 — only the prompt-guard Llama variants remain. Check `client.models.list()` rather than trusting documentation.
+
+Avoid `qwen/qwen3.6-27b`: it emits `<think>` reasoning blocks that would need stripping before display.
 
 ---
 

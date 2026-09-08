@@ -19,11 +19,14 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Groq
+    # Groq. Verified against the live model list - Groq no longer serves the
+    # Llama chat models, so anything referencing llama-3.x will 404. The
+    # fallback is deliberately a different family from the answer model, so a
+    # provider-side problem with one does not take out both.
     groq_api_key: str = ""
-    groq_router_model: str = "llama-3.1-8b-instant"
-    groq_answer_model: str = "llama-3.3-70b-versatile"
-    groq_fallback_model: str = "openai/gpt-oss-120b"
+    groq_router_model: str = "openai/gpt-oss-20b"
+    groq_answer_model: str = "openai/gpt-oss-120b"
+    groq_fallback_model: str = "qwen/qwen3.8-27b"
     groq_stt_model: str = "whisper-large-v3"
 
     # Local models (Groq offers no embedding endpoint)
