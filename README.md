@@ -38,8 +38,8 @@ BIS portal API ─┐            query → detect language
 public PDFs     ├→ chunks →  → hybrid search (dense+sparse)  → Groq LLM
 seed CSVs       ┘  + metadata → RRF fuse → rerank            → cited answer
                       ↓                  ↑                        ↓
-                 Qdrant            structured lookup          citation
-                 SQLite             (catalogue, labs)         validator
+             Supabase pgvector     structured lookup          citation
+              + Postgres FTS        (catalogue, labs)         validator
 ```
 
 Answering is an **intent-routed agent**, not one RAG chain — the eight required capabilities need different retrieval strategies:
@@ -61,13 +61,17 @@ Answering is an **intent-routed agent**, not one RAG chain — the eight require
 | Fallback | `qwen/qwen3.8-27b` (Groq) | different family, so one provider-side fault can't take out both; strong Hindi |
 | Routing | `openai/gpt-oss-20b` (Groq) | ~0.4 s intent classification, clean JSON |
 | Speech | `whisper-large-v3` (Groq) | multilingual voice input |
-| Embeddings | `BAAI/bge-m3` (**local**) | multilingual — a Hindi question matches English source text |
-| Reranking | `BAAI/bge-reranker-v2-m3` (**local**) | biggest single jump in answer quality |
+| Embeddings | `gemini-embedding-001` (Google) | multilingual — a Hindi question matches English source text |
+| Reranking | `openai/gpt-oss-20b` (Groq) | Gemini has no reranker; one call scores the whole candidate list |
 
-Two things worth knowing before changing providers:
+Everything runs on hosted APIs — **no model weights are downloaded**. Things worth knowing before changing providers:
 
-- **Groq has no embeddings endpoint**, so embedding and reranking run locally.
-- **Groq no longer serves the Llama chat models.** Any tutorial or blog post referencing `llama-3.3-70b-versatile` or `llama-3.1-8b-instant` will 404 — only the prompt-guard Llama variants remain. Check `client.models.list()` rather than trusting documentation.
+- **Groq has no embeddings endpoint**, which is why embeddings come from Gemini.
+- **Groq no longer serves the Llama chat models.** Any tutorial referencing `llama-3.3-70b-versatile` or `llama-3.1-8b-instant` will 404 — only the prompt-guard Llama variants remain. Check `client.models.list()` rather than trusting documentation.
+- **Embeddings are 1536-dimensional, not the native 3072.** pgvector's HNSW index caps at 2000 dimensions, so the embedder requests Matryoshka truncation and re-normalises (Google normalises only the full-length output).
+- **Gemini embeddings are asymmetric.** Passages use `RETRIEVAL_DOCUMENT`, queries use `RETRIEVAL_QUERY`. Using one type for both returns plausible vectors and quietly worse retrieval.
+
+Reranking by LLM is a real trade-off: a trained cross-encoder would be better and cheaper per candidate. This buys a stack with no local weights.
 
 Avoid `qwen/qwen3.6-27b`: it emits `<think>` reasoning blocks that would need stripping before display.
 
@@ -105,7 +109,7 @@ Requests are throttled to 1/sec and cached on disk, so a re-run costs nothing an
 
 ## Getting started
 
-**Requirements:** Python 3.11+. Docker optional.
+**Requirements:** Python 3.11+. No Docker, no GPU, no model downloads — the whole stack is hosted APIs.
 
 ```bash
 python -m venv .venv && .venv/Scripts/activate   # Linux/macOS: source .venv/bin/activate
@@ -119,13 +123,9 @@ Add your Groq API key to `.env` (get one at [console.groq.com/keys](https://cons
 GROQ_API_KEY=gsk_...
 ```
 
-Qdrant defaults to **embedded mode** (`QDRANT_URL=:local:`) — no Docker required. For a real server:
+You also need a **Gemini** key ([aistudio.google.com/apikey](https://aistudio.google.com/apikey)) for embeddings, and **Supabase** credentials for the vector store.
 
-```bash
-docker compose up -d
-```
-
-then set `QDRANT_URL=http://localhost:6333`.
+Apply the schema once by pasting [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) into the Supabase SQL Editor. It creates the tables, the pgvector and full-text indexes, and the `match_chunks` / `match_standards` hybrid-search functions.
 
 ### Ingest the catalogue
 
@@ -162,9 +162,12 @@ src/bis/
 │   ├── scrape_catalogue.py
 │   └── chunk.py        # section-aware chunking, never splits a clause
 ├── store/
-│   ├── db.py           # SQLAlchemy models
-│   └── vectors.py      # Qdrant hybrid search + RRF fusion
-├── retrieval/embed.py  # bge-m3 dense + BM25-style sparse
+│   ├── db.py           # SQLAlchemy models (ingestion staging)
+│   └── supabase_store.py  # pgvector + FTS hybrid search over REST
+├── retrieval/
+│   ├── embed.py        # Gemini embeddings (1536d, task-typed)
+│   ├── rerank.py       # LLM reranking + abstention threshold
+│   └── fusion.py       # client-side RRF across result sets
 ├── guardrails/
 │   └── citations.py    # marker validation, clause-claim grounding
 └── api/main.py
@@ -175,7 +178,7 @@ tests/
 Two files carry most of the design weight:
 
 - **`ingest/chunk.py`** — whatever metadata is stamped here is the ceiling on citation quality. Chunks never span a clause boundary, because a passage starting mid-clause cannot honestly be cited as that clause.
-- **`store/vectors.py`** — dense and sparse results are fused with Reciprocal Rank Fusion rather than a weighted score sum, since cosine and dot scores aren't on a comparable scale.
+- **`supabase/migrations/0001_init.sql`** — dense and lexical results are fused with Reciprocal Rank Fusion inside Postgres, rather than a weighted score sum: cosine distance and `ts_rank_cd` aren't on a comparable scale, so any weighting would be arbitrary.
 
 ---
 
@@ -184,7 +187,8 @@ Two files carry most of the design weight:
 - [x] Project skeleton, schema, health checks
 - [x] Catalogue ingestion — 6,209 standards, per-group verification
 - [ ] Public scheme / QCO / hallmarking PDF ingestion
-- [ ] Embedding + hybrid index + reranking
+- [x] Cloud retrieval stack — Gemini embeddings, Supabase pgvector, LLM reranking
+- [ ] Embed and index the catalogue
 - [ ] Intent router, tools, cited answers
 - [ ] Multilingual (Hindi first, using BIS's own Hindi titles)
 - [ ] Evaluation harness — recall@k, citation precision, refusal rate

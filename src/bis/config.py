@@ -29,14 +29,25 @@ class Settings(BaseSettings):
     groq_fallback_model: str = "qwen/qwen3.8-27b"
     groq_stt_model: str = "whisper-large-v3"
 
-    # Local models (Groq offers no embedding endpoint)
-    embed_model: str = "BAAI/bge-m3"
-    rerank_model: str = "BAAI/bge-reranker-v2-m3"
-    embed_device: str = "cpu"
+    # Embeddings: Google Gemini. Groq serves no embedding endpoint, and the
+    # project runs entirely on hosted APIs - nothing is downloaded locally.
+    #
+    # 1536 dimensions rather than gemini-embedding-001's native 3072: pgvector
+    # HNSW indexes cap at 2000 dims, so the model is asked for Matryoshka
+    # truncation. Changing this requires rebuilding the index and the column.
+    gemini_api_key: str = ""
+    embed_model: str = "gemini-embedding-001"
+    embed_dimensions: int = 1536
 
-    # Stores
-    qdrant_url: str = "http://localhost:6333"
-    qdrant_collection: str = "bis_chunks"
+    # Reranking. Gemini offers no reranker, so a small Groq model scores the
+    # candidates instead of a cross-encoder - see retrieval.rerank.
+    rerank_model: str = "openai/gpt-oss-20b"
+
+    # Stores. Supabase Postgres (pgvector) over the REST API; the direct
+    # database host is IPv6-only, which many networks cannot reach.
+    supabase_url: str = ""
+    supabase_key: str = ""
+    supabase_service_key: str = ""
     database_url: str = "sqlite:///./data/bis.db"
 
     # Retrieval

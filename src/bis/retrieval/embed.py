@@ -1,209 +1,142 @@
-"""Embeddings: dense from bge-m3, sparse from a local lexical encoder.
+"""Embeddings via the Google Gemini API.
 
-Groq has no embeddings endpoint, so this all runs locally.
+Everything runs on hosted APIs - no model weights are downloaded locally.
+Groq has no embedding endpoint, so embeddings come from Gemini instead.
 
-Dense vectors come from BAAI/bge-m3 (multilingual, 1024-dim), which is what
-lets a Hindi question match English source text.
+Two details that are easy to get wrong:
 
-Sparse vectors are produced here rather than by bge-m3's learned sparse head.
-That is a deliberate trade: the learned head needs the heavyweight
-FlagEmbedding stack, while this corpus's hard cases are exact tokens -
-"IS 15111", "HUID", "CRS", "QCO" - where a transparent BM25-style encoder is
-already the right tool. It is also inspectable, which matters when debugging
-why a specific standard number failed to surface. If recall on paraphrased
-queries later plateaus, swapping in the learned head is a contained change:
-only encode_documents/encode_query need to move.
+1. **Dimensions.** gemini-embedding-001 returns 3072 dimensions by default, but
+   pgvector's HNSW index caps at 2000, so the index simply cannot be built on a
+   3072-dim column. The model supports Matryoshka truncation, so we request
+   1536 and normalise afterwards. Google normalises the 3072-dim output but not
+   truncated outputs, so skipping that step quietly degrades cosine similarity.
+
+2. **Task types.** Gemini embeddings are asymmetric: passages must be embedded
+   with RETRIEVAL_DOCUMENT and queries with RETRIEVAL_QUERY. Using one type for
+   both still returns plausible vectors and measurably worse retrieval, which
+   is a hard bug to notice without an evaluation set.
 """
 
 from __future__ import annotations
 
-import json
 import logging
 import math
-import re
-from collections import Counter
+import time
 from functools import lru_cache
-from pathlib import Path
 
-from bis.config import PROCESSED_DIR, get_settings
+from bis.config import get_settings
 
 log = logging.getLogger(__name__)
 
-IDF_PATH = PROCESSED_DIR / "sparse_idf.json"
-HASH_SPACE = 2**20
+# The API rejects oversized batches; 100 inputs per call is comfortably inside
+# the limit and keeps a 6k-row backfill to ~60 calls.
+BATCH_SIZE = 100
 
-_TOKEN_RE = re.compile(r"[a-z0-9]+(?:\.[0-9]+)*|[ऀ-ॿ]+|[ঀ-௿]+")
-
-STOPWORDS = {
-    "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", "have",
-    "how", "i", "in", "is", "it", "of", "on", "or", "that", "the", "this", "to",
-    "was", "what", "when", "where", "which", "who", "will", "with", "do", "does",
-    "can", "my", "me", "you", "your", "we", "us",
-}
+TASK_DOCUMENT = "RETRIEVAL_DOCUMENT"
+TASK_QUERY = "RETRIEVAL_QUERY"
 
 
-def tokenize(text: str) -> list[str]:
-    """Lowercase word tokens, keeping dotted forms like 4.2.1 and IS numbers intact."""
-    return [t for t in _TOKEN_RE.findall(text.lower()) if t not in STOPWORDS]
-
-
-def _bigrams(tokens: list[str]) -> list[str]:
-    """Adjacent pairs, so "is 15111" scores above the two tokens seen apart."""
-    return [f"{a}_{b}" for a, b in zip(tokens, tokens[1:], strict=False)]
-
-
-def term_id(term: str) -> int:
-    """Stable hash into the sparse index space."""
-    return hash_str(term) % HASH_SPACE
-
-
-def hash_str(text: str) -> int:
-    # Python's builtin hash is salted per process, so use a stable digest.
-    import hashlib
-
-    return int.from_bytes(hashlib.blake2b(text.encode(), digest_size=8).digest(), "big")
-
-
-class SparseEncoder:
-    """BM25-flavoured hashed sparse encoder.
-
-    Weights are sublinear TF times IDF. IDF is fitted over the corpus at index
-    time and persisted, so query-side and document-side weighting agree. With
-    no fitted IDF it degrades to TF-only, which still retrieves but ranks
-    common terms too highly - so always fit before indexing.
-    """
-
-    def __init__(self, idf: dict[str, float] | None = None, doc_count: int = 0):
-        self.idf = idf or {}
-        self.doc_count = doc_count
-
-    @classmethod
-    def load(cls, path: Path = IDF_PATH) -> SparseEncoder:
-        if not path.exists():
-            return cls()
-        data = json.loads(path.read_text(encoding="utf-8"))
-        return cls(idf=data.get("idf", {}), doc_count=data.get("doc_count", 0))
-
-    def save(self, path: Path = IDF_PATH) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(
-            json.dumps({"idf": self.idf, "doc_count": self.doc_count}),
-            encoding="utf-8",
-        )
-
-    def fit(self, texts: list[str]) -> SparseEncoder:
-        """Compute IDF over the corpus."""
-        doc_freq: Counter[str] = Counter()
-        for text in texts:
-            tokens = tokenize(text)
-            doc_freq.update(set(tokens) | set(_bigrams(tokens)))
-
-        n = len(texts)
-        self.doc_count = n
-        # Smoothed IDF, floored at a small positive value so that a term
-        # appearing in every document still contributes a little.
-        self.idf = {
-            term: max(math.log((n - df + 0.5) / (df + 0.5) + 1.0), 0.05)
-            for term, df in doc_freq.items()
-        }
-        return self
-
-    def _weight(self, term: str) -> float:
-        if self.idf:
-            return self.idf.get(term, math.log(self.doc_count + 1.0) if self.doc_count else 1.0)
-        return 1.0
-
-    def encode(self, text: str, max_terms: int = 256) -> dict[int, float]:
-        tokens = tokenize(text)
-        if not tokens:
-            return {}
-        counts = Counter(tokens)
-        counts.update(_bigrams(tokens))
-
-        raw: dict[str, float] = {}
-        for term, tf in counts.items():
-            raw[term] = (1.0 + math.log(tf)) * self._weight(term)
-
-        top = sorted(raw.items(), key=lambda kv: kv[1], reverse=True)[:max_terms]
-        norm = math.sqrt(sum(v * v for _, v in top)) or 1.0
-
-        vector: dict[int, float] = {}
-        for term, value in top:
-            idx = term_id(term)
-            # Hash collisions are rare at 2^20 and additive here, which is the
-            # standard hashing-trick behaviour.
-            vector[idx] = vector.get(idx, 0.0) + value / norm
-        return vector
+class EmbeddingError(RuntimeError):
+    pass
 
 
 @lru_cache(maxsize=1)
-def get_dense_model():
-    """Load bge-m3. First call downloads ~2.2 GB."""
-    from sentence_transformers import SentenceTransformer
+def get_client():
+    from google import genai
 
     settings = get_settings()
-    log.info("loading dense model %s on %s", settings.embed_model, settings.embed_device)
-    return SentenceTransformer(settings.embed_model, device=settings.embed_device)
+    if not settings.gemini_api_key:
+        raise EmbeddingError(
+            "GEMINI_API_KEY is not set - get one at https://aistudio.google.com/apikey"
+        )
+    return genai.Client(api_key=settings.gemini_api_key)
 
 
-@lru_cache(maxsize=1)
-def get_sparse_encoder() -> SparseEncoder:
-    return SparseEncoder.load()
+def _normalise(vector: list[float]) -> list[float]:
+    """Scale to unit length so cosine distance behaves.
+
+    Required because Gemini only normalises its full 3072-dim output; a
+    truncated 1536-dim vector comes back unnormalised.
+    """
+    norm = math.sqrt(sum(v * v for v in vector))
+    if norm == 0:
+        return vector
+    return [v / norm for v in vector]
 
 
-def encode_documents(
-    texts: list[str], batch_size: int = 8, show_progress: bool = False
-) -> tuple[list[list[float]], list[dict[int, float]]]:
-    """Encode passages. Returns (dense_vectors, sparse_vectors)."""
-    model = get_dense_model()
-    dense = model.encode(
-        texts,
-        batch_size=batch_size,
-        normalize_embeddings=True,
-        show_progress_bar=show_progress,
-        convert_to_numpy=True,
-    )
-    encoder = get_sparse_encoder()
-    sparse = [encoder.encode(t) for t in texts]
-    return [vec.tolist() for vec in dense], sparse
+def _embed_batch(texts: list[str], task_type: str, retries: int = 4) -> list[list[float]]:
+    from google.genai import types
+
+    settings = get_settings()
+    client = get_client()
+
+    last_error: Exception | None = None
+    for attempt in range(retries):
+        try:
+            response = client.models.embed_content(
+                model=settings.embed_model,
+                contents=texts,
+                config=types.EmbedContentConfig(
+                    task_type=task_type,
+                    output_dimensionality=settings.embed_dimensions,
+                ),
+            )
+            return [_normalise(list(e.values)) for e in response.embeddings]
+        except Exception as exc:
+            last_error = exc
+            # Free-tier quota is per-minute, so backing off well past a second
+            # is usually what clears a 429 rather than an immediate retry.
+            wait = min(2**attempt * 5, 60)
+            log.warning(
+                "embed batch failed (attempt %d/%d): %s - retrying in %ds",
+                attempt + 1,
+                retries,
+                str(exc)[:160],
+                wait,
+            )
+            time.sleep(wait)
+
+    raise EmbeddingError(f"embedding failed after {retries} attempts: {last_error}")
 
 
-def encode_query(text: str) -> tuple[list[float], dict[int, float]]:
-    """Encode a query. bge-m3 needs no instruction prefix, unlike bge-v1.5."""
-    model = get_dense_model()
-    dense = model.encode([text], normalize_embeddings=True, convert_to_numpy=True)[0]
-    return dense.tolist(), get_sparse_encoder().encode(text)
+def embed_documents(
+    texts: list[str], batch_size: int = BATCH_SIZE, progress: bool = False
+) -> list[list[float]]:
+    """Embed passages for indexing."""
+    vectors: list[list[float]] = []
+    total = len(texts)
+    for start in range(0, total, batch_size):
+        batch = texts[start : start + batch_size]
+        vectors.extend(_embed_batch(batch, TASK_DOCUMENT))
+        if progress:
+            log.info("embedded %d/%d", min(start + batch_size, total), total)
+    return vectors
 
 
-def fit_sparse(texts: list[str]) -> SparseEncoder:
-    """Fit and persist the IDF table. Call once per full re-index."""
-    encoder = SparseEncoder().fit(texts)
-    encoder.save()
-    get_sparse_encoder.cache_clear()
-    log.info("fitted sparse IDF over %d documents, %d terms", len(texts), len(encoder.idf))
-    return encoder
+def embed_query(text: str) -> list[float]:
+    """Embed a single query."""
+    return _embed_batch([text], TASK_QUERY)[0]
 
 
 def health() -> dict:
-    """Report model availability without forcing a multi-GB download."""
+    """Cheap reachability probe used by GET /health."""
     settings = get_settings()
     info: dict = {
         "model": settings.embed_model,
-        "device": settings.embed_device,
-        "sparse_idf_fitted": IDF_PATH.exists(),
+        "dimensions": settings.embed_dimensions,
+        "provider": "google-gemini",
     }
-    if get_dense_model.cache_info().currsize:
-        info["ok"] = True
-        info["loaded"] = True
-        return info
-
-    try:
-        import sentence_transformers  # noqa: F401
-
-        info["ok"] = True
-        info["loaded"] = False
-        info["detail"] = "library present, model loads lazily on first use"
-    except ImportError as exc:
+    if not settings.gemini_api_key:
         info["ok"] = False
-        info["detail"] = str(exc)
+        info["detail"] = "GEMINI_API_KEY not set"
+        return info
+    try:
+        vector = embed_query("ping")
+        info["ok"] = len(vector) == settings.embed_dimensions
+        info["returned_dimensions"] = len(vector)
+        if not info["ok"]:
+            info["detail"] = "unexpected dimension count"
+    except Exception as exc:
+        info["ok"] = False
+        info["detail"] = str(exc)[:200]
     return info

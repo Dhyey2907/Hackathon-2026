@@ -49,44 +49,25 @@ app.add_middleware(
 def health() -> dict:
     """Report on every external dependency the assistant needs."""
     from bis import llm
-    from bis.store import vectors
+    from bis.retrieval import embed as embed_mod
+    from bis.store import supabase_store
 
     settings = get_settings()
 
-    qdrant: dict = {"ok": False}
-    try:
-        client = vectors.get_client()
-        collections = [c.name for c in client.get_collections().collections]
-        qdrant = {
-            "ok": True,
-            "url": settings.qdrant_url,
-            "collection": settings.qdrant_collection,
-            "collection_exists": settings.qdrant_collection in collections,
-            "points": vectors.count(),
-        }
-    except Exception as exc:
-        qdrant = {"ok": False, "detail": str(exc)[:200]}
-
-    embed: dict = {"ok": False, "detail": "not loaded"}
-    try:
-        from bis.retrieval import embed as embed_mod
-
-        embed = embed_mod.health()
-    except Exception as exc:
-        embed = {"ok": False, "detail": str(exc)[:200]}
-
+    store = supabase_store.health()
+    embed = embed_mod.health()
     groq = llm.health()
 
     return {
-        "status": "ok" if (qdrant["ok"] and groq["ok"]) else "degraded",
+        "status": "ok" if (store["ok"] and groq["ok"] and embed["ok"]) else "degraded",
         "groq": groq,
-        "qdrant": qdrant,
+        "supabase": store,
         "embeddings": embed,
         "models": {
             "router": settings.groq_router_model,
             "answer": settings.groq_answer_model,
             "fallback": settings.groq_fallback_model,
-            "embed": settings.embed_model,
+            "embed": f"{settings.embed_model} ({settings.embed_dimensions}d)",
             "rerank": settings.rerank_model,
         },
     }

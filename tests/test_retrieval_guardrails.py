@@ -8,7 +8,7 @@ from bis.guardrails.citations import (
     format_evidence_block,
     validate,
 )
-from bis.store.vectors import reciprocal_rank_fusion
+from bis.retrieval.fusion import reciprocal_rank_fusion
 
 
 def ev(index: int, **kw) -> Evidence:
