@@ -1,0 +1,170 @@
+# Corpus scope: 25 priority product groups, mapped onto BIS sectional committees.
+#
+# Committees (CED 2, ETD 9, TXD 20, ...) are BIS's own working taxonomy and the
+# unit the published-standards API enumerates, so each group fans out to the
+# committees that actually own its standards.
+#
+# `committees` entries are "ALIAS NUMBER" and are resolved against the live
+# committee list at ingest time; an entry that does not resolve is a hard error,
+# not a silent skip.
+#
+# `seed_standards` are known-important IS numbers for the group. They verify the
+# committee mapping actually captured the right standards, and they seed the
+# evaluation gold set. A missing seed means the mapping is wrong.
+
+groups:
+  - key: household_electrical
+    name: Household Electrical Appliances
+    priority: 5
+    committees: ["ETD 32", "ETD 23", "MED 33"]
+    seed_standards: ["IS 302"]
+
+  - key: electronics_it
+    name: Electronics & IT
+    priority: 5
+    committees: ["LITD 5", "LITD 4", "LITD 8", "LITD 33", "LITD 7", "ETD 31"]
+    seed_standards: ["IS 13252"]
+
+  - key: wires_cables
+    name: Electrical Wires & Cables
+    priority: 5
+    committees: ["ETD 9", "ETD 33", "LITD 6", "LITD 11"]
+    seed_standards: ["IS 694", "IS 1554", "IS 7098", "IS 14255"]
+
+  - key: cement
+    name: Cement
+    priority: 5
+    committees: ["CED 2", "CED 53"]
+    # IS 12269 (53-grade OPC) is deliberately absent: every edition carries
+    # withdrawStatus=1 in the BIS catalogue, so it is not a published standard.
+    seed_standards: ["IS 269", "IS 1489", "IS 455"]
+
+  - key: steel_construction
+    name: Steel & Construction
+    priority: 5
+    committees: ["MTD 4", "MTD 19", "MTD 16", "CED 7", "CED 54", "CED 37"]
+    seed_standards: ["IS 1786", "IS 2062", "IS 513", "IS 1161", "IS 1239"]
+
+  - key: water
+    name: Drinking & Packaged Water
+    priority: 5
+    committees: ["FAD 14", "FAD 30", "CHD 36", "EED 4"]
+    seed_standards: ["IS 10500", "IS 14543", "IS 13428"]
+
+  - key: automobile_tyres
+    name: Automobile & Tyres
+    priority: 5
+    committees: ["TED 7", "TED 2", "TED 11", "TED 22"]
+    seed_standards: ["IS 13098", "IS 15627", "IS 15633", "IS 15636"]
+
+  - key: helmets_ppe
+    name: Helmets & PPE
+    priority: 5
+    # BIS files protective headgear (IS 4151, IS 2925) under CED 22
+    # "Fire Fighting", not under any committee whose name suggests PPE.
+    committees: ["TED 29", "CHD 8", "TXD 32", "CED 22"]
+    seed_standards: ["IS 4151", "IS 2925"]
+
+  - key: cookers_utensils
+    name: Pressure Cookers & Utensils
+    priority: 5
+    committees: ["MED 33"]
+    seed_standards: ["IS 2347", "IS 1660"]
+
+  - key: lpg_gas
+    name: LPG / Gas Appliances
+    priority: 5
+    committees: ["MED 23", "MED 16", "MED 26"]
+    seed_standards: ["IS 4246", "IS 14899", "IS 3196"]
+
+  - key: toys
+    name: Toys
+    priority: 5
+    # Electric toys (IS 15644) sit with ETD 32, not with PCD 30.
+    committees: ["PCD 30", "ETD 32"]
+    seed_standards: ["IS 9873", "IS 15644"]
+
+  - key: hallmarking
+    name: Gold, Silver & Hallmarking
+    priority: 5
+    committees: ["MTD 10"]
+    seed_standards: ["IS 1417", "IS 2112", "IS 15820", "IS 1418", "IS 2113"]
+
+  - key: food
+    name: Food & Food Products
+    priority: 4
+    committees: ["FAD 15", "FAD 16", "FAD 8", "FAD 28", "FAD 6", "FAD 31", "FAD 19"]
+    seed_standards: ["IS 1165", "IS 13334"]
+
+  - key: pipes_plumbing
+    name: Pipes & Plumbing
+    priority: 4
+    committees: ["CED 50", "CED 3", "MTD 19"]
+    seed_standards: ["IS 4985", "IS 4984", "IS 13592", "IS 14735", "IS 15778"]
+
+  - key: plywood_wood
+    name: Plywood & Wood Products
+    priority: 4
+    committees: ["CED 20", "CED 9"]
+    seed_standards: ["IS 303", "IS 710", "IS 1659", "IS 1328", "IS 4990"]
+
+  - key: fire_safety
+    name: Fire Safety / Extinguishers
+    priority: 4
+    committees: ["CED 36", "CED 22"]
+    seed_standards: ["IS 15683", "IS 16018", "IS 4308"]
+
+  - key: solar_renewable
+    name: Solar / Renewable Energy
+    priority: 4
+    # Solar water-pumping standards (IS 17018, IS 17429) are owned by MED 20.
+    committees: ["ETD 28", "ETD 46", "MED 4", "MED 20"]
+    seed_standards: ["IS 17018", "IS 17429"]
+
+  - key: ev_charging
+    name: EV & EV Charging
+    priority: 4
+    committees: ["TED 27", "TED 26", "ETD 51"]
+    seed_standards: ["IS 17017"]
+
+  - key: furniture
+    name: Furniture / Mattresses
+    priority: 4
+    committees: ["CED 35"]
+    seed_standards: []
+
+  - key: footwear
+    name: Footwear
+    priority: 4
+    committees: ["CHD 19", "CHD 17"]
+    seed_standards: []
+
+  - key: textiles
+    name: Textiles & Clothing
+    priority: 4
+    committees: ["TXD 20", "TXD 31", "TXD 10", "TXD 4", "TXD 3", "TXD 39", "TXD 23"]
+    seed_standards: ["IS 16186", "IS 1943", "IS 14887", "IS 16208", "IS 16703"]
+
+  - key: pumps_motors
+    name: Pumps & Motors
+    priority: 4
+    committees: ["MED 20", "MED 27", "ETD 15"]
+    seed_standards: ["IS 8034", "IS 14220", "IS 9079", "IS 8472", "IS 12615", "IS 996"]
+
+  - key: agriculture
+    name: Agriculture / Irrigation
+    priority: 4
+    committees: ["FAD 11", "FAD 17", "FAD 20", "FAD 22", "TXD 35"]
+    seed_standards: ["IS 17425", "IS 12786", "IS 13487", "IS 13488"]
+
+  - key: batteries
+    name: Batteries
+    priority: 4
+    committees: ["ETD 10", "ETD 11"]
+    seed_standards: []
+
+  - key: chemicals_plastics_rubber
+    name: Chemicals / Plastics / Rubber
+    priority: 3
+    committees: ["PCD 12", "PCD 13", "PCD 21", "PCD 9", "CHD 20", "CHD 1"]
+    seed_standards: []

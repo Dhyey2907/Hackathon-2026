@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+data/raw/
+data/*.db
+data/cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+models/
+
+# Embedded Qdrant storage (rebuilt by the indexer)
+data/qdrant/
