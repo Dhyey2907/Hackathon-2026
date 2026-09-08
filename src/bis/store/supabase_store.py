@@ -228,6 +228,27 @@ def lookup_standards(pattern: str, limit: int = 10) -> list[dict[str, Any]]:
     return response.data or []
 
 
+def standards_by_committee(
+    committee: str, exclude: str | None = None, limit: int = 8
+) -> list[dict[str, Any]]:
+    """Other standards owned by the same sectional committee.
+
+    Committee is a better relatedness signal than title similarity here: BIS
+    committees are the working groups that actually maintain a family of
+    standards, so siblings are genuinely relevant rather than merely worded
+    alike.
+    """
+    client = get_client()
+    query = (
+        client.table("standards")
+        .select("is_number,title,committee,year,source_url")
+        .eq("committee", committee)
+    )
+    if exclude:
+        query = query.neq("is_number", exclude)
+    return query.limit(limit).execute().data or []
+
+
 def find_labs(
     state: str | None = None, scope: str | None = None, limit: int = 20
 ) -> list[dict[str, Any]]:

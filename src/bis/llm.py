@@ -1,7 +1,9 @@
 """Groq client wrapper: chat, JSON-mode, streaming, and fallback.
 
 Groq serves generation and speech-to-text only - it has no embeddings
-endpoint - so embeddings and reranking run locally (see bis.retrieval.embed).
+endpoint - so embeddings come from Gemini instead (see bis.retrieval.embed).
+Reranking is done by a small Groq model here rather than a cross-encoder,
+because nothing runs locally (see bis.retrieval.rerank).
 """
 
 from __future__ import annotations
@@ -12,8 +14,7 @@ from collections.abc import Iterator
 from functools import lru_cache
 from typing import Any
 
-from groq import Groq
-from groq import APIError, APIStatusError
+from groq import APIError, APIStatusError, Groq
 
 from bis.config import get_settings
 
