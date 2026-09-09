@@ -29,15 +29,19 @@ class Settings(BaseSettings):
     groq_fallback_model: str = "qwen/qwen3.8-27b"
     groq_stt_model: str = "whisper-large-v3"
 
-    # Embeddings: Google Gemini. Groq serves no embedding endpoint, and the
-    # project runs entirely on hosted APIs - nothing is downloaded locally.
+    # Embeddings. Provider is swappable because free-tier limits differ wildly:
+    # Gemini allows only 1,000 embedded items per DAY on the free tier, which
+    # would take a week for this corpus, while Jina's free tier is ~1M tokens.
     #
-    # 1536 dimensions rather than gemini-embedding-001's native 3072: pgvector
-    # HNSW indexes cap at 2000 dims, so the model is asked for Matryoshka
-    # truncation. Changing this requires rebuilding the index and the column.
+    # Vectors from different providers are NOT comparable. Changing this means
+    # re-embedding every row and resizing the vector column - never mix them.
+    #
+    # 1024 dimensions also keeps us under pgvector's 2000-dim HNSW index cap.
+    embed_provider: str = "jina"
+    embed_model: str = "jina-embeddings-v3"
+    embed_dimensions: int = 1024
+    jina_api_key: str = ""
     gemini_api_key: str = ""
-    embed_model: str = "gemini-embedding-001"
-    embed_dimensions: int = 1536
 
     # Reranking. Gemini offers no reranker, so a small Groq model scores the
     # candidates instead of a cross-encoder - see retrieval.rerank.

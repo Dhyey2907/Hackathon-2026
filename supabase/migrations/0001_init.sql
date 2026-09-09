@@ -26,7 +26,12 @@ create table if not exists standards (
     under_qco         boolean default false,
     source_url        text,
     title_hindi       text,
-    group_key         text,
+    -- An array, not a single value: a sectional committee legitimately serves
+    -- several product groups (MED 33 Utensils covers both household appliances
+    -- and pressure cookers; CED 22 Fire Fighting owns extinguishers and
+    -- helmets). A scalar column silently gave each shared committee to whichever
+    -- group was declared first, leaving cookers_utensils with zero rows.
+    group_keys        text[] default '{}',
     embedding         vector(1536),
     fts               tsvector generated always as (
                           to_tsvector('simple',
@@ -39,7 +44,7 @@ create table if not exists standards (
 
 create index if not exists standards_fts_idx      on standards using gin (fts);
 create index if not exists standards_committee_idx on standards (committee);
-create index if not exists standards_group_idx     on standards (group_key);
+create index if not exists standards_group_keys_idx on standards using gin (group_keys);
 
 -- ------------------------------------------------------------------- chunks
 
@@ -83,6 +88,51 @@ create table if not exists labs (
 
 create index if not exists labs_state_idx on labs (state);
 
+
+-- ---------------------------------------------------- lexical query builder
+--
+-- plainto_tsquery ANDs every term, so "gold hallmarking jewellery" matched
+-- nothing: no single title contains all three words. The lexical arm exists for
+-- recall - RRF and the reranker supply precision - so terms are ORed instead.
+--
+-- Stopwords are then stripped from the QUERY only. The 'simple' config removes
+-- none, deliberately, so that standard numbers and tokens like "huid" survive
+-- indexing; but ORing "which standard applies to LED bulbs" would otherwise
+-- match nearly every row through "standard"/"applies"/"to" and bury the real
+-- hits. Terms under 3 characters are dropped unless they are pure digits, which
+-- are usually part of a standard number.
+create or replace function bis_or_tsquery(input text)
+returns tsquery
+language sql immutable
+as $$
+    select coalesce(
+        nullif(
+            array_to_string(
+                array(
+                    select quote_literal(lex)
+                    from unnest(
+                        tsvector_to_array(to_tsvector('simple', coalesce(input, '')))
+                    ) lex
+                    where lex not in (
+                        'a','an','and','are','as','at','be','by','can','do','does',
+                        'for','from','get','has','have','how','i','in','is','it','me',
+                        'my','need','of','on','or','our','required','requirement',
+                        'requirements','should','specification','standard','standards',
+                        'that','the','their','they','this','to','use','used','using',
+                        'want','was','what','when','where','which','who','will','with',
+                        'would','you','your','applies','apply','applicable','about',
+                        'please','tell','give','list','india','indian','bis'
+                    )
+                      and (length(lex) >= 3 or lex ~ '^[0-9]+$')
+                ),
+                ' | '
+            ),
+            ''
+        )::tsquery,
+        'zzzz_no_match_zzzz'::tsquery
+    );
+$$;
+
 -- ------------------------------------------------------- hybrid search RPCs
 --
 -- Dense and lexical results are fused with Reciprocal Rank Fusion rather than
@@ -111,7 +161,7 @@ returns table (
 language sql stable
 as $$
     with q as (
-        select plainto_tsquery('simple', query_text) as tsq
+        select bis_or_tsquery(query_text) as tsq
     ),
     dense as (
         select c.chunk_uid,
@@ -166,20 +216,20 @@ returns table (
     division    text,
     year        int,
     source_url  text,
-    group_key   text,
+    group_keys  text[],
     score       double precision
 )
 language sql stable
 as $$
     with q as (
-        select plainto_tsquery('simple', query_text) as tsq
+        select bis_or_tsquery(query_text) as tsq
     ),
     dense as (
         select s.is_number,
                row_number() over (order by s.embedding <=> query_embedding) as rank
         from standards s
         where s.embedding is not null
-          and (filter_group is null or s.group_key = filter_group)
+          and (filter_group is null or filter_group = any(s.group_keys))
         order by s.embedding <=> query_embedding
         limit match_limit * 2
     ),
@@ -188,7 +238,7 @@ as $$
                row_number() over (order by ts_rank_cd(s.fts, q.tsq) desc) as rank
         from standards s, q
         where s.fts @@ q.tsq
-          and (filter_group is null or s.group_key = filter_group)
+          and (filter_group is null or filter_group = any(s.group_keys))
         order by ts_rank_cd(s.fts, q.tsq) desc
         limit match_limit * 2
     ),
@@ -200,7 +250,7 @@ as $$
         full outer join lexical l on d.is_number = l.is_number
     )
     select s.is_number, s.title, s.committee, s.division, s.year,
-           s.source_url, s.group_key, f.score
+           s.source_url, s.group_keys, f.score
     from fused f
     join standards s on s.is_number = f.is_number
     order by f.score desc

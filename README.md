@@ -4,7 +4,7 @@ An AI assistant that answers questions about **Indian Standards and BIS services
 
 Built for Smart India Hackathon problem statement **26107** (Bureau of Indian Standards).
 
-> **Status: backend in progress.** The catalogue ingestion pipeline is complete and verified. Retrieval and the answering agent are next. There is no frontend yet — the API is designed so one can be added without backend changes.
+> **Status: backend in progress.** 6,209 standards are live in Supabase with hybrid search working. The answering agent, chat API and citation guardrails are built. **Embeddings are not yet generated** — a `GEMINI_API_KEY` is needed — so retrieval currently runs on the lexical arm only. There is no frontend yet; the API is designed so one can be added without backend changes.
 
 ---
 
@@ -61,15 +61,17 @@ Answering is an **intent-routed agent**, not one RAG chain — the eight require
 | Fallback | `qwen/qwen3.8-27b` (Groq) | different family, so one provider-side fault can't take out both; strong Hindi |
 | Routing | `openai/gpt-oss-20b` (Groq) | ~0.4 s intent classification, clean JSON |
 | Speech | `whisper-large-v3` (Groq) | multilingual voice input |
-| Embeddings | `gemini-embedding-001` (Google) | multilingual — a Hindi question matches English source text |
+| Embeddings | `jina-embeddings-v3` (Jina, 1024d) | multilingual — a Hindi question matches English source text; free tier covers the corpus |
 | Reranking | `openai/gpt-oss-20b` (Groq) | Gemini has no reranker; one call scores the whole candidate list |
 
 Everything runs on hosted APIs — **no model weights are downloaded**. Things worth knowing before changing providers:
 
-- **Groq has no embeddings endpoint**, which is why embeddings come from Gemini.
+- **Groq has no embeddings endpoint** — verified, not assumed: 14 models, none of them embedding, and `/v1/embeddings` returns 404. That is why embeddings come from elsewhere.
 - **Groq no longer serves the Llama chat models.** Any tutorial referencing `llama-3.3-70b-versatile` or `llama-3.1-8b-instant` will 404 — only the prompt-guard Llama variants remain. Check `client.models.list()` rather than trusting documentation.
-- **Embeddings are 1536-dimensional, not the native 3072.** pgvector's HNSW index caps at 2000 dimensions, so the embedder requests Matryoshka truncation and re-normalises (Google normalises only the full-length output).
-- **Gemini embeddings are asymmetric.** Passages use `RETRIEVAL_DOCUMENT`, queries use `RETRIEVAL_QUERY`. Using one type for both returns plausible vectors and quietly worse retrieval.
+- **Gemini's free tier is unusable for bulk embedding.** The binding limit is `EmbedContentRequestsPerDayPerUserPerProjectPerModel-FreeTier = 1000` — a thousand embedded items *per day*, so this 6,209-row corpus would take a week. There is also a 100/minute cap that counts each item in a batch as a request, which is the one you hit first and which distracts from the real problem. Jina's free tier (~1M tokens) does the whole corpus in ~16 minutes.
+- **Embeddings are 1024-dimensional.** pgvector's HNSW index caps at 2000 dimensions, so any provider must be truncated below that; vectors are re-normalised afterwards, since Matryoshka truncation does not preserve unit length.
+- **Never mix embedding providers in one column.** Vectors from different models are not comparable, so a half-migrated table returns confident nonsense with no error. Switching provider means re-embedding everything and resizing the column — `EMBED_PROVIDER` exists to make that switch deliberate.
+- **Embeddings are asymmetric.** Passages and queries use different task types (`retrieval.passage` / `retrieval.query` on Jina). Using one for both returns plausible vectors and quietly worse retrieval.
 
 Reranking by LLM is a real trade-off: a trained cross-encoder would be better and cheaper per candidate. This buys a stack with no local weights.
 
@@ -188,8 +190,9 @@ Two files carry most of the design weight:
 - [x] Catalogue ingestion — 6,209 standards, per-group verification
 - [ ] Public scheme / QCO / hallmarking PDF ingestion
 - [x] Cloud retrieval stack — Gemini embeddings, Supabase pgvector, LLM reranking
-- [ ] Embed and index the catalogue
-- [ ] Intent router, tools, cited answers
+- [x] Catalogue uploaded to Supabase — 6,209 standards, hybrid search live
+- [x] Intent router, tools, cited answers, chat endpoints
+- [ ] Generate embeddings (needs GEMINI_API_KEY)
 - [ ] Multilingual (Hindi first, using BIS's own Hindi titles)
 - [ ] Evaluation harness — recall@k, citation precision, refusal rate
 - [ ] Frontend
