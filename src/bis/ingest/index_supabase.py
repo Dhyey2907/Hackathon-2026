@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from bis.ingest.scrape_catalogue import load_groups
 from bis.retrieval import embed as embed_mod
@@ -31,6 +32,11 @@ from bis.store.db import Standard, session_scope
 log = logging.getLogger(__name__)
 
 EMBED_BATCH = 100
+
+# Writing embeddings back is one REST round trip per row, which dominates the
+# runtime - the embedding calls themselves are batched 100 at a time. Sending
+# the updates concurrently turns a ~80 minute backfill into roughly ten.
+UPDATE_WORKERS = 12
 
 
 def _groups_for_committee() -> dict[str, list[str]]:
@@ -102,12 +108,32 @@ def embed_standards(limit: int | None = None) -> int:
 
         vectors = embed_mod.embed_documents(texts)
 
-        for row, vector in zip(pending, vectors, strict=True):
+        def write(pair):
+            row, vector = pair
             client.table("standards").update({"embedding": vector}).eq(
                 "is_number", row["is_number"]
             ).execute()
+            return row["is_number"]
 
-        done += len(pending)
+        failed = []
+        with ThreadPoolExecutor(max_workers=UPDATE_WORKERS) as pool:
+            futures = {
+                pool.submit(write, pair): pair[0]["is_number"]
+                for pair in zip(pending, vectors, strict=True)
+            }
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                except Exception as exc:
+                    failed.append(futures[future])
+                    log.warning("update failed for %s: %s", futures[future], str(exc)[:120])
+
+        if failed:
+            # Left unembedded on purpose: the next run picks them up, because
+            # the query selects rows where embedding IS NULL.
+            log.warning("%d rows failed to write and will be retried next run", len(failed))
+
+        done += len(pending) - len(failed)
         rate = done / max(time.time() - started, 1e-6)
         log.info("embedded %d standards (%.1f/s)", done, rate)
 

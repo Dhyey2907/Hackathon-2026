@@ -1,0 +1,67 @@
+2026-09-09 10:46:43,897 embedded 128 standards (6.9/s)
+2026-09-09 10:46:52,841 update failed for IS/IEC 60189 (Part 3):2020: Server disconnected
+2026-09-09 10:46:52,842 update failed for IS/IEC 60096 (Part 0/Sec 1):2017: Server disconnected
+2026-09-09 10:46:52,843 update failed for IS 5054 (Part 8):2013: Server disconnected
+2026-09-09 10:46:52,843 update failed for IS/IEC 61196 (Part 1/Sec 107):2005: Server disconnected
+2026-09-09 10:46:57,550 update failed for IS 14687:1999: <ConnectionTerminated error_code:1, last_stream_id:85, additional_data:None>
+2026-09-09 10:46:57,560 update failed for IS 6909:2026: <ConnectionTerminated error_code:1, last_stream_id:85, additional_data:None>
+2026-09-09 10:46:57,562 update failed for IS 383:2016: <ConnectionTerminated error_code:1, last_stream_id:85, additional_data:None>
+2026-09-09 10:46:57,562 update failed for IS 1199 (Part 5):2018: <ConnectionTerminated error_code:1, last_stream_id:85, additional_data:None>
+2026-09-09 10:46:57,562 update failed for IS 6461 (Part 3):2024: <ConnectionTerminated error_code:1, last_stream_id:85, additional_data:None>
+2026-09-09 10:46:57,562 update failed for IS 1199 (Part 7):2018: <ConnectionTerminated error_code:1, last_stream_id:85, additional_data:None>
+2026-09-09 10:47:02,127 10 rows failed to write and will be retried next run
+2026-09-09 10:47:02,127 embedded 246 standards (6.7/s)
+2026-09-09 10:47:11,179 update failed for IS 12897:2001: Server disconnected
+2026-09-09 10:47:11,181 update failed for IS 418:2004: Server disconnected
+2026-09-09 10:47:11,182 update failed for IS 13021 (Part 2):1991: Server disconnected
+2026-09-09 10:47:11,182 update failed for IS 12948:1990: Server disconnected
+2026-09-09 10:47:11,182 update failed for IS 15518 (Part 1):2004: Server disconnected
+2026-09-09 10:47:11,182 update failed for IS 12290:1987: Server disconnected
+2026-09-09 10:47:17,630 update failed for IS/QC 001001:2000: Server disconnected
+2026-09-09 10:47:17,633 update failed for IS/QC 760200:1995: Server disconnected
+2026-09-09 10:47:17,634 update failed for IS/QC 790131:1995: Server disconnected
+2026-09-09 10:47:17,634 update failed for IS/QC 760100:1995: Server disconnected
+2026-09-09 10:47:20,992 10 rows failed to write and will be retried next run
+2026-09-09 10:47:20,993 embedded 364 standards (6.5/s)
+2026-09-09 10:47:38,311 embedded 492 standards (6.7/s)
+2026-09-09 10:47:46,711 update failed for IS/IEC 62368 (Part 1):2023: Server disconnected
+2026-09-09 10:47:46,713 update failed for IS 18112:2025: Server disconnected
+2026-09-09 10:47:46,713 update failed for IS/IEC 60461:2021: Server disconnected
+2026-09-09 10:47:46,717 update failed for IS 15059:2023: Server disconnected
+2026-09-09 10:47:57,765 4 rows failed to write and will be retried next run
+2026-09-09 10:47:57,765 embedded 616 standards (6.7/s)
+2026-09-09 10:48:10,860 update failed for IS 10810 (Part 24):1984: Server disconnected
+2026-09-09 10:48:10,861 update failed for IS 10810 (Part 28):1984: Server disconnected
+2026-09-09 10:48:10,861 update failed for IS 10810 (Part 26):1984: Server disconnected
+2026-09-09 10:48:10,863 update failed for IS 10810 (Part 27):1984: Server disconnected
+2026-09-09 10:48:10,863 update failed for IS 10810 (Part 2):1984: Server disconnected
+2026-09-09 10:48:19,172 5 rows failed to write and will be retried next run
+2026-09-09 10:48:19,172 embedded 739 standards (6.5/s)
+2026-09-09 10:48:26,845 update failed for IS 13730 (Part 45):1999: Server disconnected
+2026-09-09 10:48:26,853 update failed for IS 9399:1979: Server disconnected
+2026-09-09 10:48:34,640 update failed for IS 10738 (Part 6/Sec 1):1991: Server disconnected
+2026-09-09 10:48:34,643 update failed for IS 5054 (Part 24):2007: Server disconnected
+2026-09-09 10:48:37,810 4 rows failed to write and will be retried next run
+2026-09-09 10:48:37,810 embedded 863 standards (6.5/s)
+2026-09-09 10:48:50,105 update failed for IS 3370 (Part 2):2021: Server disconnected
+2026-09-09 10:48:50,106 update failed for IS 3370 (Part 4/Sec 2):2021: Server disconnected
+2026-09-09 10:48:50,107 update failed for IS 3370 (Part 4/Sec 3):2021: Server disconnected
+2026-09-09 10:48:50,108 update failed for IS 3370 (Part 4/Sec 1):2021: Server disconnected
+2026-09-09 10:48:56,625 4 rows failed to write and will be retried next run
+2026-09-09 10:48:56,625 embedded 987 standards (6.5/s)
+2026-09-09 10:49:02,393 update failed for IS 10850:1984: Server disconnected
+2026-09-09 10:49:02,393 update failed for IS 10510:1983: Server disconnected
+2026-09-09 10:49:02,393 update failed for IS 10890:1984: Server disconnected
+2026-09-09 10:49:02,393 update failed for IS 6579:1981: Server disconnected
+2026-09-09 10:49:02,397 update failed for IS 10079:1982: Server disconnected
+2026-09-09 10:49:06,149 update failed for IS 2386 (Part 6):1963: Server disconnected
+2026-09-09 10:49:06,151 update failed for IS 4032:1985: Server disconnected
+2026-09-09 10:49:16,313 7 rows failed to write and will be retried next run
+2026-09-09 10:49:16,313 embedded 1108 standards (6.5/s)
+2026-09-09 10:49:37,861 embedded 1236 standards (6.4/s)
+2026-09-09 10:49:52,626 update failed for IS 11947:1987: <ConnectionTerminated error_code:1, last_stream_id:401, additional_data:None>
+2026-09-09 10:49:52,626 update failed for IS 11946:1987: <ConnectionTerminated error_code:1, last_stream_id:401, additional_data:None>
+2026-09-09 10:49:55,531 update failed for IS 963:1958: deque mutated during iteration
+2026-09-09 10:49:58,806 3 rows failed to write and will be retried next run
+2026-09-09 10:49:58,806 embedded 1361 standards (6.4/s)
+2026-09-09 10:50:16,322 embedded 1489 standards (6.4/s)
