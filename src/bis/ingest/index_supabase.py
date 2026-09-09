@@ -33,20 +33,25 @@ log = logging.getLogger(__name__)
 EMBED_BATCH = 100
 
 
-def _group_for_committee() -> dict[str, str]:
-    """committee code -> product group key, so rows can be filtered by group."""
-    mapping: dict[str, str] = {}
+def _groups_for_committee() -> dict[str, list[str]]:
+    """committee code -> every product group that claims it.
+
+    A committee genuinely belongs to several groups: MED 33 (Utensils) serves
+    both household appliances and pressure cookers, and CED 22 (Fire Fighting)
+    owns extinguishers and helmets alike. An earlier version kept only the first
+    match, which left cookers_utensils with zero rows because household
+    appliances was listed first.
+    """
+    mapping: dict[str, list[str]] = {}
     for group in load_groups():
         for code in group.committees:
-            # A committee shared by two groups keeps the first; group_key is a
-            # coarse retrieval filter, not an authoritative classification.
-            mapping.setdefault(code, group.key)
+            mapping.setdefault(code, []).append(group.key)
     return mapping
 
 
 def upload_standards(batch_size: int = 200) -> int:
     """Copy the local catalogue into Supabase, without embeddings."""
-    by_committee = _group_for_committee()
+    by_committee = _groups_for_committee()
 
     with session_scope() as session:
         rows = session.query(Standard).all()
@@ -65,7 +70,7 @@ def upload_standards(batch_size: int = 200) -> int:
                     "status": row.status,
                     "under_qco": bool(row.under_qco),
                     "source_url": row.source_url,
-                    "group_key": by_committee.get(code),
+                    "group_keys": by_committee.get(code, []),
                 }
             )
 

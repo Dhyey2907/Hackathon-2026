@@ -4,7 +4,7 @@ An AI assistant that answers questions about **Indian Standards and BIS services
 
 Built for Smart India Hackathon problem statement **26107** (Bureau of Indian Standards).
 
-> **Status: backend in progress.** The catalogue ingestion pipeline is complete and verified. Retrieval and the answering agent are next. There is no frontend yet — the API is designed so one can be added without backend changes.
+> **Status: backend in progress.** 6,209 standards are live in Supabase with hybrid search working. The answering agent, chat API and citation guardrails are built. **Embeddings are not yet generated** — a `GEMINI_API_KEY` is needed — so retrieval currently runs on the lexical arm only. There is no frontend yet; the API is designed so one can be added without backend changes.
 
 ---
 
@@ -188,8 +188,9 @@ Two files carry most of the design weight:
 - [x] Catalogue ingestion — 6,209 standards, per-group verification
 - [ ] Public scheme / QCO / hallmarking PDF ingestion
 - [x] Cloud retrieval stack — Gemini embeddings, Supabase pgvector, LLM reranking
-- [ ] Embed and index the catalogue
-- [ ] Intent router, tools, cited answers
+- [x] Catalogue uploaded to Supabase — 6,209 standards, hybrid search live
+- [x] Intent router, tools, cited answers, chat endpoints
+- [ ] Generate embeddings (needs GEMINI_API_KEY)
 - [ ] Multilingual (Hindi first, using BIS's own Hindi titles)
 - [ ] Evaluation harness — recall@k, citation precision, refusal rate
 - [ ] Frontend

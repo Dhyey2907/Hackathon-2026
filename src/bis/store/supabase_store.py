@@ -198,6 +198,7 @@ def search_standards(
                     "is_number": row["is_number"],
                     "committee": row.get("committee"),
                     "year": row.get("year"),
+                    "group_keys": row.get("group_keys"),
                     "clause": None,
                     "page": None,
                 },
