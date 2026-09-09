@@ -13,3 +13,7 @@ models/
 
 # Embedded Qdrant storage (rebuilt by the indexer)
 data/qdrant/
+
+# runtime logs
+embed_run.log
+*.log
