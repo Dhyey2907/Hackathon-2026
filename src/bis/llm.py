@@ -71,11 +71,21 @@ def chat(
     raise LLMUnavailable(f"all Groq models failed: {last_error}") from last_error
 
 
+# JSON-mode calls need far more headroom than the output implies. The gpt-oss
+# models reason before answering, and those tokens come out of the same budget,
+# so a 512-token cap produced "max completion tokens reached before generating
+# a valid document" - a 400, not a truncated response. That failure then fell
+# back to the secondary model, whose larger prompt promptly hit the free tier's
+# input-tokens-per-minute limit, turning one tight number into a 413 cascade.
+JSON_MAX_TOKENS = 3000
+
+
 def chat_json(
     messages: list[Message],
     *,
     model: str | None = None,
     temperature: float = 0.0,
+    max_tokens: int = JSON_MAX_TOKENS,
     default: dict | None = None,
 ) -> dict:
     """Completion parsed as JSON. Returns `default` rather than raising on bad JSON."""
@@ -83,7 +93,7 @@ def chat_json(
         messages,
         model=model or get_settings().groq_router_model,
         temperature=temperature,
-        max_tokens=512,
+        max_tokens=max_tokens,
         json_mode=True,
     )
     try:

@@ -165,3 +165,11 @@ def test_fullwidth_brackets_are_normalised():
 def test_halfwidth_and_fullwidth_mix():
     result = validate("First ［S1］ and second [S2].", [ev(1), ev(2)])
     assert [s["marker"] for s in result.sources] == ["S1", "S2"]
+
+
+def test_uncited_flag_is_set_when_evidence_was_ignored():
+    """The flag exists so callers can surface it; it was computed and never read."""
+    result = validate("Registration is mandatory under the scheme.", [ev(1), ev(2)])
+    assert result.uncited
+    assert result.sources == []
+    assert not result.is_clean

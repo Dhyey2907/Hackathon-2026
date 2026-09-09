@@ -86,7 +86,6 @@ def upload_standards(batch_size: int = 200) -> int:
 
 def embed_standards(limit: int | None = None) -> int:
     """Embed catalogue rows that have no vector yet. Safe to re-run."""
-    client = supabase_store.get_write_client()
     done = 0
     started = time.time()
 
@@ -110,9 +109,9 @@ def embed_standards(limit: int | None = None) -> int:
 
         def write(pair):
             row, vector = pair
-            client.table("standards").update({"embedding": vector}).eq(
-                "is_number", row["is_number"]
-            ).execute()
+            supabase_store.update_with_retry(
+                "standards", "is_number", row["is_number"], {"embedding": vector}
+            )
             return row["is_number"]
 
         failed = []
@@ -195,9 +194,9 @@ def embed_chunks() -> int:
 
         def write(pair):
             row, vector = pair
-            client.table("chunks").update({"embedding": vector}).eq(
-                "chunk_uid", row["chunk_uid"]
-            ).execute()
+            supabase_store.update_with_retry(
+                "chunks", "chunk_uid", row["chunk_uid"], {"embedding": vector}
+            )
 
         failed = 0
         with ThreadPoolExecutor(max_workers=UPDATE_WORKERS) as pool:

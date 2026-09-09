@@ -17,6 +17,7 @@ ingestion scripts need.
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any
@@ -100,6 +101,37 @@ def upsert_chunks(rows: list[dict[str, Any]], batch_size: int = 200) -> int:
         written += len(batch)
         log.info("chunks upserted %d/%d", written, len(rows))
     return written
+
+
+def update_with_retry(
+    table: str,
+    key_column: str,
+    key_value: str,
+    values: dict[str, Any],
+    retries: int = 4,
+) -> None:
+    """Update one row, retrying transient transport failures.
+
+    Supabase's REST endpoint intermittently drops connections under concurrent
+    writes ("Server disconnected"). Without a retry those rows were simply left
+    unwritten and only recovered because the backfill re-selects rows with a
+    null embedding - which works, but quietly turns a one-pass job into a
+    two-pass one and hides how many writes are actually failing.
+    """
+    client = get_write_client()
+    last_error: Exception | None = None
+
+    for attempt in range(retries):
+        try:
+            client.table(table).update(values).eq(key_column, key_value).execute()
+            return
+        except Exception as exc:
+            last_error = exc
+            time.sleep(min(0.5 * 2**attempt, 8))
+
+    raise StoreError(
+        f"update {table}.{key_value} failed after {retries} attempts: {last_error}"
+    ) from last_error
 
 
 def standards_missing_embeddings(limit: int = 500) -> list[dict[str, Any]]:
