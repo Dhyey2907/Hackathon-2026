@@ -17,7 +17,6 @@ decides which 6 the model actually gets to cite.
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
@@ -27,7 +26,15 @@ from bis.llm import chat_json
 log = logging.getLogger(__name__)
 
 # Enough of a passage to judge relevance without paying for the whole thing.
-SNIPPET_CHARS = 700
+# Kept small because Groq's free tier caps input tokens per minute (7,000 on
+# on-demand): 30 candidates at 700 chars each blew that limit on its own and
+# 413'd the request.
+SNIPPET_CHARS = 400
+
+# Candidates actually sent to the model. Hybrid search returns ~30 for recall,
+# but scoring all of them costs more tokens than the ranking is worth - the
+# tail is nearly always irrelevant anyway.
+MAX_CANDIDATES = 15
 
 # Candidates scoring below this are dropped even if that returns fewer than
 # top_k. Hybrid search optimises for recall, so the tail of the list is often
@@ -76,6 +83,14 @@ def rerank(query: str, hits: list[Any], top_k: int | None = None) -> list[Any]:
 
     if not hits:
         return []
+
+    # Score only the head of the list; anything past MAX_CANDIDATES keeps its
+    # fusion score and stays available if the scored set comes back thin.
+    overflow = hits[MAX_CANDIDATES:]
+    hits = hits[:MAX_CANDIDATES]
+    for hit in overflow:
+        hit.rerank_score = 0.0
+
     if len(hits) <= top_k:
         for hit in hits:
             hit.rerank_score = getattr(hit, "score", 0.0)
@@ -95,8 +110,12 @@ def rerank(query: str, hits: list[Any], top_k: int | None = None) -> list[Any]:
             for entry in result.get("scores", [])
             if isinstance(entry, dict) and "id" in entry and "score" in entry
         }
-    except (ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
-        log.warning("rerank failed, falling back to fusion order: %s", exc)
+    except Exception as exc:
+        # Deliberately broad. Reranking is an optimisation, and the fusion
+        # order is a usable ranking on its own - so *any* failure here must
+        # degrade rather than propagate. A narrow tuple missed LLMUnavailable
+        # from a Groq rate limit, which took down the whole request.
+        log.warning("rerank failed, falling back to fusion order: %s", str(exc)[:160])
         for hit in hits:
             hit.rerank_score = getattr(hit, "score", 0.0)
         return hits[:top_k]
