@@ -147,3 +147,34 @@ def test_fuse_hits_single_list_preserves_order():
 
 def test_rrf_still_matches_reference_formula():
     assert reciprocal_rank_fusion([["x"]], k=60)["x"] == pytest.approx(1 / 61)
+
+
+def test_rerank_survives_a_rate_limit_error(monkeypatch):
+    """A provider rate limit must not take down the request.
+
+    Regression: the except clause listed only (ValueError, TypeError, KeyError,
+    JSONDecodeError), so LLMUnavailable from a Groq 413 propagated out of
+    rerank and killed the whole answer. Reranking is an optimisation; the
+    fusion order is a usable ranking on its own.
+    """
+    from bis.llm import LLMUnavailable
+
+    def rate_limited(messages, **kwargs):
+        raise LLMUnavailable("Error code: 413 - request too large (ITPM)")
+
+    monkeypatch.setattr(rerank_mod, "chat_json", rate_limited)
+    out = rerank_mod.rerank("q", hits(20), top_k=3)
+    assert [h.chunk_uid for h in out] == ["c0", "c1", "c2"]
+
+
+def test_rerank_caps_how_many_candidates_reach_the_model(monkeypatch):
+    """Only the head of the list is scored, to stay inside token limits."""
+    seen = {}
+
+    def capture(messages, **kwargs):
+        seen["passages"] = messages[1]["content"].count("\n---\n") + 1
+        return {"scores": [{"id": i, "score": 9} for i in range(rerank_mod.MAX_CANDIDATES)]}
+
+    monkeypatch.setattr(rerank_mod, "chat_json", capture)
+    rerank_mod.rerank("q", hits(40), top_k=5)
+    assert seen["passages"] <= rerank_mod.MAX_CANDIDATES

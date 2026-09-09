@@ -16,6 +16,25 @@ from typing import Any
 
 MARKER_RE = re.compile(r"\[S(\d+)\]")
 
+# Models do not reliably emit ASCII brackets. gpt-oss in particular produces
+# fullwidth CJK brackets - an answer citing 【S1】 looked perfectly cited to a
+# reader while resolving to zero sources, because the validator saw no markers
+# at all and silently dropped every one. Normalising first turns that invisible
+# failure back into a working citation.
+_BRACKET_TRANSLATION = str.maketrans({
+    "【": "[",  # 【
+    "】": "]",  # 】
+    "［": "[",  # ［
+    "］": "]",  # ］
+    "❨": "[",
+    "❩": "]",
+})
+
+
+def normalise_markers(text: str) -> str:
+    """Rewrite non-ASCII citation brackets so markers can be matched."""
+    return (text or "").translate(_BRACKET_TRANSLATION)
+
 
 @dataclass
 class Evidence:
@@ -109,6 +128,7 @@ def format_evidence_block(evidence: list[Evidence], max_chars: int = 2000) -> st
 
 def validate(text: str, evidence: list[Evidence]) -> ValidationResult:
     """Strip unresolvable markers; return the answer plus only cited sources."""
+    text = normalise_markers(text)
     valid_indices = {e.index for e in evidence}
     by_index = {e.index: e for e in evidence}
 

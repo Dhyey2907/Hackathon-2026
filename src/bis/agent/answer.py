@@ -142,6 +142,13 @@ def answer(question: str) -> Answer:
 
     result = validate(raw, evidence)
     warnings: list[str] = []
+    if result.uncited:
+        # The model was given evidence and answered without citing any of it.
+        # That is not necessarily wrong, but it is unverifiable - which for a
+        # regulatory assistant is the thing we are trying to avoid. Surfaced so
+        # the caller can flag it rather than presenting it as source-backed.
+        warnings.append("answer cites no sources despite evidence being retrieved")
+        log.warning("uncited answer for a question that retrieved %d passages", len(evidence))
     if result.dropped_markers:
         warnings.append(f"removed unresolvable citations: {result.dropped_markers}")
         log.warning("model cited %s which was not in evidence", result.dropped_markers)
@@ -239,4 +246,5 @@ def answer_stream(question: str) -> Iterator[dict]:
         "abstained": False,
         "latency_ms": (time.time() - started) * 1000,
         "dropped_markers": result.dropped_markers,
+        "uncited": result.uncited,
     }

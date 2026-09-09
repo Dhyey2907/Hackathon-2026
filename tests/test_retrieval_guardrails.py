@@ -148,3 +148,28 @@ def test_evidence_block_labels_every_passage():
     assert "[S1]" in block and "[S2]" in block
     assert "clause 2.1" in block
     assert "https://example.invalid/1" in block
+
+
+def test_fullwidth_brackets_are_normalised():
+    """Regression: gpt-oss emits 【S1】, which resolved to zero sources.
+
+    The answer looked cited to a reader while the sources panel came back
+    empty - the worst kind of failure, because nothing signals it.
+    """
+    result = validate("Registration is mandatory 【S1】.", [ev(1)])
+    assert "[S1]" in result.text
+    assert [s["marker"] for s in result.sources] == ["S1"]
+    assert not result.uncited
+
+
+def test_halfwidth_and_fullwidth_mix():
+    result = validate("First ［S1］ and second [S2].", [ev(1), ev(2)])
+    assert [s["marker"] for s in result.sources] == ["S1", "S2"]
+
+
+def test_uncited_flag_is_set_when_evidence_was_ignored():
+    """The flag exists so callers can surface it; it was computed and never read."""
+    result = validate("Registration is mandatory under the scheme.", [ev(1), ev(2)])
+    assert result.uncited
+    assert result.sources == []
+    assert not result.is_clean

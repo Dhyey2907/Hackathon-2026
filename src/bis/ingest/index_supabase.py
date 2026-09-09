@@ -86,7 +86,6 @@ def upload_standards(batch_size: int = 200) -> int:
 
 def embed_standards(limit: int | None = None) -> int:
     """Embed catalogue rows that have no vector yet. Safe to re-run."""
-    client = supabase_store.get_write_client()
     done = 0
     started = time.time()
 
@@ -110,9 +109,9 @@ def embed_standards(limit: int | None = None) -> int:
 
         def write(pair):
             row, vector = pair
-            client.table("standards").update({"embedding": vector}).eq(
-                "is_number", row["is_number"]
-            ).execute()
+            supabase_store.update_with_retry(
+                "standards", "is_number", row["is_number"], {"embedding": vector}
+            )
             return row["is_number"]
 
         failed = []
@@ -140,6 +139,81 @@ def embed_standards(limit: int | None = None) -> int:
     return done
 
 
+def upload_chunks() -> int:
+    """Parse the FaQs corpus and upsert chunks (without embeddings)."""
+    from bis.ingest.parse_docs import parse_corpus
+
+    records = parse_corpus()
+    payload = [
+        {
+            "chunk_uid": r.chunk_uid,
+            "text": r.text,
+            "doc_key": r.doc_key,
+            "doc_title": r.doc_title,
+            "doc_type": r.doc_type,
+            "source_url": r.source_url,
+            "ordinal": r.ordinal,
+            "token_count": r.token_count,
+            "clause": r.clause,
+            "section_path": r.section_path,
+            "page": r.page,
+            "is_number": r.is_number,
+            "language": r.language,
+        }
+        for r in records
+    ]
+    log.info("uploading %d chunks", len(payload))
+    return supabase_store.upsert_chunks(payload)
+
+
+def embed_chunks() -> int:
+    """Embed chunks that have no vector yet. Safe to re-run."""
+    client = supabase_store.get_write_client()
+    done = 0
+
+    while True:
+        response = (
+            client.table("chunks")
+            .select("chunk_uid,text,doc_title")
+            .is_("embedding", "null")
+            .limit(EMBED_BATCH)
+            .execute()
+        )
+        pending = response.data or []
+        if not pending:
+            break
+
+        # The document title is prepended so a passage carries its context: an
+        # answer reading "Yes, within 30 days" is meaningless on its own, but
+        # useful once the vector also encodes which scheme it belongs to.
+        texts = [
+            ((row.get("doc_title") or "") + "\n" + row["text"]).strip()
+            for row in pending
+        ]
+        vectors = embed_mod.embed_documents(texts)
+
+        def write(pair):
+            row, vector = pair
+            supabase_store.update_with_retry(
+                "chunks", "chunk_uid", row["chunk_uid"], {"embedding": vector}
+            )
+
+        failed = 0
+        with ThreadPoolExecutor(max_workers=UPDATE_WORKERS) as pool:
+            futures = [pool.submit(write, pair) for pair in zip(pending, vectors, strict=True)]
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                except Exception as exc:
+                    failed += 1
+                    log.warning("chunk update failed: %s", str(exc)[:120])
+
+        done += len(pending) - failed
+        log.info("embedded %d chunks", done)
+
+    return done
+
+
 def status() -> dict:
     counts = supabase_store.counts()
     pending = len(supabase_store.standards_missing_embeddings(limit=1000))
@@ -154,6 +228,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--upload", action="store_true", help="copy SQLite catalogue to Supabase")
     parser.add_argument("--embed", action="store_true", help="embed rows missing a vector")
+    parser.add_argument("--chunks", action="store_true", help="parse, upload and embed FaQs documents")
     parser.add_argument("--status", action="store_true")
     parser.add_argument("--limit", type=int, default=None, help="cap rows embedded this run")
     args = parser.parse_args()
@@ -173,7 +248,11 @@ def main() -> None:
         count = embed_standards(limit=args.limit)
         print(f"embedded {count} standards")
 
-    if not (args.upload or args.embed):
+    if args.chunks:
+        print(f"uploaded {upload_chunks()} chunks")
+        print(f"embedded {embed_chunks()} chunks")
+
+    if not (args.upload or args.embed or args.chunks):
         parser.print_help()
 
 
