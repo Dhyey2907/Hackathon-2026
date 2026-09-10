@@ -27,7 +27,6 @@ class Settings(BaseSettings):
     groq_router_model: str = "openai/gpt-oss-20b"
     groq_answer_model: str = "openai/gpt-oss-120b"
     groq_fallback_model: str = "qwen/qwen3.8-27b"
-    groq_stt_model: str = "whisper-large-v3"
 
     # Embeddings. Provider is swappable because free-tier limits differ wildly:
     # Gemini allows only 1,000 embedded items per DAY on the free tier, which

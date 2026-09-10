@@ -1,7 +1,7 @@
 """Groq client wrapper: chat, JSON-mode, streaming, and fallback.
 
-Groq serves generation and speech-to-text only - it has no embeddings
-endpoint - so embeddings come from Gemini instead (see bis.retrieval.embed).
+Groq serves text generation only - it has no embeddings
+endpoint - so embeddings come from Jina instead (see bis.retrieval.embed).
 Reranking is done by a small Groq model here rather than a cross-encoder,
 because nothing runs locally (see bis.retrieval.rerank).
 """
@@ -125,19 +125,6 @@ def chat_stream(
         if delta:
             yield delta
 
-
-def transcribe(audio_bytes: bytes, filename: str = "audio.wav") -> dict:
-    """Speech-to-text via whisper-large-v3. Returns {text, language}."""
-    settings = get_settings()
-    result = get_client().audio.transcriptions.create(
-        file=(filename, audio_bytes),
-        model=settings.groq_stt_model,
-        response_format="verbose_json",
-    )
-    return {
-        "text": getattr(result, "text", ""),
-        "language": getattr(result, "language", None),
-    }
 
 
 def health() -> dict:

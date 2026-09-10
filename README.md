@@ -4,7 +4,7 @@ An AI assistant that answers questions about **Indian Standards and BIS services
 
 Built for Smart India Hackathon problem statement **26107** (Bureau of Indian Standards).
 
-> **Status: backend in progress.** 6,209 standards are live in Supabase with hybrid search working. The answering agent, chat API and citation guardrails are built. **Embeddings are not yet generated** — a `GEMINI_API_KEY` is needed — so retrieval currently runs on the lexical arm only. There is no frontend yet; the API is designed so one can be added without backend changes.
+> **Status: backend working end to end.** 6,209 standards and 220 document chunks are indexed in Supabase with hybrid dense + lexical search. The intent router, retrieval tools, chat API and citation guardrails all run against live data. A frontend is in progress separately.
 
 ---
 
@@ -60,7 +60,6 @@ Answering is an **intent-routed agent**, not one RAG chain — the eight require
 | Answering | `openai/gpt-oss-120b` (Groq) | strongest available, 131k context |
 | Fallback | `qwen/qwen3.8-27b` (Groq) | different family, so one provider-side fault can't take out both; strong Hindi |
 | Routing | `openai/gpt-oss-20b` (Groq) | ~0.4 s intent classification, clean JSON |
-| Speech | `whisper-large-v3` (Groq) | multilingual voice input |
 | Embeddings | `jina-embeddings-v3` (Jina, 1024d) | multilingual — a Hindi question matches English source text; free tier covers the corpus |
 | Reranking | `openai/gpt-oss-20b` (Groq) | Gemini has no reranker; one call scores the whole candidate list |
 
@@ -158,7 +157,7 @@ pytest
 ```
 src/bis/
 ├── config.py           # settings (pydantic-settings)
-├── llm.py              # Groq: chat, JSON mode, streaming, STT, fallback
+├── llm.py              # Groq: chat, JSON mode, streaming, fallback
 ├── ingest/
 │   ├── bis_api.py      # BIS portal API client (throttled, cached)
 │   ├── scrape_catalogue.py
