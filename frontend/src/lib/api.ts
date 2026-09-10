@@ -179,12 +179,22 @@ export function getStandard(
 // --------------------------------------------------------------------- labs
 
 export function findLabs(
-  opts: { state?: string; scope?: string; limit?: number } = {},
+  opts: {
+    state?: string;
+    scope?: string;
+    q?: string;
+    recognisedOnly?: boolean;
+    limit?: number;
+  } = {},
 ): Promise<LabsResponse> {
   const params = new URLSearchParams();
   if (opts.state) params.set("state", opts.state);
   if (opts.scope) params.set("scope", opts.scope);
-  params.set("limit", String(opts.limit ?? 20));
+  if (opts.q) params.set("q", opts.q);
+  if (opts.recognisedOnly) params.set("recognised_only", "true");
+  // The directory is ~790 rows. Fetching it once and filtering in the browser
+  // beats a round trip per keystroke.
+  params.set("limit", String(opts.limit ?? 1000));
   return request<LabsResponse>(`/labs?${params}`);
 }
 

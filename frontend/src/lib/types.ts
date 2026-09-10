@@ -180,10 +180,26 @@ export interface Lab {
   name: string;
   city: string | null;
   state: string | null;
+  /**
+   * Always null today. BIS does not publish test scopes in the recognised-lab
+   * lists; scope lives in the LIMS portal, searchable one standard at a time.
+   */
   scope: string | null;
+  /** "BIS recognised (Group 1)" or "Facility used by BIS, not recognised (Group 2)". */
   schemes: string | null;
+  /** Always null. The published lists carry no phone, e-mail or address. */
   contact: string | null;
   source_url: string | null;
+  /** BIS's own identifier for the laboratory. */
+  osl_code?: string | null;
+  /** Private / Govt. / Autonomous, as published. */
+  category?: string | null;
+  /** ISO date recognition lapses. Group 2 entries have none. */
+  valid_to?: string | null;
+  /** False when the newest dated event in `remarks` is a suspension. */
+  operative?: boolean;
+  /** BIS's raw suspension/revocation audit trail, kept verbatim. */
+  remarks?: string | null;
 }
 
 export interface LabsResponse {

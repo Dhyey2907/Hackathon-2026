@@ -4,7 +4,7 @@ An AI assistant that answers questions about **Indian Standards and BIS services
 
 Built for Smart India Hackathon problem statement **26107** (Bureau of Indian Standards).
 
-> **Status: backend working end to end.** 6,209 standards and 790 document chunks are indexed in Supabase with hybrid dense + lexical search. The intent router, retrieval tools, chat API and citation guardrails all run against live data. A frontend is in progress separately.
+> **Status: backend working end to end.** 6,209 standards, 790 document chunks and 790 testing laboratories are indexed in Supabase with hybrid dense + lexical search. The intent router, retrieval tools, chat API and citation guardrails all run against live data. A frontend is in progress separately.
 
 ---
 
@@ -151,6 +151,9 @@ python -m bis.ingest.index_supabase --chunks
 # 4. fetch, parse and upload the public hallmarking corpus
 python -m bis.ingest.hallmarking --upload
 python -m bis.ingest.index_supabase --embed
+
+# 5. build the testing-laboratory directory
+python -m bis.ingest.labs --upload
 ```
 
 Both embedding steps resume: they select rows where `embedding IS NULL`, so an
@@ -172,7 +175,7 @@ uvicorn bis.api.main:app --reload
 | `POST /chat/stream` | same, as SSE: `intent` → `token`* → `sources` → `done` |
 | `GET /standards/search?q=` | hybrid search over the catalogue |
 | `GET /standards/{is_number}` | one standard plus siblings from its committee |
-| `GET /labs?state=&scope=` | recognised testing laboratories |
+| `GET /labs?state=&q=&recognised_only=` | testing laboratories, from BIS's Group 1 and Group 2 lists |
 | `GET /health` | dependency status |
 
 Each entry in `sources` carries `marker, title, url, locator, is_number, doc_type, chunk_uid` — `locator` being the `clause 4.2.1, p. 12` string a citation displays. The full contract, including the streaming events, is in [`docs/FRONTEND_PROMPT.md`](docs/FRONTEND_PROMPT.md).
@@ -239,7 +242,10 @@ Two files carry most of the design weight:
 - [x] Hallmarking and HUID documents — 570 chunks from 26 public BIS sources:
       the FAQs, the 2018 Regulations, the mandatory-hallmarking order and its
       amendment chain, and the phase-wise district list
-- [ ] Consumer-complaint and testing-laboratory data
+- [x] Testing-laboratory directory — 790 labs from BIS's published Group 1
+      (438 recognised) and Group 2 (352 used-by-BIS) lists, with OSL codes,
+      recognition validity and suspension status
+- [ ] Consumer-complaint data
 - [ ] Evaluation harness — recall@k, citation precision, refusal rate
 - [ ] Frontend (in progress separately)
 
