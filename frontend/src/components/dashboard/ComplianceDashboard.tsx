@@ -1,6 +1,10 @@
 "use client";
 
 import Reveal from "@/components/motion/Reveal";
+import { useCountUp } from "@/components/motion/useCountUp";
+import QuickUpload from "@/components/documents/QuickUpload";
+import { useRoadmapProgress } from "@/components/roadmap/useRoadmapProgress";
+import { progressPercent } from "@/lib/roadmap";
 
 import Link from "next/link";
 import { useAuth, UserType } from "@/components/auth/AuthProvider";
@@ -131,11 +135,17 @@ function getGreeting(): string {
 // ─── Radial Score ─────────────────────────────────────────────────────────────
 
 function RadialScore({ score }: { score: number }) {
+  // Both the ring and the digits climb from zero, so the figure reads as a
+  // measurement on a scale rather than a label stamped on the page.
+  const shown = useCountUp(score);
+
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
-  const filled = circumference * (score / 100);
+  const filled = circumference * (shown / 100);
   const gap = circumference - filled;
 
+  // Keyed to the settled score, not the animating one - otherwise every score
+  // flashes red then amber on its way up, which reads as a verdict changing.
   const color =
     score >= 80
       ? "#22c55e" // green-500
@@ -169,7 +179,7 @@ function RadialScore({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-[var(--color-text-primary)] leading-none">{score}</span>
+        <span className="text-2xl font-bold tabular-nums text-[var(--color-text-primary)] leading-none">{shown}</span>
         <span className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">/ 100</span>
       </div>
     </div>
@@ -329,16 +339,7 @@ export default function ComplianceDashboard() {
             Here is your regulatory and certification compliance health.
           </p>
         </div>
-        <Link
-          href="/documents"
-          id="dashboard-upload-btn"
-          className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[var(--color-navy)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--color-navy-light)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)] focus:ring-offset-2"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-          </svg>
-          Upload &amp; Analyze Document
-        </Link>
+        <QuickUpload />
       </div>
 
       {/* ── Five-card grid ─────────────────────────────────────────────────── */}
