@@ -146,6 +146,38 @@ const en: Dictionary = {
   "updates.category.recruitment": "Recruitment",
   "updates.category.event": "Event",
   "updates.category.news": "News",
+
+  // Document upload
+  "upload.button": "Upload a document",
+  "upload.dropHere": "Drop a file here, or choose one",
+  "upload.formats": "PDF, image or Word · up to 20 MB",
+  "upload.category": "Category",
+  "upload.category.License": "Licence",
+  "upload.category.TestReport": "Test report",
+  "upload.category.Certificate": "Certificate",
+  "upload.category.Other": "Other",
+  "upload.expiry": "Expires on (optional)",
+  "upload.choose": "Choose file",
+  "upload.close": "Close",
+  "upload.added": "Added",
+  "upload.tooLarge": "Too large to add",
+  "upload.privacy":
+    "Files stay in this browser. Nothing is sent to BIS or to a server, and the assistant does not read their contents.",
+
+  // Certification roadmap
+  "roadmap.eyebrow": "What to do next",
+  "roadmap.title": "BIS certification roadmap",
+  "roadmap.subtitle":
+    "The route to a licence, in the order it happens. Every step links to the BIS page it came from.",
+  "roadmap.stepsDone": "steps marked done",
+  "roadmap.nextUp": "Next up",
+  "roadmap.allDone": "Every step marked done.",
+  "roadmap.timing": "Timing",
+  "roadmap.markDone": "Mark done",
+  "roadmap.markNotDone": "Mark not done",
+  "roadmap.reset": "Clear all",
+  "roadmap.disclaimer":
+    "You are marking your own progress; this is not confirmation from BIS that a step is complete. Fees and timelines are as BIS states them and can change — check",
 };
 
 const hi: Dictionary = {
@@ -266,6 +298,38 @@ const hi: Dictionary = {
   "updates.category.recruitment": "भर्ती",
   "updates.category.event": "आयोजन",
   "updates.category.news": "समाचार",
+
+  // Document upload
+  "upload.button": "दस्तावेज़ अपलोड करें",
+  "upload.dropHere": "फ़ाइल यहाँ छोड़ें, या चुनें",
+  "upload.formats": "PDF, चित्र या Word · अधिकतम 20 MB",
+  "upload.category": "श्रेणी",
+  "upload.category.License": "लाइसेंस",
+  "upload.category.TestReport": "परीक्षण रिपोर्ट",
+  "upload.category.Certificate": "प्रमाणपत्र",
+  "upload.category.Other": "अन्य",
+  "upload.expiry": "समाप्ति तिथि (वैकल्पिक)",
+  "upload.choose": "फ़ाइल चुनें",
+  "upload.close": "बंद करें",
+  "upload.added": "जोड़ा गया",
+  "upload.tooLarge": "बहुत बड़ी है, जोड़ी नहीं गई",
+  "upload.privacy":
+    "फ़ाइलें इसी ब्राउज़र में रहती हैं। कुछ भी BIS या किसी सर्वर पर नहीं भेजा जाता, और सहायक उनकी सामग्री नहीं पढ़ता।",
+
+  // Certification roadmap
+  "roadmap.eyebrow": "आगे क्या करें",
+  "roadmap.title": "BIS प्रमाणन रोडमैप",
+  "roadmap.subtitle":
+    "लाइसेंस तक का रास्ता, उसी क्रम में जिस क्रम में यह होता है। हर चरण उस BIS पृष्ठ से जुड़ा है जहाँ से वह लिया गया है।",
+  "roadmap.stepsDone": "चरण पूर्ण",
+  "roadmap.nextUp": "अगला चरण",
+  "roadmap.allDone": "सभी चरण पूर्ण चिह्नित हैं।",
+  "roadmap.timing": "समय",
+  "roadmap.markDone": "पूर्ण चिह्नित करें",
+  "roadmap.markNotDone": "अपूर्ण चिह्नित करें",
+  "roadmap.reset": "सभी हटाएँ",
+  "roadmap.disclaimer":
+    "आप अपनी स्वयं की प्रगति चिह्नित कर रहे हैं; यह BIS की ओर से पुष्टि नहीं है कि कोई चरण पूरा हो चुका है। शुल्क और समयसीमा BIS द्वारा बताए अनुसार हैं और बदल सकते हैं — देखें",
 };
 
 const DICTIONARIES: Record<Language, Dictionary> = { en, hi };

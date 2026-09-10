@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import ComplianceDashboard from "@/components/dashboard/ComplianceDashboard";
 import ChatInput from "@/components/chat/ChatInput";
 import Reveal from "@/components/motion/Reveal";
+import ComplianceRoadmap from "@/components/roadmap/ComplianceRoadmap";
 import { useChat } from "@/components/chat/ChatProvider";
 
 const FEATURES = [
@@ -137,6 +138,11 @@ export default function HomePage() {
       <div className="mx-auto max-w-5xl px-4 pb-8 sm:px-6 lg:px-8">
         {/* Compliance dashboard widget — renders for logged-in users via client-side auth check */}
         <ComplianceDashboard />
+
+        {/* What to actually do next, in order, from BIS's own published process. */}
+        <div className="mt-6">
+          <ComplianceRoadmap />
+        </div>
 
         {/* Feature grid */}
         <div className="mt-10">

@@ -16,6 +16,13 @@ export type DocumentRecord = {
   previewUrl?: string;
   /** ISO date string (YYYY-MM-DD). Absent means no expiry set. */
   expiryDate?: string;
+  /**
+   * True for the example rows the app ships with. They exist so the dashboard
+   * has something to show before anything is uploaded, and they are badged in
+   * the UI - a demo document sitting unmarked beside a real licence is the
+   * kind of thing someone acts on.
+   */
+  isSample?: boolean;
 };
 
 /**
@@ -52,6 +59,7 @@ type DocumentContextValue = {
 const INITIAL_DOCUMENTS: DocumentRecord[] = [
   {
     id: "seed-isi-license-electronics",
+    isSample: true,
     name: "ISI License - Electronics.pdf",
     type: "PDF",
     size: 2457600,
@@ -61,6 +69,7 @@ const INITIAL_DOCUMENTS: DocumentRecord[] = [
   },
   {
     id: "seed-test-report-cement",
+    isSample: true,
     name: "Test Report - Cement.pdf",
     type: "PDF",
     size: 1835008,
@@ -70,6 +79,7 @@ const INITIAL_DOCUMENTS: DocumentRecord[] = [
   },
   {
     id: "seed-huid-verification-notes",
+    isSample: true,
     name: "HUID Verification Notes.pdf",
     type: "PDF",
     size: 921600,
@@ -79,6 +89,7 @@ const INITIAL_DOCUMENTS: DocumentRecord[] = [
   },
   {
     id: "seed-led-compliance-checklist",
+    isSample: true,
     name: "LED Compliance Checklist.pdf",
     type: "PDF",
     size: 716800,

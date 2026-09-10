@@ -353,8 +353,16 @@ function DocumentsManagerInner() {
                             <h2 className="truncate text-sm font-bold text-[#3D2B1F] group-hover:text-[#4E382A]">
                               {doc.name}
                             </h2>
-                            <p className="text-xs text-[#8C7B6F]">
+                            <p className="flex items-center gap-1.5 text-xs text-[#8C7B6F]">
                               {doc.category} · {formatSize(doc.size)}
+                              {/* An example row the app ships with. Left
+                                  unmarked it sits beside a real licence and
+                                  reads as one. */}
+                              {doc.isSample && (
+                                <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                                  Sample
+                                </span>
+                              )}
                             </p>
                           </div>
                         </div>
