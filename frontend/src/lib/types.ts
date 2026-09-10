@@ -73,12 +73,43 @@ export interface ChatNavigation {
 // API request / response shapes
 // ---------------------------------------------------------------------------
 
+export interface BusinessContext {
+  products: string[];
+  role: "manufacturer" | "seller" | "service_provider" | "unknown";
+  industry: string | null;
+  business_type: string | null;
+  /** Only "high" and "medium" may be shown to the user as context. */
+  confidence: "high" | "medium" | "low" | "none";
+  /** The user's own words supporting the above, if any. */
+  evidence: string | null;
+  topics: string[];
+  is_usable: boolean;
+  /**
+   * Pre-hedged phrasing from the backend: "you're working with X" when they
+   * said so, "you've been asking about X" when it was inferred. The wording
+   * lives server-side so the confidence rule has exactly one home.
+   */
+  headline: string | null;
+}
+
+export interface ContextResponse {
+  /** True whenever there is nothing trustworthy to personalise with. */
+  is_new_user: boolean;
+  business_context: BusinessContext;
+  suggestions: string[];
+}
+
 export interface ChatRequest {
   message: string;
   /** Existing session UUID, or null to start a new session */
   session_id: string | null;
   /** "auto" | "en" | "hi" */
   language: string;
+  /**
+   * What the user works with. Shapes how the question is read - it resolves
+   * "my product" - but is never treated as evidence for a factual claim.
+   */
+  user_context?: string | null;
 }
 
 export interface ChatResponse {

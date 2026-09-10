@@ -24,6 +24,9 @@ class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
     session_id: str | None = None
     language: str = "auto"
+    # What the user works with, from POST /context. Shapes how the question is
+    # read; never treated as evidence for a factual claim.
+    user_context: str | None = Field(default=None, max_length=500)
 
 
 class ChatResponse(BaseModel):
@@ -40,7 +43,7 @@ class ChatResponse(BaseModel):
 @router.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
     """Answer a question in one response. Fallback when SSE is unavailable."""
-    result = answer_mod.answer(request.message)
+    result = answer_mod.answer(request.message, user_context=request.user_context)
     return ChatResponse(
         answer=result.text,
         sources=result.sources,

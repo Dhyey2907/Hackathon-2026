@@ -129,7 +129,18 @@ def prepare(question: str) -> dict:
     }
 
 
-def answer(question: str) -> Answer:
+def _with_user_context(question: str, context: str | None) -> str:
+    """Prefix the question with the user's situation, clearly labelled.
+
+    Kept out of the SOURCES block on purpose. Anything inside that block is
+    citable evidence, and the user's own description of their business is not.
+    """
+    if not context:
+        return question
+    return "[About the user: " + context + "]\n\n" + question
+
+
+def answer(question: str, user_context: str | None = None) -> Answer:
     """Answer a question in one shot."""
     started = time.time()
 
@@ -180,7 +191,10 @@ def answer(question: str) -> Answer:
             {"role": "system", "content": ANSWER_PROMPT},
             {
                 "role": "user",
-                "content": evidence_prompt(question, format_evidence_block(evidence)),
+                "content": evidence_prompt(
+                    _with_user_context(question, user_context),
+                    format_evidence_block(evidence),
+                ),
             },
         ],
         temperature=0.2,

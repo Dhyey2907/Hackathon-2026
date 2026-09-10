@@ -15,6 +15,7 @@
 import type {
   ChatRequest,
   ChatResponse,
+  ContextResponse,
   HealthResponse,
   Lab,
   LabsResponse,
@@ -133,6 +134,30 @@ export async function streamMessage(
       }
     }
   }
+}
+
+/**
+ * Infer what the user works with, and what they might usefully ask next.
+ *
+ * The conversation is sent from here rather than read on the server. The
+ * history lives in Supabase under row-level security, so the browser can only
+ * ever read this account's messages - which means the backend cannot be
+ * tricked into summarising somebody else's conversation, because it never
+ * queries the table.
+ */
+export function getContext(
+  messages: { role: string; content: string }[],
+  lastQuestion?: string,
+): Promise<ContextResponse> {
+  return request<ContextResponse>("/context", {
+    method: "POST",
+    body: JSON.stringify({
+      // Recent turns are what describe a business; older ones add tokens
+      // without adding signal.
+      messages: messages.slice(-60),
+      last_question: lastQuestion ?? null,
+    }),
+  });
 }
 
 // ---------------------------------------------------------------- catalogue

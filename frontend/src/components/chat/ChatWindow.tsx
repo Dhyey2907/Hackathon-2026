@@ -17,6 +17,7 @@ import { useRef, useEffect, useId } from "react";
 import { useChat } from "./ChatProvider";
 import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
+import ChatOpeningState from "./ChatOpeningState";
 import ChatInput from "./ChatInput";
 
 // ---------------------------------------------------------------------------
@@ -168,6 +169,12 @@ export default function ChatWindow() {
         </span>
 
         <div className="mx-auto max-w-2xl space-y-6">
+          {/*
+            Sits above the greeting rather than replacing the composer: the
+            user can answer it, ignore it, or ask something else entirely.
+          */}
+          {!hasConversation && <ChatOpeningState />}
+
           {messages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} />
           ))}
