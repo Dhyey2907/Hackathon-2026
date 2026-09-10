@@ -36,6 +36,33 @@ def normalise_markers(text: str) -> str:
     return (text or "").translate(_BRACKET_TRANSLATION)
 
 
+# Line-break tags the model emits despite being told not to. The reader's
+# markdown renderer escapes HTML - correctly, since it must not execute markup
+# an LLM produced - so an unhandled tag arrives on screen as the literal text
+# "<br>". Prompting alone did not stop it, so it is removed here as well.
+_BR_RE = re.compile(r"<\s*br\s*/?\s*>", re.IGNORECASE)
+# A table row opens with a pipe and has at least one more. Anchoring the end to
+# a pipe is too strict: a citation marker often trails the closing pipe.
+_TABLE_ROW_RE = re.compile(r"^\s*\|.*\|")
+
+
+def strip_html_breaks(text: str) -> str:
+    """Replace <br> tags with something the markdown renderer can show.
+
+    Context decides the replacement. Inside a table row a real newline would
+    terminate the table and scatter the remaining cells across the page, so the
+    break becomes a separator instead. Everywhere else a newline is what the
+    tag meant.
+    """
+    lines = []
+    for line in (text or "").splitlines():
+        if _TABLE_ROW_RE.match(line):
+            lines.append(_BR_RE.sub(" · ", line))
+        else:
+            lines.append(_BR_RE.sub("\n", line))
+    return "\n".join(lines)
+
+
 @dataclass
 class Evidence:
     """One retrieved passage offered to the model, numbered S1..Sn."""
@@ -128,7 +155,7 @@ def format_evidence_block(evidence: list[Evidence], max_chars: int = 2000) -> st
 
 def validate(text: str, evidence: list[Evidence]) -> ValidationResult:
     """Strip unresolvable markers; return the answer plus only cited sources."""
-    text = normalise_markers(text)
+    text = strip_html_breaks(normalise_markers(text))
     valid_indices = {e.index for e in evidence}
     by_index = {e.index: e for e in evidence}
 
