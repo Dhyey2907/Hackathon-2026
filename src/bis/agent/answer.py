@@ -14,7 +14,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Any
 
-from bis.agent import tools
+from bis.agent import answer_cache, faq_cache, tools
 from bis.agent.prompts import (
     ABSTAIN_PROMPT,
     ANSWER_PROMPT,
@@ -43,6 +43,28 @@ class Answer:
     structured: dict[str, Any] = field(default_factory=dict)
     latency_ms: float = 0.0
     warnings: list[str] = field(default_factory=list)
+    """Whether this came from the FAQ fast path rather than the full pipeline."""
+    from_faq: bool = False
+
+
+def _faq_answer(question: str) -> Answer | None:
+    """Serve a question BIS has already answered, verbatim.
+
+    Returns None when no FAQ matches closely enough, in which case the caller
+    runs the full pipeline. The answer text is BIS's own wording - it is not
+    regenerated, so there is nothing for a model to get subtly wrong.
+    """
+    hit = faq_cache.match(question)
+    if hit is None:
+        return None
+
+    log.info("FAQ fast path matched %.3f: %s", hit.score, hit.entry.question[:70])
+    return Answer(
+        text=hit.entry.text.strip() + " [S1]",
+        sources=[hit.to_source()],
+        intent="faq",
+        from_faq=True,
+    )
 
 
 def _abstain(question: str) -> str:
@@ -110,23 +132,47 @@ def prepare(question: str) -> dict:
 def answer(question: str) -> Answer:
     """Answer a question in one shot."""
     started = time.time()
+
+    # An identical question already answered this session: no guessing, no model
+    # calls, and the citations are the ones the pipeline actually produced.
+    cached = answer_cache.get(question)
+    if cached is not None:
+        log.info("answer cache hit")
+        return cached
+
+    # Then the verbatim FAQ: one embedding call instead of three model calls,
+    # returning BIS's own wording rather than a paraphrase of it.
+    fast = _faq_answer(question)
+    if fast is not None:
+        fast.latency_ms = (time.time() - started) * 1000
+        answer_cache.put(question, fast)
+        return fast
+
     state = prepare(question)
 
     if state["smalltalk"]:
-        return Answer(
+        chat_reply = Answer(
             text=_smalltalk(question),
             intent="smalltalk",
             latency_ms=(time.time() - started) * 1000,
         )
+        # Cached like any other answer. Small talk is generated at a higher
+        # temperature, so without this the same greeting produces a different
+        # reply every time - which reads as flaky rather than conversational.
+        answer_cache.put(question, chat_reply)
+        return chat_reply
 
     if state["abstain"]:
-        return Answer(
+        abstention = Answer(
             text=_abstain(question),
             intent=state["intent"],
             abstained=True,
             structured=state["structured"],
             latency_ms=(time.time() - started) * 1000,
         )
+        # An abstention is a correct outcome, not a failure to cache.
+        answer_cache.put(question, abstention)
+        return abstention
 
     evidence = state["evidence"]
     raw = chat(
@@ -161,7 +207,7 @@ def answer(question: str) -> Answer:
         warnings.append(f"unsupported clause claims: {unsupported}")
         log.warning("answer claims clauses not present in evidence: %s", unsupported)
 
-    return Answer(
+    final = Answer(
         text=result.text,
         sources=result.sources,
         intent=state["intent"],
@@ -169,6 +215,11 @@ def answer(question: str) -> Answer:
         latency_ms=(time.time() - started) * 1000,
         warnings=warnings,
     )
+    # Only cache a clean answer. One that dropped a fabricated citation or
+    # claimed an unsupported clause should be re-attempted, not replayed.
+    if not warnings:
+        answer_cache.put(question, final)
+    return final
 
 
 def answer_stream(question: str) -> Iterator[dict]:
@@ -181,6 +232,20 @@ def answer_stream(question: str) -> Iterator[dict]:
     forces. A dropped marker is corrected in the final `sources` event.
     """
     started = time.time()
+
+    fast = _faq_answer(question)
+    if fast is not None:
+        yield {"event": "intent", "intent": "faq", "product": None, "is_numbers": []}
+        yield {"event": "token", "text": fast.text}
+        yield {"event": "sources", "sources": fast.sources}
+        yield {
+            "event": "done",
+            "abstained": False,
+            "latency_ms": (time.time() - started) * 1000,
+            "from_faq": True,
+        }
+        return
+
     state = prepare(question)
     routed = state["routed"]
 

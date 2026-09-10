@@ -23,6 +23,17 @@ log = logging.getLogger("bis")
 async def lifespan(app: FastAPI):
     init_db()
     log.info("database ready")
+
+    # Warm the FAQ fast path at startup rather than on the first question, so
+    # no user pays the one-off load and embedding cost. Failure is not fatal:
+    # the full pipeline answers everything the fast path would have.
+    try:
+        from bis.agent import faq_cache
+
+        faq_cache.load()
+    except Exception as exc:
+        log.warning("FAQ fast path unavailable: %s", str(exc)[:160])
+
     yield
 
 
@@ -62,11 +73,14 @@ def health() -> dict:
     embed = embed_mod.health()
     groq = llm.health()
 
+    from bis.agent import answer_cache, faq_cache
+
     return {
         "status": "ok" if (store["ok"] and groq["ok"] and embed["ok"]) else "degraded",
         "groq": groq,
         "supabase": store,
         "embeddings": embed,
+        "caches": {"answers": answer_cache.stats(), "faq": faq_cache.stats()},
         "models": {
             "router": settings.groq_router_model,
             "answer": settings.groq_answer_model,
