@@ -154,6 +154,9 @@ python -m bis.ingest.index_supabase --embed
 
 # 5. build the testing-laboratory directory
 python -m bis.ingest.labs --upload
+
+# 6. pull the BIS What's New feed (re-run to pick up new notices)
+python -m bis.ingest.updates --upload --refresh
 ```
 
 Both embedding steps resume: they select rows where `embedding IS NULL`, so an
@@ -176,6 +179,8 @@ uvicorn bis.api.main:app --reload
 | `GET /standards/search?q=` | hybrid search over the catalogue |
 | `GET /standards/{is_number}` | one standard plus siblings from its committee |
 | `GET /labs?state=&q=&recognised_only=` | testing laboratories, from BIS's Group 1 and Group 2 lists |
+| `GET /updates?category=&weeks=` | BIS announcements from the What's New feed, newest first |
+| `POST /translate` | translate a finished answer, citations preserved or the translation is refused |
 | `GET /health` | dependency status |
 
 Each entry in `sources` carries `marker, title, url, locator, is_number, doc_type, chunk_uid` — `locator` being the `clause 4.2.1, p. 12` string a citation displays. The full contract, including the streaming events, is in [`docs/FRONTEND_PROMPT.md`](docs/FRONTEND_PROMPT.md).
@@ -245,6 +250,8 @@ Two files carry most of the design weight:
 - [x] Testing-laboratory directory — 790 labs from BIS's published Group 1
       (438 recognised) and Group 2 (352 used-by-BIS) lists, with OSL codes,
       recognition validity and suspension status
+- [x] BIS Updates feed — amendments, QCOs, licences and announcements from
+      the Bureau's own What's New page, grouped by publication week
 - [ ] Consumer-complaint data
 - [ ] Evaluation harness — recall@k, citation precision, refusal rate
 - [ ] Frontend (in progress separately)

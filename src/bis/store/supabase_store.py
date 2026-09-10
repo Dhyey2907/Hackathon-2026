@@ -314,6 +314,32 @@ def find_labs(
     return query.limit(limit).execute().data or []
 
 
+def find_updates(
+    category: str | None = None,
+    since: str | None = None,
+    limit: int = 100,
+) -> list[dict[str, Any]]:
+    """BIS announcements, newest first.
+
+    Undated rows sort last rather than being dropped: a notice BIS published
+    without a date is still a notice, and hiding it would make the feed look
+    shorter than the Bureau's own page.
+    """
+    client = get_client()
+    query = client.table("bis_updates").select("*")
+    if category:
+        query = query.eq("category", category)
+    if since:
+        query = query.gte("published_on", since)
+    return (
+        query.order("published_on", desc=True, nullsfirst=False)
+        .limit(limit)
+        .execute()
+        .data
+        or []
+    )
+
+
 def counts() -> dict[str, int]:
     """Row counts, used by GET /health."""
     client = get_client()

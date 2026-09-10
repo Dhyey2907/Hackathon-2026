@@ -202,6 +202,30 @@ export interface Lab {
   remarks?: string | null;
 }
 
+/** One announcement from the BIS What's New feed. */
+export interface BisUpdate {
+  id: number;
+  update_uid: string;
+  title: string;
+  url: string | null;
+  /** Derived from the title, not published by BIS. */
+  category: "amendment" | "qco" | "hallmarking" | "licence" | "standard" | "recruitment" | "event" | "news";
+  media_type: string | null;
+  size: string | null;
+  /** ISO date on the notice. Null for the few archive rows BIS left undated. */
+  published_on: string | null;
+  is_number: string | null;
+  source_page: string | null;
+}
+
+export interface UpdatesResponse {
+  results: BisUpdate[];
+  total: number;
+  since: string | null;
+  by_category: Record<string, number>;
+  source: string;
+}
+
 export interface LabsResponse {
   results: Lab[];
   total: number;
