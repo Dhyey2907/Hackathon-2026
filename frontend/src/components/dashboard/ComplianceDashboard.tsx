@@ -1,5 +1,7 @@
 "use client";
 
+import Reveal from "@/components/motion/Reveal";
+
 import Link from "next/link";
 import { useAuth, UserType } from "@/components/auth/AuthProvider";
 import { getExpiryStatus, useDocuments } from "@/components/documents/DocumentProvider";
@@ -342,92 +344,102 @@ export default function ComplianceDashboard() {
       {/* ── Five-card grid ─────────────────────────────────────────────────── */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {/* 1 — Compliance Score (dark, spans wider on small screens) */}
-        <ScoreCard score={score} missingCount={missingCount} expiringCount={expiringCount} />
+        <Reveal className="h-full [&>*]:h-full">
+          <ScoreCard score={score} missingCount={missingCount} expiringCount={expiringCount} />
+        </Reveal>
 
         {/* 2 — Active Certifications */}
-        <StatCard
-          id="dashboard-active-card"
-          href="/documents?filter=valid"
-          label="Active Certifications"
-          value={activeCount}
-          valueColor={activeCount > 0 ? "green" : "default"}
-          subtitle={activeCount > 0 ? "All compliant" : "No active documents"}
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            </svg>
-          }
-        />
+        <Reveal delayIndex={1} className="h-full [&>*]:h-full">
+          <StatCard
+            id="dashboard-active-card"
+            href="/documents?filter=valid"
+            label="Active Certifications"
+            value={activeCount}
+            valueColor={activeCount > 0 ? "green" : "default"}
+            subtitle={activeCount > 0 ? "All compliant" : "No active documents"}
+            icon={
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            }
+          />
+        </Reveal>
 
         {/* 3 — Expiring Soon */}
-        <StatCard
-          id="dashboard-expiring-card"
-          href="/documents?filter=expiring"
-          label="Expiring Soon"
-          value={expiringCount}
-          valueColor={expiringCount > 0 ? (expiringCount >= 2 ? "red" : "amber") : "green"}
-          subtitle={
-            nearestDaysLeft !== null && nearestDaysLeft >= 0
-              ? `Renewal in ${nearestDaysLeft} day${nearestDaysLeft !== 1 ? "s" : ""}`
-              : expiringCount > 0
-              ? "Some already expired"
-              : "Nothing expiring"
-          }
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z" />
-            </svg>
-          }
-          badge={
-            expiringCount > 0 ? (
-              <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                Action needed
-              </span>
-            ) : undefined
-          }
-        />
+        <Reveal delayIndex={2} className="h-full [&>*]:h-full">
+          <StatCard
+            id="dashboard-expiring-card"
+            href="/documents?filter=expiring"
+            label="Expiring Soon"
+            value={expiringCount}
+            valueColor={expiringCount > 0 ? (expiringCount >= 2 ? "red" : "amber") : "green"}
+            subtitle={
+              nearestDaysLeft !== null && nearestDaysLeft >= 0
+                ? `Renewal in ${nearestDaysLeft} day${nearestDaysLeft !== 1 ? "s" : ""}`
+                : expiringCount > 0
+                ? "Some already expired"
+                : "Nothing expiring"
+            }
+            icon={
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z" />
+              </svg>
+            }
+            badge={
+              expiringCount > 0 ? (
+                <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                  Action needed
+                </span>
+              ) : undefined
+            }
+          />
+        </Reveal>
 
         {/* 4 — Missing Requirements */}
-        <StatCard
-          id="dashboard-missing-card"
-          href="/missing-requirements"
-          label="Missing Requirements"
-          value={missingCount}
-          valueColor={missingCount === 0 ? "green" : "red"}
-          subtitle={urgentMissingCount > 0 ? `${urgentMissingCount} urgent — needs action now` : "Review recommended"}
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-            </svg>
-          }
-          badge={
-            urgentMissingCount > 0 ? (
-              <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
-                {urgentMissingCount} urgent
-              </span>
-            ) : undefined
-          }
-        />
+        <Reveal delayIndex={3} className="h-full [&>*]:h-full">
+          <StatCard
+            id="dashboard-missing-card"
+            href="/missing-requirements"
+            label="Missing Requirements"
+            value={missingCount}
+            valueColor={missingCount === 0 ? "green" : "red"}
+            subtitle={urgentMissingCount > 0 ? `${urgentMissingCount} urgent — needs action now` : "Review recommended"}
+            icon={
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+              </svg>
+            }
+            badge={
+              urgentMissingCount > 0 ? (
+                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
+                  {urgentMissingCount} urgent
+                </span>
+              ) : undefined
+            }
+          />
+        </Reveal>
 
         {/* 5 — New Amendments */}
-        <StatCard
-          id="dashboard-amendments-card"
-          href="/amendments"
-          label="New Amendments"
-          value={AMENDMENTS.length}
-          valueColor="navy"
-          subtitle="Applicable to Sector"
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
-            </svg>
-          }
-          badge={
-            <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-              New
-            </span>
-          }
-        />
+        <Reveal delayIndex={4} className="h-full [&>*]:h-full">
+          <StatCard
+            id="dashboard-amendments-card"
+            href="/amendments"
+            label="New Amendments"
+            value={AMENDMENTS.length}
+            valueColor="navy"
+            subtitle="Applicable to Sector"
+            icon={
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
+              </svg>
+            }
+            badge={
+              <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                New
+              </span>
+            }
+          />
+        </Reveal>
       </div>
     </section>
   );

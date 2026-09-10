@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { MOCK_LABS } from "@/lib/mock-labs";
 import EmptyState from "@/components/EmptyState";
+import Reveal from "@/components/motion/Reveal";
 
 export default function LabFinder() {
   const [query, setQuery] = useState("");
@@ -18,12 +19,19 @@ export default function LabFinder() {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm sm:p-6">
+      <Reveal as="section" className="rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-navy)]">BIS directory</p>
+            {/* Not a directory. These are ten fixture rows with placeholder contact
+                details; the real BIS laboratory table is empty. Calling it a
+                directory invites someone to ring a number that does not exist. */}
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-navy)]">Testing laboratories</p>
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">Sample data</span>
+            </div>
             <h2 className="mt-1 text-xl font-semibold text-gray-900">Find a testing laboratory</h2>
             <p className="mt-1 max-w-xl text-sm text-gray-600">Search by product scope, city, or state to find a local testing facility.</p>
+            <p className="mt-2 max-w-xl text-xs leading-relaxed text-gray-500">Example entries shown while the BIS laboratory directory is being loaded. Names are indicative; the contact details are placeholders and should not be used.</p>
           </div>
           <span className="text-sm text-gray-500"><strong className="text-gray-900">{results.length}</strong> matches</span>
         </div>
@@ -61,9 +69,9 @@ export default function LabFinder() {
             </select>
           </label>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="grid gap-4 md:grid-cols-2" aria-live="polite">
+      <Reveal as="section" delayIndex={1} className="grid gap-4 md:grid-cols-2" aria-live="polite">
         {results.map((lab) => (
           <article key={lab.id} className="rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
             <div className="flex items-start justify-between gap-3">
@@ -103,7 +111,7 @@ export default function LabFinder() {
             />
           </div>
         )}
-      </section>
+      </Reveal>
     </div>
   );
 }

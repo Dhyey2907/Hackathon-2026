@@ -235,6 +235,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           abstained: response.abstained ?? false,
           intent: response.intent,
           latency_ms: response.latency_ms,
+          // Carried through rather than dropped: the context cards read these,
+          // and a warning the backend already computed is worth surfacing.
+          structured: response.structured,
+          warnings: response.warnings,
           timestamp: now(),
           navigation: getMockChatNavigation(response.sources ?? []),
         };
