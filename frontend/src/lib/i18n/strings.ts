@@ -1,0 +1,233 @@
+/**
+ * The interface's own words, in English and Hindi.
+ *
+ * These are written out rather than machine-translated at runtime, for three
+ * reasons. They are a fixed, small set that never changes between page loads,
+ * so translating them repeatedly would be paying per render for the same
+ * answer. They must be exact - a navigation label that comes back slightly
+ * different on a later load makes the app feel unstable. And a wrong button
+ * label is not recoverable by the reader the way a wrong sentence is, because
+ * there is no original beside it to compare against.
+ *
+ * The assistant's *answers* are the opposite case - unbounded, generated, and
+ * different every time - so those go through POST /translate instead, where
+ * the citation markers are checked. See components/chat/TranslateAnswer.tsx.
+ *
+ * Terms deliberately left in Latin script: BIS, ISI, HUID, QCO, FMCS, CRS, and
+ * standard numbers such as IS 1417. These appear exactly this way on the BIS
+ * portal and on the forms a user has to fill in, so translating them would
+ * make the thing on screen stop matching the thing in their hand.
+ */
+
+export type Language = "en" | "hi";
+
+export const LANGUAGE_LABELS: Record<Language, string> = {
+  en: "English",
+  hi: "हिन्दी",
+};
+
+type Dictionary = Record<string, string>;
+
+const en: Dictionary = {
+  // Shell and navigation
+  "app.name": "BIS Sahayak",
+  "app.tagline": "Bureau of Indian Standards",
+  "nav.home": "Home",
+  "nav.chat": "Chat Assistant",
+  "nav.wizard": "Product Wizard",
+  "nav.standards": "Standards",
+  "nav.labs": "Lab Finder",
+  "nav.verify": "Verify License",
+  "nav.documents": "Documents",
+  "nav.recents": "Recents",
+  "nav.recentChats": "Recent Chats",
+  "nav.recentDocuments": "Recent Documents",
+  "nav.viewAll": "View all",
+  "nav.profile": "Profile",
+  "nav.settings": "Settings",
+  "nav.logout": "Log out",
+  "nav.openNavigation": "Open navigation",
+
+  // Language switch
+  "lang.label": "Language",
+  "lang.switchTo": "Switch to हिन्दी",
+
+  // Chat
+  "chat.placeholder": "Ask about Indian Standards, certification, hallmarking, testing labs…",
+  "chat.send": "Send message",
+  "chat.reset": "Reset chat history",
+  "chat.resetConfirm": "Reset this chat history? This cannot be undone.",
+  "chat.conversation": "Conversation",
+  "chat.messages": "Chat messages",
+  "chat.tryAsking": "Try asking",
+  "chat.newAnswer": "New answer",
+  "chat.requestFailed": "Request failed",
+  "chat.retry": "Retry",
+  "chat.sources": "Sources",
+  "chat.translate": "Translate",
+  "chat.showEnglish": "Show English",
+  "chat.translateInto": "Translate this answer into",
+  "chat.translatedNote":
+    "Translated from the English answer. Standard numbers, scheme names and the sources below are unchanged.",
+  "chat.translateUnavailable": "Translation is unavailable at the moment.",
+
+  // Context panel
+  "panel.label": "Answer context",
+  "panel.business": "Your business",
+  "panel.businessEmpty": "Tell me what you make or sell and I'll tailor answers to it.",
+  "panel.askedAbout": "You've asked about",
+  "panel.youSaid": "You said",
+  "panel.certification": "Certification",
+  "panel.certificationEmpty":
+    "Ask about licensing, a scheme or a QCO and the documents behind the answer land here.",
+  "panel.citedInAnswer": "Cited in this answer",
+  "panel.youToldUs": "You told us",
+  "panel.unverified": "As entered during onboarding. Not checked against BIS records.",
+  "panel.sources": "Sources",
+  "panel.sourcesEmpty":
+    "Sources for the current answer will appear here, each linking back to the BIS document it came from.",
+  "panel.abstained": "Abstained",
+  "panel.abstainedBody":
+    "The assistant found no authoritative source for that question and declined to answer rather than guess.",
+  "panel.labs": "Nearby testing labs",
+  "panel.labsLoading": "Loading the BIS directory…",
+  "panel.labsUnreachable": "The laboratory directory could not be reached just now.",
+  "panel.mapView": "Map view",
+  "panel.mapNoKey": "Google Maps key not configured",
+  "panel.sortByDistance": "Sort by distance from me",
+  "panel.locating": "Finding you…",
+  "panel.locationDeclined": "Location not shared — showing laboratories in directory order.",
+  "panel.suspended": "Currently suspended",
+  "panel.labsCaveat":
+    "BIS publishes each laboratory's city, not its address, so distances are to the city centre. Test scopes are not published in this list.",
+
+  // Lab finder
+  "labs.title": "Find a testing laboratory",
+  "labs.eyebrow": "BIS laboratory directory",
+  "labs.subtitle": "Search the laboratories BIS publishes, by name, city or state.",
+  "labs.searchPlaceholder": "Search by name, city or OSL code…",
+  "labs.allLocations": "All locations",
+  "labs.allLabs": "All laboratories",
+  "labs.recognisedOnly": "BIS recognised only",
+  "labs.matches": "matches",
+  "labs.loading": "Loading the directory…",
+  "labs.recognised": "BIS recognised",
+  "labs.usedByBis": "Used by BIS",
+  "labs.noneTitle": "No laboratories match",
+  "labs.noneBody": "Try a different state, or search by the laboratory's name.",
+  "labs.osl": "OSL",
+  "labs.type": "Type",
+  "labs.validTo": "Valid to",
+  "labs.lapsed": "Lapsed",
+  "labs.locationUnknown": "Location not published",
+};
+
+const hi: Dictionary = {
+  // Shell and navigation
+  "app.name": "BIS सहायक",
+  "app.tagline": "भारतीय मानक ब्यूरो",
+  "nav.home": "होम",
+  "nav.chat": "चैट सहायक",
+  "nav.wizard": "उत्पाद विज़ार्ड",
+  "nav.standards": "मानक",
+  "nav.labs": "प्रयोगशाला खोजें",
+  "nav.verify": "लाइसेंस सत्यापित करें",
+  "nav.documents": "दस्तावेज़",
+  "nav.recents": "हाल के",
+  "nav.recentChats": "हाल की चैट",
+  "nav.recentDocuments": "हाल के दस्तावेज़",
+  "nav.viewAll": "सभी देखें",
+  "nav.profile": "प्रोफ़ाइल",
+  "nav.settings": "सेटिंग्स",
+  "nav.logout": "लॉग आउट",
+  "nav.openNavigation": "नेविगेशन खोलें",
+
+  // Language switch
+  "lang.label": "भाषा",
+  "lang.switchTo": "English पर जाएँ",
+
+  // Chat
+  "chat.placeholder": "भारतीय मानकों, प्रमाणन, हॉलमार्किंग या परीक्षण प्रयोगशालाओं के बारे में पूछें…",
+  "chat.send": "संदेश भेजें",
+  "chat.reset": "चैट इतिहास मिटाएँ",
+  "chat.resetConfirm": "यह चैट इतिहास मिटाएँ? इसे वापस नहीं लाया जा सकता।",
+  "chat.conversation": "बातचीत",
+  "chat.messages": "चैट संदेश",
+  "chat.tryAsking": "यह पूछकर देखें",
+  "chat.newAnswer": "नया उत्तर",
+  "chat.requestFailed": "अनुरोध विफल रहा",
+  "chat.retry": "पुनः प्रयास करें",
+  "chat.sources": "स्रोत",
+  "chat.translate": "अनुवाद करें",
+  "chat.showEnglish": "अंग्रेज़ी में देखें",
+  "chat.translateInto": "इस उत्तर का अनुवाद करें",
+  "chat.translatedNote":
+    "अंग्रेज़ी उत्तर से अनुवादित। मानक संख्याएँ, योजनाओं के नाम और नीचे दिए स्रोत अपरिवर्तित हैं।",
+  "chat.translateUnavailable": "अनुवाद अभी उपलब्ध नहीं है।",
+
+  // Context panel
+  "panel.label": "उत्तर का संदर्भ",
+  "panel.business": "आपका व्यवसाय",
+  "panel.businessEmpty": "बताइए आप क्या बनाते या बेचते हैं, उत्तर उसी के अनुसार दूँगा।",
+  "panel.askedAbout": "आपने इनके बारे में पूछा",
+  "panel.youSaid": "आपने कहा",
+  "panel.certification": "प्रमाणन",
+  "panel.certificationEmpty":
+    "लाइसेंस, किसी योजना या QCO के बारे में पूछिए — उत्तर के पीछे के दस्तावेज़ यहाँ दिखेंगे।",
+  "panel.citedInAnswer": "इस उत्तर में उद्धृत",
+  "panel.youToldUs": "आपने हमें बताया",
+  "panel.unverified": "पंजीकरण के समय आपके द्वारा दर्ज। BIS रिकॉर्ड से सत्यापित नहीं।",
+  "panel.sources": "स्रोत",
+  "panel.sourcesEmpty":
+    "वर्तमान उत्तर के स्रोत यहाँ दिखेंगे, प्रत्येक उस BIS दस्तावेज़ से जुड़ा जिससे वह लिया गया है।",
+  "panel.abstained": "उत्तर नहीं दिया",
+  "panel.abstainedBody":
+    "उस प्रश्न के लिए कोई प्रामाणिक स्रोत नहीं मिला, इसलिए अनुमान लगाने के बजाय उत्तर नहीं दिया गया।",
+  "panel.labs": "आस-पास की परीक्षण प्रयोगशालाएँ",
+  "panel.labsLoading": "BIS निर्देशिका लोड हो रही है…",
+  "panel.labsUnreachable": "प्रयोगशाला निर्देशिका अभी उपलब्ध नहीं हो सकी।",
+  "panel.mapView": "मानचित्र",
+  "panel.mapNoKey": "Google Maps कुंजी कॉन्फ़िगर नहीं है",
+  "panel.sortByDistance": "मेरी दूरी के अनुसार क्रमबद्ध करें",
+  "panel.locating": "आपका स्थान खोजा जा रहा है…",
+  "panel.locationDeclined": "स्थान साझा नहीं किया गया — प्रयोगशालाएँ निर्देशिका क्रम में दिख रही हैं।",
+  "panel.suspended": "फ़िलहाल निलंबित",
+  "panel.labsCaveat":
+    "BIS प्रत्येक प्रयोगशाला का शहर प्रकाशित करता है, पता नहीं — इसलिए दूरी शहर के केंद्र तक है। इस सूची में परीक्षण का दायरा प्रकाशित नहीं होता।",
+
+  // Lab finder
+  "labs.title": "परीक्षण प्रयोगशाला खोजें",
+  "labs.eyebrow": "BIS प्रयोगशाला निर्देशिका",
+  "labs.subtitle": "BIS द्वारा प्रकाशित प्रयोगशालाएँ नाम, शहर या राज्य से खोजें।",
+  "labs.searchPlaceholder": "नाम, शहर या OSL कोड से खोजें…",
+  "labs.allLocations": "सभी स्थान",
+  "labs.allLabs": "सभी प्रयोगशालाएँ",
+  "labs.recognisedOnly": "केवल BIS मान्यता प्राप्त",
+  "labs.matches": "परिणाम",
+  "labs.loading": "निर्देशिका लोड हो रही है…",
+  "labs.recognised": "BIS मान्यता प्राप्त",
+  "labs.usedByBis": "BIS द्वारा प्रयुक्त",
+  "labs.noneTitle": "कोई प्रयोगशाला नहीं मिली",
+  "labs.noneBody": "कोई दूसरा राज्य चुनें, या प्रयोगशाला के नाम से खोजें।",
+  "labs.osl": "OSL",
+  "labs.type": "प्रकार",
+  "labs.validTo": "मान्य",
+  "labs.lapsed": "समाप्त",
+  "labs.locationUnknown": "स्थान प्रकाशित नहीं",
+};
+
+const DICTIONARIES: Record<Language, Dictionary> = { en, hi };
+
+/**
+ * Look up a key. An untranslated key falls back to the English rather than
+ * showing the key itself: a gap in the dictionary should read as an
+ * untranslated phrase, not as `panel.labsCaveat` in the middle of the page.
+ */
+export function lookup(language: Language, key: string): string {
+  return DICTIONARIES[language][key] ?? en[key] ?? key;
+}
+
+/** Keys present in English but not yet in Hindi. Used by the test. */
+export function missingKeys(language: Language): string[] {
+  return Object.keys(en).filter((key) => !(key in DICTIONARIES[language]));
+}

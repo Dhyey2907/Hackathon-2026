@@ -13,6 +13,7 @@ const inter = Inter({
 import AppShell from "@/components/AppShell";
 import RouteBlurEffect from "@/components/RouteBlurEffect";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import LanguageProvider from "@/components/i18n/LanguageProvider";
 import { DocumentProvider } from "@/components/documents/DocumentProvider";
 import { ChatProvider } from "@/components/chat/ChatProvider";
 
@@ -45,13 +46,15 @@ export default function RootLayout({
           Skip to main content
         </a>
 
-        <AuthProvider>
-          <DocumentProvider>
-            <ChatProvider>
-              <AppShell>{children}</AppShell>
-            </ChatProvider>
-          </DocumentProvider>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <DocumentProvider>
+              <ChatProvider>
+                <AppShell>{children}</AppShell>
+              </ChatProvider>
+            </DocumentProvider>
+          </AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -15,17 +15,18 @@
 import SourceCard from "../SourceCard";
 import ContextCard from "./ContextCard";
 import { useLatestAnswer } from "./useLatestAnswer";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 export default function SourcesCard() {
   const answer = useLatestAnswer();
+  const { t } = useLanguage();
   const sources = answer?.sources ?? [];
 
   if (answer?.abstained) {
     return (
-      <ContextCard title="Sources" badge="Abstained" badgeTone="warning">
+      <ContextCard title={t("panel.sources")} badge={t("panel.abstained")} badgeTone="warning">
         <p className="text-sm leading-relaxed text-gray-600">
-          The assistant found no authoritative source for that question and declined to answer
-          rather than guess.
+          {t("panel.abstainedBody")}
         </p>
       </ContextCard>
     );
@@ -34,14 +35,14 @@ export default function SourcesCard() {
   if (sources.length === 0) {
     return (
       <ContextCard
-        title="Sources"
-        awaiting="Sources for the current answer will appear here, each linking back to the BIS document it came from."
+        title={t("panel.sources")}
+        awaiting={t("panel.sourcesEmpty")}
       />
     );
   }
 
   return (
-    <ContextCard title="Sources" badge={`${sources.length}`}>
+    <ContextCard title={t("panel.sources")} badge={`${sources.length}`}>
       <div className="space-y-3" role="list" aria-label="Sources for the current answer">
         {sources.map((source, index) => (
           <div key={source.chunk_uid} role="listitem">

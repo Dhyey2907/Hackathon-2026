@@ -28,6 +28,7 @@ import ChatOpeningState from "./ChatOpeningState";
 import FollowUpSuggestions from "./FollowUpSuggestions";
 import ChatInput from "./ChatInput";
 import ChatContextPanel from "./ChatContextPanel";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 // ---------------------------------------------------------------------------
 // AI Ambient Intelligence blur constants
@@ -71,6 +72,7 @@ export default function ChatWindow() {
     hasConversation,
   } = useChat();
 
+  const { t } = useLanguage();
   const bottomRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const outerRef = useRef<HTMLDivElement>(null);
@@ -85,6 +87,7 @@ export default function ChatWindow() {
   const [seenId, setSeenId] = useState<string | null>(null);
 
   const lastMessage = messages[messages.length - 1];
+  const latestAnswerId = [...messages].reverse().find((m) => m.role === "assistant")?.id;
   // Read by the observer callback, which outlives the render that created it.
   // Synced in an effect rather than written during render, which the React
   // Compiler rightly rejects.
@@ -236,14 +239,14 @@ export default function ChatWindow() {
           <button
             type="button"
             onClick={() => {
-              if (window.confirm("Reset this chat history? This cannot be undone.")) {
+              if (window.confirm(t("chat.resetConfirm"))) {
                 void resetChatHistory();
               }
             }}
             disabled={isLoading}
             className="rounded-md px-2 py-1 text-xs font-medium text-gray-500 transition-colors hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Reset chat history
+            {t("chat.reset")}
           </button>
         </div>
       )}
@@ -255,14 +258,14 @@ export default function ChatWindow() {
       <div
         ref={messageListRef}
         className="flex-1 px-4 py-6 [overflow-anchor:none] sm:px-6 lg:min-h-0 lg:overflow-y-auto"
-        aria-label="Conversation"
+        aria-label={t("chat.conversation")}
         aria-labelledby={listLabelId}
         role="log"
         aria-live="polite"
         aria-atomic="false"
       >
         <span id={listLabelId} className="sr-only">
-          Chat messages
+          {t("chat.messages")}
         </span>
 
         <div className="mx-auto max-w-2xl space-y-6">
@@ -274,7 +277,9 @@ export default function ChatWindow() {
 
           {messages.map((msg) => (
             <div key={msg.id} id={`msg-${msg.id}`} className="scroll-mt-4">
-              <MessageBubble message={msg} />
+              {/* Only the newest answer translates itself: doing it for every
+                  bubble would fire a model call per message on first render. */}
+              <MessageBubble message={msg} autoTranslate={msg.id === latestAnswerId} />
             </div>
           ))}
 
@@ -288,7 +293,7 @@ export default function ChatWindow() {
           {showExamples && (
             <div className="mt-2">
               <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400">
-                Try asking
+                {t("chat.tryAsking")}
               </p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {EXAMPLE_QUESTIONS.map((q) => (
@@ -325,14 +330,14 @@ export default function ChatWindow() {
                 />
               </svg>
               <div className="flex-1">
-                <p className="font-medium">Request failed</p>
+                <p className="font-medium">{t("chat.requestFailed")}</p>
                 <p className="text-red-700">{error}</p>
               </div>
               <button
                 onClick={retryLast}
                 className="shrink-0 rounded border border-red-300 bg-white px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
-                Retry
+                {t("chat.retry")}
               </button>
             </div>
           )}
@@ -354,7 +359,7 @@ export default function ChatWindow() {
             onClick={goToUnread}
             className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-[var(--color-navy)] px-3.5 py-2 text-xs font-semibold text-white shadow-lg transition hover:bg-[var(--color-navy-light)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)] focus-visible:ring-offset-2"
           >
-            New answer
+            {t("chat.newAnswer")}
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3" />
             </svg>
@@ -368,7 +373,7 @@ export default function ChatWindow() {
             narrow screens, docked beside it from lg up with its own scroller
             so reading the cards never moves the conversation. */}
         <aside
-          aria-label="Answer context"
+          aria-label={t("panel.label")}
           className="shrink-0 border-t border-[var(--color-border)] px-4 pb-8 pt-6 lg:h-full lg:w-[360px] lg:overflow-y-auto lg:border-l lg:border-t-0 xl:w-[380px]"
         >
           <ChatContextPanel />

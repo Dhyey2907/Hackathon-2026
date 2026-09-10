@@ -25,11 +25,14 @@ import { findLabs } from "@/lib/api";
 import type { Lab } from "@/lib/types";
 import EmptyState from "@/components/EmptyState";
 import Reveal from "@/components/motion/Reveal";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 const LIMS_SCOPE_SEARCH = "https://lims.bis.gov.in/home/search_is_number/";
-const ALL_STATES = "All locations";
-const ALL_KINDS = "All laboratories";
-const RECOGNISED = "BIS recognised only";
+// Stable internal values; the visible labels come from the dictionary, so
+// switching language never changes what is selected.
+const ALL_STATES = "__all_states__";
+const ALL_KINDS = "__all_kinds__";
+const RECOGNISED = "__recognised__";
 
 function isRecognised(lab: Lab): boolean {
   return (lab.schemes ?? "").startsWith("BIS recognised");
@@ -40,6 +43,7 @@ function hasLapsed(lab: Lab): boolean {
 }
 
 export default function LabFinder() {
+  const { t } = useLanguage();
   const [labs, setLabs] = useState<Lab[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -81,11 +85,11 @@ export default function LabFinder() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-navy)]">
-              BIS laboratory directory
+              {t("labs.eyebrow")}
             </p>
-            <h2 className="mt-1 text-xl font-semibold text-gray-900">Find a testing laboratory</h2>
+            <h2 className="mt-1 text-xl font-semibold text-gray-900">{t("labs.title")}</h2>
             <p className="mt-1 max-w-xl text-sm text-gray-600">
-              Search the laboratories BIS publishes, by name, city or state.
+              {t("labs.subtitle")}
             </p>
             <p className="mt-2 max-w-xl text-xs leading-relaxed text-gray-500">
               BIS does not publish what each laboratory can test. To find one for a particular
@@ -103,7 +107,7 @@ export default function LabFinder() {
           </div>
           <span className="whitespace-nowrap text-sm text-gray-500">
             <strong className="text-gray-900">{results.length}</strong>{" "}
-            {labs === null ? "loading" : "matches"}
+            {labs === null ? t("labs.loading") : t("labs.matches")}
           </span>
         </div>
 
@@ -116,7 +120,7 @@ export default function LabFinder() {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by name, city or OSL code..."
+              placeholder={t("labs.searchPlaceholder")}
               className="h-11 w-full rounded-lg border border-gray-300 pl-10 pr-3 text-sm shadow-sm placeholder:text-gray-400 focus:border-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]/20"
             />
           </label>
@@ -129,7 +133,9 @@ export default function LabFinder() {
               className="h-11 w-full rounded-lg border border-gray-300 px-3 text-sm shadow-sm focus:border-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]/20"
             >
               {states.map((option) => (
-                <option key={option}>{option}</option>
+                <option key={option} value={option}>
+                  {option === ALL_STATES ? t("labs.allLocations") : option}
+                </option>
               ))}
             </select>
           </label>
@@ -141,8 +147,8 @@ export default function LabFinder() {
               onChange={(event) => setKind(event.target.value)}
               className="h-11 w-full rounded-lg border border-gray-300 px-3 text-sm shadow-sm focus:border-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]/20"
             >
-              <option>{ALL_KINDS}</option>
-              <option>{RECOGNISED}</option>
+              <option value={ALL_KINDS}>{t("labs.allLabs")}</option>
+              <option value={RECOGNISED}>{t("labs.recognisedOnly")}</option>
             </select>
           </label>
         </div>
@@ -155,13 +161,13 @@ export default function LabFinder() {
       )}
 
       {labs === null && !error && (
-        <p className="text-sm text-gray-500">Loading the directory…</p>
+        <p className="text-sm text-gray-500">{t("labs.loading")}</p>
       )}
 
       {labs !== null && results.length === 0 && (
         <EmptyState
-          title="No laboratories match"
-          description="Try a different state, or search by the laboratory's name."
+          title={t("labs.noneTitle")}
+          description={t("labs.noneBody")}
         />
       )}
 
@@ -175,6 +181,7 @@ export default function LabFinder() {
 }
 
 function LabCard({ lab }: { lab: Lab }) {
+  const { t } = useLanguage();
   const recognised = isRecognised(lab);
   const lapsed = hasLapsed(lab);
   const suspended = lab.operative === false;
@@ -188,30 +195,30 @@ function LabCard({ lab }: { lab: Lab }) {
             recognised ? "bg-emerald-100 text-emerald-800" : "bg-gray-100 text-gray-600"
           }`}
         >
-          {recognised ? "BIS recognised" : "Used by BIS"}
+          {recognised ? t("labs.recognised") : t("labs.usedByBis")}
         </span>
       </div>
 
       <p className="mt-1 text-sm text-gray-600">
-        {[lab.city, lab.state].filter(Boolean).join(", ") || "Location not published"}
+        {[lab.city, lab.state].filter(Boolean).join(", ") || t("labs.locationUnknown")}
       </p>
 
       <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500">
         {lab.osl_code && (
           <div className="flex gap-1.5">
-            <dt>OSL</dt>
+            <dt>{t("labs.osl")}</dt>
             <dd className="font-mono text-gray-700">{lab.osl_code}</dd>
           </div>
         )}
         {lab.category && (
           <div className="flex gap-1.5">
-            <dt>Type</dt>
+            <dt>{t("labs.type")}</dt>
             <dd className="text-gray-700">{lab.category}</dd>
           </div>
         )}
         {lab.valid_to && (
           <div className="flex gap-1.5">
-            <dt>{lapsed ? "Lapsed" : "Valid to"}</dt>
+            <dt>{lapsed ? t("labs.lapsed") : t("labs.validTo")}</dt>
             <dd className={lapsed ? "font-semibold text-amber-700" : "text-gray-700"}>
               {new Date(lab.valid_to).toLocaleDateString("en-IN", {
                 day: "2-digit",
@@ -227,7 +234,7 @@ function LabCard({ lab }: { lab: Lab }) {
           buried: a suspended lab is still listed, but never silently. */}
       {suspended && (
         <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
-          <strong>Currently suspended.</strong> {lab.remarks}
+          <strong>{t("panel.suspended")}.</strong> {lab.remarks}
         </p>
       )}
       {!suspended && lab.remarks && (

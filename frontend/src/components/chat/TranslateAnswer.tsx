@@ -15,8 +15,9 @@
  * than a fluent answer that can no longer be checked.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { translateAnswer } from "@/lib/api";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 /** Endonyms: a speaker looks for their language written the way they write it. */
 const LANGUAGES: { code: string; name: string; english: string }[] = [
@@ -37,9 +38,16 @@ interface TranslateAnswerProps {
   onShow: (text: string | null, language: string | null) => void;
   /** Language currently on screen, or null when showing the original. */
   active: string | null;
+  /**
+   * Translate without being asked, when the interface itself is in another
+   * language. Set only on the newest answer: doing it for every message in a
+   * long history would fire a model call per bubble on the first render.
+   */
+  auto?: boolean;
 }
 
-export default function TranslateAnswer({ source, onShow, active }: TranslateAnswerProps) {
+export default function TranslateAnswer({ source, onShow, active, auto = false }: TranslateAnswerProps) {
+  const { language: uiLanguage, t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -69,11 +77,25 @@ export default function TranslateAnswer({ source, onShow, active }: TranslateAns
         setNotice(result.warning ?? "This answer could not be translated.");
       }
     } catch {
-      setNotice("Translation is unavailable at the moment.");
+      setNotice(t("chat.translateUnavailable"));
     } finally {
       setBusy(null);
     }
   }
+
+  // Translate once, without being asked, when the interface is in another
+  // language. Guarded by a ref rather than by state so a re-render mid-flight
+  // cannot start a second request for the same answer.
+  const autoTried = useRef<string | null>(null);
+  useEffect(() => {
+    if (!auto || uiLanguage === "en" || active !== null) return;
+    if (autoTried.current === uiLanguage) return;
+    autoTried.current = uiLanguage;
+    void choose(uiLanguage);
+    // `choose` is recreated every render; re-running on that would defeat the
+    // ref guard's purpose without changing what happens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto, uiLanguage, active]);
 
   const activeLanguage = LANGUAGES.find((language) => language.code === active);
 
@@ -89,7 +111,7 @@ export default function TranslateAnswer({ source, onShow, active }: TranslateAns
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="m10.5 21 5.25-11.25L21 21m-9-3h7.5M3 5.621a48.5 48.5 0 0 1 6-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138q.897.06 1.786.15m-1.786-.15L11.28 9.517M9 17.25a41 41 0 0 1-2.077-2.045" />
           </svg>
-          {activeLanguage ? activeLanguage.name : "Translate"}
+          {activeLanguage ? activeLanguage.name : t("chat.translate")}
           {busy && <span className="text-gray-400">…</span>}
         </button>
 
@@ -99,13 +121,13 @@ export default function TranslateAnswer({ source, onShow, active }: TranslateAns
             onClick={() => onShow(null, null)}
             className="text-[11px] font-semibold text-gray-500 underline-offset-2 hover:text-[var(--color-navy)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)]"
           >
-            Show English
+            {t("chat.showEnglish")}
           </button>
         )}
       </div>
 
       {open && (
-        <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Translate this answer into">
+        <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={t("chat.translateInto")}>
           {LANGUAGES.map((language) => (
             <li key={language.code}>
               <button
@@ -135,8 +157,7 @@ export default function TranslateAnswer({ source, onShow, active }: TranslateAns
 
       {activeLanguage && (
         <p className="mt-2 text-[11px] leading-relaxed text-gray-400">
-          Translated from the English answer. Standard numbers, scheme names and the sources
-          below are unchanged.
+          {t("chat.translatedNote")}
         </p>
       )}
     </div>
