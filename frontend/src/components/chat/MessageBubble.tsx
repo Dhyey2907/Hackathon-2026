@@ -52,11 +52,13 @@ function renderMarkdown(text: string, sources: Source[]): React.ReactNode {
       const content = headingMatch[2];
       const Tag = `h${level}` as "h1" | "h2" | "h3";
       const cls =
+        // Every level sits at or above the 15px body size - a heading smaller
+        // than the text under it reads as a caption, not a heading.
         level === 1
-          ? "text-base font-semibold text-gray-900 mt-3 mb-1"
+          ? "text-lg font-semibold text-gray-900 mt-4 mb-1.5 first:mt-0"
           : level === 2
-          ? "text-sm font-semibold text-gray-900 mt-2 mb-1"
-          : "text-sm font-medium text-gray-800 mt-2 mb-0.5";
+          ? "text-base font-semibold text-gray-900 mt-3.5 mb-1 first:mt-0"
+          : "text-[15px] font-semibold text-gray-800 mt-3 mb-1 first:mt-0";
       elements.push(
         <Tag key={i} className={cls}>
           {inlineRender(content, markerMap)}
@@ -128,11 +130,13 @@ function renderMarkdown(text: string, sources: Source[]): React.ReactNode {
         i++;
       }
       elements.push(
-        <ul key={`ul-${i}`} className="my-1.5 space-y-0.5 pl-4">
+        <ul key={`ul-${i}`} className="my-2 space-y-1.5 pl-1">
           {items.map((item, ii) => (
-            <li key={ii} className="flex gap-1.5 text-gray-700">
-              <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-gray-400" />
-              <span>{inlineRender(item, markerMap)}</span>
+            <li key={ii} className="flex gap-2.5 leading-relaxed text-gray-700">
+              {/* em-based offset so the dot stays on the first line's centre
+                  whatever the body size is */}
+              <span className="mt-[0.6em] h-1 w-1 shrink-0 rounded-full bg-gray-400" />
+              <span className="min-w-0 flex-1">{inlineRender(item, markerMap)}</span>
             </li>
           ))}
         </ul>
@@ -143,20 +147,20 @@ function renderMarkdown(text: string, sources: Source[]): React.ReactNode {
     // Ordered list
     if (line.match(/^\d+\.\s+/)) {
       const items: string[] = [];
-      let num = 1;
       while (i < lines.length && lines[i].match(/^\d+\.\s+/)) {
         items.push(lines[i].replace(/^\d+\.\s+/, ""));
         i++;
-        num++;
       }
       elements.push(
-        <ol key={`ol-${i}`} className="my-1.5 space-y-0.5 pl-4 list-none">
+        <ol key={`ol-${i}`} className="my-2 list-none space-y-1.5 pl-1">
           {items.map((item, ii) => (
-            <li key={ii} className="flex gap-2 text-gray-700">
-              <span className="shrink-0 text-gray-400 font-mono text-xs mt-0.5">
+            <li key={ii} className="flex gap-2.5 leading-relaxed text-gray-700">
+              {/* Fixed width and tabular figures so "9." and "10." share an
+                  edge and every item's text starts on the same column. */}
+              <span className="w-5 shrink-0 text-right tabular-nums text-gray-400">
                 {ii + 1}.
               </span>
-              <span>{inlineRender(item, markerMap)}</span>
+              <span className="min-w-0 flex-1">{inlineRender(item, markerMap)}</span>
             </li>
           ))}
         </ol>
@@ -179,16 +183,24 @@ function renderMarkdown(text: string, sources: Source[]): React.ReactNode {
       continue;
     }
 
+    // Horizontal rule. Without this the model's "---" separators rendered as
+    // a literal "---" paragraph in the middle of the answer.
+    if (/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
+      elements.push(<hr key={i} className="my-3 border-gray-200" />);
+      i++;
+      continue;
+    }
+
     // Paragraph
     elements.push(
-      <p key={i} className="text-gray-700 leading-relaxed">
+      <p key={i} className="leading-relaxed text-gray-700">
         {inlineRender(line, markerMap)}
       </p>
     );
     i++;
   }
 
-  return <div className="space-y-1">{elements}</div>;
+  return <div className="space-y-2">{elements}</div>;
 }
 
 /**
@@ -328,7 +340,9 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
     return (
       <div className="flex justify-end">
         <div className="max-w-[80%] sm:max-w-[70%]">
-          <div className="rounded-2xl rounded-tr-sm bg-navy px-4 py-3 text-sm text-white shadow-sm">
+          {/* Matches the assistant bubble's size, so the two sides of the
+              conversation read as one exchange rather than two typefaces. */}
+          <div className="rounded-2xl rounded-tr-sm bg-navy px-5 py-3.5 text-[15px] text-white shadow-sm">
             <p className="leading-relaxed whitespace-pre-wrap">{message.content}</p>
           </div>
           <p className="mt-1 text-right text-[11px] text-gray-400">{time}</p>
@@ -361,10 +375,10 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
         </svg>
       </div>
 
-      <div className="max-w-[85%] sm:max-w-[75%] flex-1">
+      <div className="max-w-[92%] sm:max-w-[88%] lg:max-w-[82%] flex-1">
         {/* Bubble */}
         <div
-          className={`rounded-2xl rounded-tl-sm border bg-white px-4 py-3 text-sm shadow-sm ${
+          className={`rounded-2xl rounded-tl-sm border bg-white px-5 py-4 text-[15px] shadow-sm ${
             message.abstained ? "border-amber-200" : "border-gray-200"
           }`}
         >
