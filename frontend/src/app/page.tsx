@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ComplianceDashboard from "@/components/dashboard/ComplianceDashboard";
-import ScrollOverHero from "@/components/ScrollOverHero";
+import ChatInput from "@/components/chat/ChatInput";
+import { useChat } from "@/components/chat/ChatProvider";
 
 const FEATURES = [
   {
@@ -59,16 +61,77 @@ const FEATURES = [
 ];
 
 export default function HomePage() {
+  const router = useRouter();
+  const { input, setInput, sendMessage, isLoading } = useChat();
+
+  function continueInChat() {
+    if (!input.trim() || isLoading) return;
+    void sendMessage(input);
+    router.push("/chat");
+  }
+
   return (
-    <main className="flex-1 overflow-y-auto bg-gray-50" id="main-content">
-      {/* ── Atmospheric hero — home starts sharp (0px blur), hero is purely aesthetic */}
-      <ScrollOverHero
-        eyebrow="Your Compliance Command Center"
-        title="BIS Sahayak"
-        subtitle="Certifications, standards, and regulatory health — all in one place."
-        startBlur={0}
-        endBlur={0}
-      />
+    <main className="home-page flex-1 overflow-y-auto" id="main-content">
+      <section className="home-hero relative overflow-hidden border-b border-white/60 px-5 pb-8 pt-10 sm:px-10 sm:pb-10 sm:pt-14 lg:px-14">
+        <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:radial-gradient(circle_at_78%_35%,rgba(255,255,255,0.95),transparent_30%),linear-gradient(135deg,transparent_45%,rgba(220,174,181,0.12)_46%,transparent_62%)]" />
+        <div className="relative mx-auto max-w-6xl">
+          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(380px,1.05fr)]">
+            <div className="max-w-xl">
+              <p className="text-sm font-medium text-[var(--color-text-secondary)]">Good afternoon,</p>
+              <h1 className="mt-2 max-w-[12ch] text-4xl font-semibold leading-[1.05] tracking-[-0.04em] text-[var(--color-text-primary)] sm:text-5xl lg:text-[3.7rem]">
+                How can I help you with BIS <span className="text-[#E78B68]">today?</span>
+                <span className="ml-2 text-[#F2B15D]" aria-hidden="true">✦</span>
+              </h1>
+              <p className="mt-5 max-w-md text-base leading-7 text-[var(--color-text-secondary)] sm:text-lg">
+                Find standards, check products, understand certification requirements — all in one place.
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-2 text-[11px] font-medium text-[var(--color-text-secondary)]">
+                <span className="hero-trust-pill inline-flex items-center gap-2 rounded-full px-3 py-2 shadow-sm ring-1 ring-white/80">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> Official BIS Source
+                </span>
+                <span className="hero-trust-pill inline-flex items-center gap-2 rounded-full px-3 py-2 shadow-sm ring-1 ring-white/80">
+                  <span aria-hidden="true">◈</span> Reliable Information
+                </span>
+                <span className="hero-trust-pill inline-flex items-center gap-2 rounded-full px-3 py-2 shadow-sm ring-1 ring-white/80">
+                  <span aria-hidden="true">♧</span> For Everyone
+                </span>
+              </div>
+            </div>
+
+            <div className="relative hidden min-h-[290px] lg:block" aria-hidden="true">
+              <div className="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#E8CDBD]/70" />
+              <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rotate-[24deg] rounded-full border border-[#D9E3EE]/80" />
+              <div className="absolute left-1/2 top-1/2 flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[10px] border-white/80 bg-[#252525] shadow-[0_16px_40px_rgba(61,43,31,0.2)]">
+                <div className="flex h-16 w-20 items-center justify-center gap-3 rounded-[45%] bg-[#111] text-white shadow-inner">
+                  <span className="h-3 w-3 rounded-full bg-[#FFF1E8]" />
+                  <span className="h-3 w-3 rounded-full bg-[#FFF1E8]" />
+                </div>
+              </div>
+              <span className="absolute left-[23%] top-[36%] h-3 w-3 rounded-full bg-[#F19B70] shadow-[0_0_0_5px_rgba(241,155,112,0.12)]" />
+              <span className="absolute right-[22%] top-[29%] h-2 w-2 rounded-full bg-[#E7A2A7]" />
+              <span className="absolute bottom-[18%] left-[30%] h-2 w-2 rounded-full bg-[#F19B70]" />
+
+              <HeroActionCard className="left-0 top-0 rotate-[-7deg]" icon="▤" title="Search" subtitle="Standards" />
+              <HeroActionCard className="right-0 top-7 rotate-[6deg]" icon="⌾" title="Scan" subtitle="Product" />
+              <HeroActionCard className="bottom-0 right-4 rotate-[-5deg]" icon="◈" title="Get" subtitle="Guidance" />
+              <p className="absolute bottom-8 left-[30%] max-w-[10ch] -rotate-[9deg] text-center font-serif text-sm italic leading-5 text-[#9B786C]">
+                Same Standards<br />Brighter Tomorrow
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 max-w-4xl">
+            <ChatInput
+              value={input}
+              onChange={setInput}
+              onSend={continueInChat}
+              disabled={isLoading}
+              placeholder="Ask anything about BIS standards, products or certification..."
+            />
+          </div>
+        </div>
+      </section>
 
       <div className="mx-auto max-w-5xl px-4 pb-8 sm:px-6 lg:px-8">
         {/* Compliance dashboard widget — renders for logged-in users via client-side auth check */}
@@ -95,5 +158,25 @@ export default function HomePage() {
         </div>
       </div>
     </main>
+  );
+}
+
+function HeroActionCard({
+  className,
+  icon,
+  title,
+  subtitle,
+}: {
+  className: string;
+  icon: string;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <div className={`hero-action-card absolute w-32 rounded-2xl border p-4 shadow-[0_18px_40px_rgba(22,43,58,0.12)] ${className}`}>
+      <div className="text-2xl text-[#D86F42]">{icon}</div>
+      <p className="mt-3 text-sm font-semibold leading-4 text-[var(--color-text-primary)]">{title}<br />{subtitle}</p>
+      <span className="absolute right-4 top-4 text-lg text-[#D86F42]">→</span>
+    </div>
   );
 }

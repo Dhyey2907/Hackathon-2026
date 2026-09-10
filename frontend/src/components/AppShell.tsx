@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useEffect, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -31,6 +32,7 @@ const assistantStore = {
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const assistantOpen = useSyncExternalStore(
     assistantStore.subscribe,
     assistantStore.getSnapshot,
@@ -67,10 +69,31 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-0 flex-1">
-      <Navigation collapsed={collapsed} onToggle={() => setCollapsed((current) => !current)} />
+      <Navigation
+        collapsed={collapsed}
+        onToggle={() => setCollapsed((current) => !current)}
+        mobileOpen={mobileNavOpen}
+        onMobileClose={() => setMobileNavOpen(false)}
+      />
       <div
-        className={`min-w-0 flex-1 transition-[margin] duration-200 ${collapsed ? "ml-[72px]" : "ml-64"} ${assistantDocked ? "lg:mr-[380px]" : ""}`}
+        className={`min-w-0 flex-1 transition-[margin] duration-200 ${collapsed ? "lg:ml-[72px]" : "lg:ml-64"} ${assistantDocked ? "lg:mr-[380px]" : ""}`}
       >
+        <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 backdrop-blur lg:hidden">
+          <Link href="/" className="flex items-center gap-2.5" aria-label="BIS Sahayak home">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-navy)] text-[9px] font-bold text-white">BIS</span>
+            <span className="text-sm font-semibold text-[var(--color-text-primary)]">BIS Sahayak</span>
+          </Link>
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-navy-lighter)] focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)]"
+            aria-label="Open navigation"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+          </button>
+        </div>
         {children}
       </div>
       {showAssistant && <AssistantSidePanel open={assistantOpen} onToggle={toggleAssistant} />}

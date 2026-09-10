@@ -28,14 +28,14 @@ interface ScrollOverHeroProps {
 }
 
 /**
- * ScrollOverHero — Pinteresty atmospheric page header with peeking blur effect.
+ * ScrollOverHero — shared atmospheric page header with peeking blur effect.
  *
  * Visual flow: The background starts blurred (atmospheric, 8px) while the hero
  * is visible. As the user scrolls down past the hero, --current-blur linearly
  * animates from startBlur → endBlur, creating a "coming into focus" effect.
  *
- * Works in both Light (Butter-Cream) and Dark (Midnight Espresso) themes
- * because it manipulates the CSS variable, not the element directly.
+ * The surrounding non-home page owns the full atmospheric background; this
+ * component adds the focused header content and theme-aware glow details.
  */
 export default function ScrollOverHero({
   eyebrow,
@@ -86,25 +86,17 @@ export default function ScrollOverHero({
   return (
     <div
       ref={heroRef}
-      className="relative w-full overflow-hidden"
-      aria-hidden="true"
+      className="page-hero relative w-full overflow-hidden"
     >
-      {/* Atmospheric hero card */}
+      {/* Atmospheric page header */}
       <div className="relative px-6 py-10 sm:px-10 sm:py-14">
-        {/* Subtle ambient glow orbs — Pinteresty aesthetic */}
         <div
-          className="pointer-events-none absolute -top-12 -right-12 h-64 w-64 rounded-full opacity-20"
-          style={{
-            background:
-              "radial-gradient(circle, var(--color-powder-blue) 0%, transparent 70%)",
-          }}
+          className="page-hero-glow page-hero-glow-blue pointer-events-none absolute -right-12 -top-12 h-64 w-64 rounded-full"
+          aria-hidden="true"
         />
         <div
-          className="pointer-events-none absolute -bottom-8 -left-8 h-48 w-48 rounded-full opacity-15"
-          style={{
-            background:
-              "radial-gradient(circle, var(--color-dusty-rose) 0%, transparent 70%)",
-          }}
+          className="page-hero-glow page-hero-glow-warm pointer-events-none absolute -bottom-8 -left-8 h-48 w-48 rounded-full"
+          aria-hidden="true"
         />
 
         {/* Hero text */}
@@ -140,7 +132,7 @@ export default function ScrollOverHero({
           </p>
 
           {/* Decorative scroll hint */}
-          <div className="mt-8 flex items-center gap-2 opacity-50">
+          <div className="page-hero-hint mt-8 flex items-center gap-2">
             <span className="text-[11px] font-medium" style={{ color: "var(--color-text-muted)" }}>
               Scroll to focus
             </span>

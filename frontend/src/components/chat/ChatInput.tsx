@@ -1,6 +1,6 @@
 /**
- * Fixed bottom input bar: textarea that auto-expands up to 5 lines,
- * send button, and keyboard shortcut (Enter to send, Shift+Enter for newline).
+ * AI assistant style chat composer with glassmorphism treatment and
+ * keyboard shortcuts (Enter to send, Shift+Enter for newline).
  */
 
 "use client";
@@ -24,12 +24,10 @@ export default function ChatInput({
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    // Cap at ~5 lines (~120px)
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
   }, [value]);
 
@@ -49,45 +47,53 @@ export default function ChatInput({
   const canSend = !disabled && value.trim().length > 0;
 
   return (
-    <div className="border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-      {/* Keyboard hint */}
-      <p className="mb-2 text-[11px] text-gray-400 text-right select-none">
-        Press{" "}
-        <kbd className="rounded border border-gray-200 bg-gray-100 px-1 py-0.5 font-mono text-[10px]">
-          Enter
-        </kbd>{" "}
-        to send ·{" "}
-        <kbd className="rounded border border-gray-200 bg-gray-100 px-1 py-0.5 font-mono text-[10px]">
-          Shift+Enter
-        </kbd>{" "}
-        for new line
-      </p>
+    <div className="px-3 pb-4 sm:px-4">
+      <div className="chat-composer-shell mx-auto max-w-2xl rounded-[20px] border p-3">
+        <div className="chat-composer-inner rounded-[12px] border p-1.5">
+          <div className="flex items-end gap-2">
+            <button
+              type="button"
+              className="chat-composer-action flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition"
+              aria-label="Attach file"
+            >
+              <PaperclipIcon />
+            </button>
 
-      <div className="flex items-end gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-shadow">
-        <textarea
-          ref={textareaRef}
-          id="chat-input"
-          value={value}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          disabled={disabled}
-          placeholder={placeholder}
-          rows={1}
-          aria-label="Message"
-          aria-multiline="true"
-          className="flex-1 resize-none bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 leading-relaxed"
-          style={{ minHeight: "24px", maxHeight: "120px" }}
-        />
+            <textarea
+              ref={textareaRef}
+              id="chat-input"
+              value={value}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              disabled={disabled}
+              placeholder={placeholder}
+              rows={1}
+              aria-label="Message"
+              aria-multiline="true"
+              className="flex-1 resize-none bg-transparent px-2 py-1 text-sm leading-4 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+              style={{ minHeight: "32px", maxHeight: "120px" }}
+            />
 
-        <button
-          onClick={onSend}
-          disabled={!canSend}
-          aria-label="Send message"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy text-white transition-colors hover:bg-navy-700 focus:outline-none focus:ring-2 focus:ring-[#B0C4DE] focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40"
-          style={{ backgroundColor: canSend ? "#3D2B1F" : undefined }}
-        >
-          <SendIcon />
-        </button>
+            <button
+              type="button"
+              className="chat-composer-action flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition"
+              aria-label="Use voice input"
+            >
+              <MicIcon />
+            </button>
+
+            <button
+              type="button"
+              onClick={onSend}
+              disabled={!canSend}
+              aria-label="Send message"
+              className="chat-composer-send flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-lg transition hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)] focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <SendIcon />
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -96,8 +102,8 @@ export default function ChatInput({
 function SendIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -111,3 +117,43 @@ function SendIcon() {
     </svg>
   );
 }
+
+function PaperclipIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21.44 11.05 12.25 20.24a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 1 1-2.83-2.83l8.49-8.48" />
+    </svg>
+  );
+}
+
+function MicIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="9" y="2" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0" />
+      <path d="M12 18v4" />
+      <path d="M8 22h8" />
+    </svg>
+  );
+}
+
