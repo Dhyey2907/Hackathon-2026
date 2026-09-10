@@ -123,6 +123,7 @@ const en: Dictionary = {
 
   // BIS updates
   "nav.updates": "BIS Updates",
+  "nav.roadmap": "Compliance Roadmap",
   "updates.eyebrow": "Bureau of Indian Standards",
   "updates.title": "BIS Updates",
   "updates.subtitle":
@@ -166,7 +167,7 @@ const en: Dictionary = {
 
   // Certification roadmap
   "roadmap.eyebrow": "What to do next",
-  "roadmap.title": "BIS certification roadmap",
+  "roadmap.title": "Compliance Roadmap",
   "roadmap.subtitle":
     "The route to a licence, in the order it happens. Every step links to the BIS page it came from.",
   "roadmap.stepsDone": "steps marked done",
@@ -275,6 +276,7 @@ const hi: Dictionary = {
 
   // BIS updates
   "nav.updates": "BIS अपडेट",
+  "nav.roadmap": "अनुपालन रोडमैप",
   "updates.eyebrow": "भारतीय मानक ब्यूरो",
   "updates.title": "BIS अपडेट",
   "updates.subtitle":
@@ -318,7 +320,7 @@ const hi: Dictionary = {
 
   // Certification roadmap
   "roadmap.eyebrow": "आगे क्या करें",
-  "roadmap.title": "BIS प्रमाणन रोडमैप",
+  "roadmap.title": "अनुपालन रोडमैप",
   "roadmap.subtitle":
     "लाइसेंस तक का रास्ता, उसी क्रम में जिस क्रम में यह होता है। हर चरण उस BIS पृष्ठ से जुड़ा है जहाँ से वह लिया गया है।",
   "roadmap.stepsDone": "चरण पूर्ण",

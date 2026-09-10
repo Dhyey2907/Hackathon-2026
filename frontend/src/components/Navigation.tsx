@@ -17,6 +17,7 @@ const NAV_LINKS = [
   { href: "/updates", labelKey: "nav.updates", icon: "standards" },
   { href: "/labs", labelKey: "nav.labs", icon: "labs" },
   { href: "/verify", labelKey: "nav.verify", icon: "verify" },
+  { href: "/roadmap", labelKey: "nav.roadmap", icon: "roadmap" },
   { href: "/documents", labelKey: "nav.documents", icon: "documents" },
 ] as const;
 
@@ -37,6 +38,7 @@ function NavIcon({ name }: { name: IconName }) {
     labs: <><path d="M9 3h6M10 3v6l-5 8a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-8V3" /><path d="M8 15h8" /></>,
     verify: <><circle cx="12" cy="12" r="9" /><path d="m8 12 2.5 2.5L16 9" /></>,
     documents: <><path d="M6 3h9l3 3v15H6z" /><path d="M15 3v4h4" /><path d="M9 12h6M9 16h4" /></>,
+    roadmap: <><path d="m3 6 2 2 3-3" /><path d="m3 13 2 2 3-3" /><path d="m3 20 2 2 3-3" /><path d="M12 6h9M12 14h9M12 21h6" /></>,
   };
   return (
     <svg
