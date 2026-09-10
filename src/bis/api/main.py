@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from bis.api import routes_chat, routes_context, routes_search
+from bis.api import routes_chat, routes_context, routes_search, routes_translate
 from bis.config import get_settings
 from bis.store.db import init_db
 
@@ -59,6 +59,7 @@ app.add_middleware(
 app.include_router(routes_chat.router)
 app.include_router(routes_search.router)
 app.include_router(routes_context.router)
+app.include_router(routes_translate.router)
 
 
 @app.get("/health", tags=["ops"])

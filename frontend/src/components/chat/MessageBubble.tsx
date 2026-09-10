@@ -10,10 +10,11 @@
 
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Message, Source } from "@/lib/types";
 import SourceCard from "./SourceCard";
 import ChatNavigationAction from "./ChatNavigationAction";
+import TranslateAnswer from "./TranslateAnswer";
 
 // ---------------------------------------------------------------------------
 // Simple inline markdown renderer
@@ -321,9 +322,15 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const sources = message.sources ?? [];
 
+  // A translation of this answer, when the reader has asked for one. The
+  // English stays in `message.content` untouched, so "Show English" is a
+  // render away rather than another round trip.
+  const [translated, setTranslated] = useState<string | null>(null);
+  const [language, setLanguage] = useState<string | null>(null);
+
   const renderedContent = useMemo(
-    () => renderMarkdown(message.content, sources),
-    [message.content, sources]
+    () => renderMarkdown(translated ?? message.content, sources),
+    [translated, message.content, sources]
   );
 
   const time = useMemo(
@@ -382,10 +389,25 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
             message.abstained ? "border-amber-200" : "border-gray-200"
           }`}
         >
-          <div aria-live="polite">{renderedContent}</div>
+          <div aria-live="polite" lang={language ?? "en"}>
+            {renderedContent}
+          </div>
 
           {/* Abstention notice */}
           {message.abstained && <AbstentionNotice />}
+
+          {/* Offered on the finished answer, never before it: the citations
+              were validated against the English, and it stays one tap away. */}
+          {!message.abstained && message.content.trim().length > 0 && (
+            <TranslateAnswer
+              source={message.content}
+              active={language}
+              onShow={(text, code) => {
+                setTranslated(text);
+                setLanguage(code);
+              }}
+            />
+          )}
         </div>
 
         {/* Sources section */}

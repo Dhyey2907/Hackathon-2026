@@ -198,6 +198,24 @@ export function findLabs(
   return request<LabsResponse>(`/labs?${params}`);
 }
 
+// ---------------------------------------------------------------- translate
+
+export interface TranslateResponse {
+  text: string;
+  language: string;
+  /** False when translation was refused; `text` is then the English original. */
+  translated: boolean;
+  warning?: string | null;
+}
+
+export function translateAnswer(text: string, target: string): Promise<TranslateResponse> {
+  return request<TranslateResponse>("/translate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, target }),
+  });
+}
+
 // ------------------------------------------------------------------- health
 
 export function getHealth(): Promise<HealthResponse> {
