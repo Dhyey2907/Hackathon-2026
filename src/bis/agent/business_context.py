@@ -269,9 +269,15 @@ Write 3 or 4 suggestions. Each is a short action label of 2-5 words that reads \
 as something to do, not a sentence: "Check applicable standards", "Find a \
 testing lab", "Required documents".
 
-Ground them in this specific user. If they work with a product, name that \
-product's concerns. If their last question was about certification, the natural \
-next steps are documents, testing and labs - not "learn about BIS".
+The last question leads. Suggest where *that* subject goes next: after a \
+certification question, the natural steps are documents, testing and labs - not \
+"learn about BIS".
+
+The user's business colours the suggestions only when the question is about it. \
+If a helmet manufacturer asks what HUID is, they have changed the subject to \
+hallmarking, and the follow-ups belong to hallmarking - offering them helmet \
+standards ignores what they actually asked. When there is no last question, the \
+business is all you have, so lead with it.
 
 Never suggest something vague like "Ask me anything", "Explore standards" or \
 "Learn more" unless you genuinely have nothing to work with.
