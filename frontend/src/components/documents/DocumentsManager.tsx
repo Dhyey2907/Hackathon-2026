@@ -132,7 +132,7 @@ function DocumentsManagerInner() {
         endBlur={0}
       />
 
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto -mt-8 w-full max-w-7xl px-4 pb-8 pt-0 sm:px-6 lg:px-8">
 
 
         {/* ── Page Header ─────────────────────────────────────────────── */}

@@ -22,9 +22,9 @@ export const ASSISTANT_PANEL_WIDTH = 380;
 
 /** Short prompts offered when the side panel has no conversation yet. */
 const QUICK_PROMPTS = [
-  "What applies to my product?",
-  "Explain this page to me",
-  "Which documents do I need?",
+  "What BIS standards and licences apply to my product?",
+  "Explain this page and what I can do here",
+  "Which documents and lab steps do I need?",
 ] as const;
 
 interface AssistantSidePanelProps {
@@ -125,18 +125,47 @@ export default function AssistantSidePanel({
 
           {!hasConversation && !isLoading && (
             <div className="pt-1">
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
-                Quick asks
-              </p>
-              <div className="grid gap-2">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  Quick asks
+                </p>
+                <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-navy-lighter)] px-2 py-0.5 text-[9px] uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
+                  FAQ
+                </span>
+              </div>
+
+              <div className="space-y-2 rounded-[20px] border border-[var(--color-border)] bg-[rgba(255,255,255,0.02)] p-2">
                 {QUICK_PROMPTS.map((q) => (
                   <button
                     key={q}
                     type="button"
                     onClick={() => sendMessage(q)}
-                    className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-left text-xs text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-powder-blue)] hover:bg-[var(--color-navy-lighter)] focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)]"
+                    className="group w-full rounded-[16px] border border-[var(--color-border)] bg-[rgba(255,255,255,0.04)] px-3 py-2.5 text-left transition-all duration-200 hover:border-[var(--color-powder-blue)] hover:bg-[var(--color-navy-lighter)] focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)]"
                   >
-                    {q}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[9px] font-medium uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
+                        Help
+                      </span>
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full border border-[var(--color-border)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-muted)] transition-transform duration-200 group-hover:translate-x-0.5">
+                        <svg
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M5 12h14" />
+                          <path d="m13 5 7 7-7 7" />
+                        </svg>
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-primary)]">
+                      {q}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -165,8 +194,8 @@ export default function AssistantSidePanel({
       </div>
 
       {/* Compact composer */}
-      <div className="shrink-0 border-t border-[var(--color-border)] p-3">
-        <div className="flex items-end gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 transition-shadow focus-within:ring-1 focus-within:ring-[var(--color-powder-blue)]">
+      <div className="shrink-0 p-3">
+        <div className="flex items-end gap-2 rounded-[22px] border border-transparent bg-[rgba(255,255,255,0.02)] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-all duration-200 focus-within:border-[rgba(176,196,222,0.28)] focus-within:bg-[rgba(255,255,255,0.04)]">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -187,7 +216,7 @@ export default function AssistantSidePanel({
             onClick={() => sendMessage(input)}
             disabled={isLoading || !input.trim()}
             aria-label="Send message"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#3D2B1F] text-white transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#3D2B1F] text-white shadow-[0_8px_20px_rgba(61,43,31,0.18)] transition-colors hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <svg
               width="14"

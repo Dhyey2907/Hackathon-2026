@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { supabase, hasSupabaseConfig } from "@/lib/supabase";
 
 export type UserType = "consumer" | "existing_business" | "new_business";
 
@@ -19,6 +20,7 @@ export type OnboardingData = {
 };
 
 type AuthUser = {
+  id: string;
   identifier: string;
   name: string;
   isNewUser: boolean;
@@ -30,33 +32,82 @@ type AuthContextValue = {
   user: AuthUser | null;
   isNewUser: boolean;
   isLoading: boolean;
-  signIn: (identifier: string) => void;
-  signUp: (name: string, identifier: string) => void;
+  signIn: (identifier: string, password?: string) => Promise<void>;
+  signUp: (
+    name: string,
+    identifier: string,
+    password?: string,
+  ) => Promise<{ requiresEmailConfirmation: boolean }>;
   saveOnboardingData: (userType: UserType, onboardingData: OnboardingData) => void;
   completeOnboarding: (userType: UserType, onboardingData?: OnboardingData) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
-const STORAGE_KEY = "bis-sahayak-mock-auth";
+const STORAGE_KEY = "bis-sahayak-auth";
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+const fallbackUser = (): AuthUser | null => {
+  const storedUser = window.localStorage.getItem(STORAGE_KEY);
+  if (!storedUser) return null;
+
+  try {
+    return JSON.parse(storedUser) as AuthUser;
+  } catch {
+    window.localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const hydrationTimer = window.setTimeout(() => {
-      const storedUser = window.localStorage.getItem(STORAGE_KEY);
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser) as AuthUser);
-        } catch {
-          window.localStorage.removeItem(STORAGE_KEY);
-        }
+    const loadUser = async () => {
+      if (!supabase) {
+        const stored = fallbackUser();
+        setUser(stored);
+        setIsLoading(false);
+        return;
       }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          identifier: session.user.email ?? session.user.user_metadata?.username ?? "",
+          name: session.user.user_metadata?.full_name ?? session.user.email ?? "User",
+          isNewUser: false,
+        });
+      } else {
+        setUser(fallbackUser());
+      }
+
       setIsLoading(false);
-    }, 0);
-    return () => window.clearTimeout(hydrationTimer);
+    };
+
+    void loadUser();
+
+    const { data: authListener } = supabase
+      ? supabase.auth.onAuthStateChange((_event, session) => {
+          if (session?.user) {
+            setUser({
+              id: session.user.id,
+              identifier: session.user.email ?? session.user.user_metadata?.username ?? "",
+              name: session.user.user_metadata?.full_name ?? session.user.email ?? "User",
+              isNewUser: false,
+            });
+          } else {
+            setUser(null);
+            window.localStorage.removeItem(STORAGE_KEY);
+          }
+        })
+      : { data: { subscription: { unsubscribe: () => {} } } };
+
+    return () => authListener.subscription.unsubscribe();
   }, []);
 
   function saveUser(nextUser: AuthUser) {
@@ -64,12 +115,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser));
   }
 
-  function signIn(identifier: string) {
-    saveUser({ identifier: identifier.trim(), name: identifier.trim(), isNewUser: false });
+  async function signIn(identifier: string, password = "password") {
+    if (!supabase || !hasSupabaseConfig) {
+      const email = identifier.trim();
+      saveUser({ id: `local-${email}`, identifier: email, name: email, isNewUser: false });
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: identifier.trim(),
+      password: password.trim() || "password",
+    });
+
+    if (error) throw new Error(error.message);
+
+    if (data.user) {
+      setUser({
+        id: data.user.id,
+        identifier: data.user.email ?? identifier,
+        name: data.user.user_metadata?.full_name ?? data.user.email ?? identifier,
+        isNewUser: false,
+      });
+    }
   }
 
-  function signUp(name: string, identifier: string) {
-    saveUser({ identifier: identifier.trim(), name: name.trim(), isNewUser: true });
+  async function signUp(
+    name: string,
+    identifier: string,
+    password = "password",
+  ): Promise<{ requiresEmailConfirmation: boolean }> {
+    if (!supabase || !hasSupabaseConfig) {
+      const email = identifier.trim();
+      saveUser({ id: `local-${email}`, identifier: email, name: name.trim() || email, isNewUser: true });
+      return { requiresEmailConfirmation: false };
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email: identifier.trim(),
+      password: password.trim() || "password",
+      options: {
+        data: {
+          full_name: name.trim(),
+        },
+      },
+    });
+
+    if (error) throw new Error(error.message);
+
+    if (data.user && data.session) {
+      setUser({
+        id: data.user.id,
+        identifier: data.user.email ?? identifier,
+        name: data.user.user_metadata?.full_name ?? (name.trim() || identifier),
+        isNewUser: true,
+      });
+    }
+
+    return { requiresEmailConfirmation: !data.session };
   }
 
   function saveOnboardingData(userType: UserType, onboardingData: OnboardingData) {
@@ -82,7 +184,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     saveUser({ ...user, userType, onboardingData, isNewUser: false });
   }
 
-  function logout() {
+  async function logout() {
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     setUser(null);
     window.localStorage.removeItem(STORAGE_KEY);
   }

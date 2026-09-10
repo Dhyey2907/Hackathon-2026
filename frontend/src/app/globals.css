@@ -1,50 +1,48 @@
 /* ── Imports must come first ─────────────────────────────────────────────── */
 @import "tailwindcss";
 
-/* ── Design tokens: Pinteresty Gen Z Aesthetic ─────────────────────────────
-   Palette:
-   - Surface (The Frame): Soft Butter-Cream (#FDFBF7)
-   - Primary (Authority): Muted Espresso Brown (#3D2B1F) for all headings, buttons, text
-   - Accents (The Jewelry): Dusty Powder Blue (#B0C4DE) & Dusty Rose (#DCAEB5)
-   - Frosted Glass: rgba(253, 251, 247, 0.9) with blur(24px) & 1px rgba(255, 255, 255, 0.5) border
-   ─────────────────────────────────────────────────────────────────────────── */
+/* ── BIS Sahayak design system ──────────────────────────────────────────────
+  Light: paper surfaces, ink-blue authority, copper action accents.
+  Dark: deep blue-black surfaces, oat text, softened blue controls.
+  ─────────────────────────────────────────────────────────────────────────── */
 
 :root {
   /* Surface (The Frame): Soft Butter-Cream */
-  --color-cream: #FDFBF7;
-  --color-cream-glass: rgba(253, 251, 247, 0.9);
-  --color-cream-card: rgba(253, 251, 247, 0.92);
-  --color-bg: #FDFBF7;
-  --color-surface: rgba(253, 251, 247, 0.9);
-  --color-border: rgba(255, 255, 255, 0.5);
-  --color-glass-border: rgba(255, 255, 255, 0.5);
+  --color-cream: #F7F4EE;
+  --color-cream-glass: rgba(255, 253, 250, 0.92);
+  --color-cream-card: #FFFDF9;
+  --color-bg: #F7F4EE;
+  --color-surface: rgba(255, 253, 250, 0.94);
+  --color-border: #E1E5E7;
+  --color-glass-border: rgba(255, 255, 255, 0.78);
 
   /* Primary (Authority): Muted Espresso Brown */
-  --color-espresso: #3D2B1F;
-  --color-espresso-hover: #4E382A;
-  --color-espresso-light: #5A4435;
-  --color-navy: #3D2B1F;
-  --color-navy-light: #4E382A;
-  --color-navy-lighter: rgba(176, 196, 222, 0.28); /* Tinted with Dusty Powder Blue */
+  --color-espresso: #162B3A;
+  --color-espresso-hover: #1D4964;
+  --color-espresso-light: #52728A;
+  --color-navy: #173B57;
+  --color-navy-light: #1E5876;
+  --color-navy-lighter: #E7F0F4;
 
   /* Accents (The Jewelry): Dusty Powder Blue & Dusty Rose */
-  --color-powder-blue: #B0C4DE;
-  --color-powder-blue-light: rgba(176, 196, 222, 0.22);
-  --color-powder-blue-hover: #9BB3CE;
-  --color-dusty-rose: #DCAEB5;
-  --color-dusty-rose-light: rgba(220, 174, 181, 0.22);
-  --color-dusty-rose-hover: #D29EA6;
+  --color-powder-blue: #7BA9C2;
+  --color-powder-blue-light: #E4EEF3;
+  --color-powder-blue-hover: #5F91AD;
+  --color-dusty-rose: #D77D58;
+  --color-dusty-rose-light: #FBE9DF;
+  --color-dusty-rose-hover: #C86643;
+  --color-success: #2F8F6B;
+  --color-success-light: #E2F3EB;
 
   /* Text: Muted Espresso Brown hierarchy */
-  --color-text-primary: #3D2B1F;
-  --color-text-secondary: #5C4A3E;
-  --color-text-muted: #8C7B6F;
+  --color-text-primary: #16212B;
+  --color-text-secondary: #52616C;
+  --color-text-muted: #7C8A93;
 
   /* Fonts */
   --font-sans: var(--font-inter, "Inter", system-ui, -apple-system, sans-serif);
   --font-mono: ui-monospace, "Cascadia Code", "Fira Code", monospace;
   /* Background image */
-  --bg-image: url("/bis-background.jpg");
 
   /* ── Dynamic Blur System ───────────────────────────────────────────────────
      --current-blur is the single source of truth for the background blur.
@@ -68,40 +66,38 @@
 .dark,
 :root.dark,
 body.dark {
-  /* Dynamic Background Image: Midnight Espresso theme */
-  --bg-image: url("/bis-dark-background.jpg");
-
-  /* Surface (Background): Deep Charcoal-Brown */
-  --color-cream: #1A1614;
-  --color-cream-glass: rgba(26, 22, 20, 0.8);
-  --color-cream-card: rgba(26, 22, 20, 0.85);
-  --color-bg: #1A1614;
-  --color-surface: rgba(26, 22, 20, 0.8);
-  --color-border: rgba(255, 255, 255, 0.12);
-  --color-glass-border: rgba(255, 255, 255, 0.12);
+  --color-cream: #0B1117;
+  --color-cream-glass: rgba(17, 27, 36, 0.96);
+  --color-cream-card: #16232D;
+  --color-bg: #0B1117;
+  --color-surface: rgba(17, 27, 36, 0.96);
+  --color-border: #2A3A46;
+  --color-glass-border: #314552;
 
   /* Text/Primary: Soft Oat-Cream */
-  --color-text-primary: #EDE7E0;
-  --color-text-secondary: #C8BFB6;
-  --color-text-muted: #9E9389;
+  --color-text-primary: #F2F0EA;
+  --color-text-secondary: #C0CDD4;
+  --color-text-muted: #8FA2AE;
 
   /* Primary (Authority): Soft Oat-Cream */
-  --color-espresso: #EDE7E0;
-  --color-espresso-hover: #DFD7CE;
-  --color-espresso-light: #C8BFB6;
-  --color-navy: #EDE7E0;
-  --color-navy-light: #DFD7CE;
-  --color-navy-lighter: rgba(122, 139, 156, 0.22);
+  --color-espresso: #F2F0EA;
+  --color-espresso-hover: #FFFFFF;
+  --color-espresso-light: #C0CDD4;
+  --color-navy: #9CC7DD;
+  --color-navy-light: #B6D9E8;
+  --color-navy-lighter: #1D3542;
 
   /* Accent 1 (Blue): Muted Steel Blue */
-  --color-powder-blue: #7A8B9C;
-  --color-powder-blue-light: rgba(122, 139, 156, 0.22);
-  --color-powder-blue-hover: #8D9EAF;
+  --color-powder-blue: #8FBED3;
+  --color-powder-blue-light: #1D3542;
+  --color-powder-blue-hover: #B6D9E8;
 
   /* Accent 2 (Rose): Dusty Mauve */
-  --color-dusty-rose: #A67C84;
-  --color-dusty-rose-light: rgba(166, 124, 132, 0.22);
-  --color-dusty-rose-hover: #B58D95;
+  --color-dusty-rose: #E49A78;
+  --color-dusty-rose-light: #3A2927;
+  --color-dusty-rose-hover: #F0B49A;
+  --color-success: #65C69D;
+  --color-success-light: #173A32;
 }
 
 /* ── Base & Typography ───────────────────────────────────────────────────── */
@@ -119,8 +115,8 @@ body {
 }
 
 body {
-  background-color: transparent;
-  color: #3D2B1F;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
   font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.75;
@@ -130,124 +126,108 @@ body {
 }
 
 .dark body {
-  color: #EDE7E0;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
 }
 
 /* Headings in Muted Espresso Brown with breathable spacing */
 h1, h2, h3, h4, h5, h6 {
-  color: #3D2B1F !important;
+  color: var(--color-text-primary) !important;
   letter-spacing: -0.022em;
   line-height: 1.35;
 }
 
 .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-  color: #EDE7E0 !important;
+  color: var(--color-text-primary) !important;
 }
 
 .text-gray-900,
 .text-gray-800,
 .text-black {
-  color: #3D2B1F !important;
+  color: var(--color-text-primary) !important;
 }
 
 .dark .text-gray-900,
 .dark .text-gray-800,
 .dark .text-black {
-  color: #EDE7E0 !important;
+  color: var(--color-text-primary) !important;
 }
 
 .text-gray-700,
 .text-gray-600 {
-  color: #5C4A3E !important;
+  color: var(--color-text-secondary) !important;
 }
 
 .dark .text-gray-700,
 .dark .text-gray-600 {
-  color: #C8BFB6 !important;
+  color: var(--color-text-secondary) !important;
 }
 
 .text-gray-500,
 .text-gray-400 {
-  color: #8C7B6F !important;
+  color: var(--color-text-muted) !important;
 }
 
 .dark .text-gray-500,
 .dark .text-gray-400 {
-  color: #9E9389 !important;
+  color: var(--color-text-muted) !important;
 }
 
 /* ── Global dynamic background image ─────────────────────────────────────── */
 
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1;
-  pointer-events: none;
-  background-image: var(--bg-image);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  transform: scale(1.05);
-  animation: flowyBackground 30s infinite alternate ease-in-out;
-  /* Smooth transition for both blur and background image changes */
-  transition: filter 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-image 0.5s ease;
-  /* Dynamic blur: controlled by --current-blur CSS variable.
-     JavaScript sets this via document.documentElement.style.setProperty()
-     to implement scroll-based peeking and AI ambient intelligence blur. */
-  filter: blur(var(--current-blur));
-}
 
 /* Internal 'flowy' animation modifying only background-position */
-@keyframes flowyBackground {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 100% 50%;
-  }
-}
 
-/* Route-based blur: on non-home routes, --current-blur starts at 8px.
-   JS in RouteBlurEffect.tsx sets this on the <html> element, so both
-   CSS variable inheritance and the body::before filter pick it up. */
+/* Route-based blur state retained for the ambient interaction controls. */
 .bg-blurred {
   --current-blur: 8px;
 }
 
-/* Ensure main containers remain translucent so background image is visible */
+/* Keep route surfaces on the semantic page background. */
 #main-content {
-  background-color: transparent !important;
+  background-color: var(--color-bg) !important;
   padding-bottom: 2.5rem;
 }
 
-/* ── The 'Frosted Glass' Surface Effect ─────────────────────────────────────
-   Light mode: semi-transparent cream frosted glass (rgba(253, 251, 247, 0.9), 24px blur)
-   Dark mode: deep charcoal-brown frosted glass (rgba(26, 22, 20, 0.8), 24px blur)
-   ─────────────────────────────────────────────────────────────────────────── */
+#main-content:not(.home-page) {
+  background: radial-gradient(circle at 88% 8%, rgba(123, 169, 194, 0.14), transparent 26%),
+    radial-gradient(circle at 8% 76%, rgba(215, 125, 88, 0.09), transparent 24%),
+    linear-gradient(180deg, #F7F4EE 0%, #F0F4F4 52%, #E8F0F3 100%) !important;
+  background-attachment: fixed;
+  background-size: cover;
+  min-height: 100dvh;
+}
+
+.dark #main-content:not(.home-page) {
+  background: radial-gradient(circle at 88% 8%, rgba(123, 169, 194, 0.2), transparent 24%),
+    radial-gradient(circle at 8% 76%, rgba(215, 125, 88, 0.11), transparent 22%),
+    linear-gradient(180deg, #0B1117 0%, #101B25 52%, #0C151D 100%) !important;
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+/* ── Shared surface treatment ─────────────────────────────────────────────── */
 
 .bg-white,
 [class*="bg-white"] {
-  background-color: rgba(253, 251, 247, 0.9) !important;
-  backdrop-filter: blur(24px) !important;
-  -webkit-backdrop-filter: blur(24px) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
+  background-color: var(--color-cream-card) !important;
+  border-color: var(--color-border) !important;
 }
 
 .dark .bg-white,
 .dark [class*="bg-white"] {
-  background-color: rgba(26, 22, 20, 0.8) !important;
-  backdrop-filter: blur(24px) !important;
-  -webkit-backdrop-filter: blur(24px) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
+  background-color: color-mix(in srgb, var(--color-bg) 72%, var(--color-cream-card) 28%) !important;
+  border-color: var(--color-border) !important;
 }
 
 .dark .bg-gray-50,
 .dark [class*="bg-gray-50"] {
-  background-color: rgba(26, 22, 20, 0.6) !important;
+  background-color: var(--color-bg) !important;
+}
+
+.bg-gray-50,
+[class*="bg-gray-50"] {
+  background-color: var(--color-bg) !important;
 }
 
 /* Frosted glass borders */
@@ -255,14 +235,14 @@ body::before {
 .border-gray-100,
 .border-gray-300,
 .border-\[var\(--color-border\)\] {
-  border-color: rgba(255, 255, 255, 0.5) !important;
+  border-color: var(--color-border) !important;
 }
 
 .dark .border-gray-200,
 .dark .border-gray-100,
 .dark .border-gray-300,
 .dark .border-\[var\(--color-border\)\] {
-  border-color: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--color-border) !important;
 }
 
 /* Pillowy, breathable soft cards */
@@ -275,7 +255,7 @@ body::before {
 }
 
 .shadow-sm {
-  box-shadow: 0 4px 20px -2px rgba(61, 43, 31, 0.04), 0 2px 6px -1px rgba(61, 43, 31, 0.02) !important;
+  box-shadow: 0 8px 24px -12px rgba(22, 43, 58, 0.2) !important;
 }
 
 .dark .shadow-sm {
@@ -283,27 +263,154 @@ body::before {
 }
 
 .shadow-md {
-  box-shadow: 0 10px 25px -4px rgba(61, 43, 31, 0.07), 0 4px 10px -2px rgba(61, 43, 31, 0.03) !important;
+  box-shadow: 0 18px 40px -18px rgba(22, 43, 58, 0.28) !important;
 }
 
 .dark .shadow-md {
   box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.45), 0 4px 10px -2px rgba(0, 0, 0, 0.25) !important;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ── Branded hero and assistant composer ─────────────────────────────────── */
+.home-hero {
+  background: transparent;
+}
+
+.dark .home-hero {
+  background: transparent;
+  border-color: var(--color-border) !important;
+}
+
+.home-page {
+  background: linear-gradient(180deg, #F7F4EE 0%, #FFF9F3 48%, #ECF3F7 100%);
+}
+
+.dark .home-page {
+  background: linear-gradient(180deg, #0B1117 0%, #111C27 48%, #0B1117 100%);
+}
+
+.hero-trust-pill {
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--color-text-secondary);
+}
+
+.dark .hero-trust-pill {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: none !important;
+  ring-color: var(--color-border);
+}
+
+.hero-action-card {
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--color-text-primary);
+  backdrop-filter: blur(12px);
+}
+
+.dark .hero-action-card {
+  border-color: var(--color-border);
+  background: rgba(22, 35, 45, 0.92);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28) !important;
+}
+
+.chat-composer-shell {
+  border-color: var(--color-glass-border);
+  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  box-shadow: 0 20px 55px color-mix(in srgb, var(--color-navy) 12%, transparent);
+}
+
+.chat-composer-inner {
+  border-color: var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+}
+
+.chat-composer-action {
+  border-color: var(--color-border);
+  background: var(--color-cream-card);
+  color: var(--color-text-primary);
+}
+
+.chat-composer-action:hover {
+  background: var(--color-navy-lighter);
+}
+
+.chat-composer-send {
+  background: var(--color-navy);
+}
+
+.chat-composer-send:hover {
+  background: var(--color-navy-light);
+}
+.dark [class*="bg-[#FDFBF7]"] {
+  background-color: var(--color-cream-card) !important;
+}
+.dark [class*="bg-[#3D2B1F]"] {
+  background-color: var(--color-navy) !important;
+}
+.dark [class*="bg-[#DCAEB5]"] {
+  background-color: var(--color-dusty-rose-light) !important;
+}
+.dark [class*="border-white"] {
+  border-color: var(--color-border) !important;
+}
+.dark [class*="text-[#3D2B1F]"],
+.dark [class*="text-[#5C4A3E]"] {
+  color: var(--color-text-primary) !important;
+}
+.dark [class*="text-[#8C7B6F]"] {
+  color: var(--color-text-muted) !important;
+}
+.dark [class*="text-[#FDFBF7]"] {
+  color: #10202B !important;
+}
+
+/* ── Shared non-home atmospheric headers ──────────────────────────────────── */
+.page-hero {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 78%, transparent);
+}
+
+.page-hero-glow {
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(28px);
+}
+
+.page-hero-glow-blue {
+  background: radial-gradient(circle, rgba(123, 169, 194, 0.25) 0%, transparent 70%);
+}
+
+.page-hero-glow-warm {
+  background: radial-gradient(circle, rgba(215, 125, 88, 0.16) 0%, transparent 70%);
+}
+
+.page-hero-hint {
+  opacity: 0.62;
+}
+
+.dark .page-hero-hint {
+  opacity: 0.72;
+}
+
 /* ── Sidebar (The Frame) ─────────────────────────────────────────────────── */
 
 aside {
-  background-color: rgba(253, 251, 247, 0.9) !important;
-  backdrop-filter: blur(24px) !important;
-  -webkit-backdrop-filter: blur(24px) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.5) !important;
+  background-color: var(--color-surface) !important;
+  border-right: 1px solid var(--color-border) !important;
 }
 
 .dark aside {
-  background-color: rgba(26, 22, 20, 0.85) !important;
-  backdrop-filter: blur(24px) !important;
-  -webkit-backdrop-filter: blur(24px) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background-color: var(--color-surface) !important;
+  border-right: 1px solid var(--color-border) !important;
 }
 
 /* Sidebar navigation links */
@@ -312,28 +419,28 @@ aside nav a {
 }
 
 aside nav a:hover {
-  background-color: rgba(176, 196, 222, 0.25) !important; /* Dusty Powder Blue hover */
-  color: #3D2B1F !important;
+  background-color: var(--color-navy-lighter) !important;
+  color: var(--color-text-primary) !important;
   border-radius: 0.625rem;
 }
 
 .dark aside nav a:hover {
-  background-color: rgba(122, 139, 156, 0.22) !important; /* Muted Steel Blue hover */
-  color: #EDE7E0 !important;
+  background-color: var(--color-navy-lighter) !important;
+  color: var(--color-text-primary) !important;
 }
 
 aside nav a[aria-current="page"] {
-  background-color: rgba(176, 196, 222, 0.35) !important; /* Dusty Powder Blue active */
-  color: #3D2B1F !important;
+  background-color: var(--color-navy-lighter) !important;
+  color: var(--color-navy) !important;
   font-weight: 600 !important;
   border-radius: 0.625rem;
-  border: 1px solid rgba(176, 196, 222, 0.45) !important;
+  border: 1px solid color-mix(in srgb, var(--color-powder-blue) 45%, transparent) !important;
 }
 
 .dark aside nav a[aria-current="page"] {
-  background-color: rgba(122, 139, 156, 0.28) !important; /* Muted Steel Blue active */
-  color: #EDE7E0 !important;
-  border: 1px solid rgba(122, 139, 156, 0.4) !important;
+  background-color: var(--color-navy-lighter) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid color-mix(in srgb, var(--color-powder-blue) 40%, transparent) !important;
 }
 
 /* ── Primary Buttons (Authority) ─────────────────────────────────────────── */
@@ -342,8 +449,8 @@ aside nav a[aria-current="page"] {
 button.bg-\[var\(--color-navy\)\],
 a.bg-\[var\(--color-navy\)\],
 button[type="submit"] {
-  background-color: #3D2B1F !important;
-  color: #FDFBF7 !important;
+  background-color: var(--color-navy) !important;
+  color: var(--color-cream-card) !important;
   border-radius: 0.75rem;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -352,16 +459,16 @@ button[type="submit"] {
 .dark button.bg-\[var\(--color-navy\)\],
 .dark a.bg-\[var\(--color-navy\)\],
 .dark button[type="submit"] {
-  background-color: #EDE7E0 !important;
-  color: #1A1614 !important;
+  background-color: var(--color-navy) !important;
+  color: #10202B !important;
 }
 
 .bg-navy:hover,
 button.bg-\[var\(--color-navy\)\]:hover,
 a.bg-\[var\(--color-navy\)\]:hover,
 button[type="submit"]:hover {
-  background-color: #4E382A !important;
-  box-shadow: 0 6px 20px rgba(61, 43, 31, 0.16) !important;
+  background-color: var(--color-navy-light) !important;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--color-navy) 22%, transparent) !important;
   transform: translateY(-1px);
 }
 
@@ -369,7 +476,7 @@ button[type="submit"]:hover {
 .dark button.bg-\[var\(--color-navy\)\]:hover,
 .dark a.bg-\[var\(--color-navy\)\]:hover,
 .dark button[type="submit"]:hover {
-  background-color: #DFD7CE !important;
+  background-color: var(--color-navy-light) !important;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35) !important;
   transform: translateY(-1px);
 }
@@ -527,35 +634,43 @@ article.group.rounded-xl:hover {
 input,
 select,
 textarea {
-  background-color: rgba(253, 251, 247, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
-  color: #3D2B1F !important;
-  border-radius: 0.625rem !important;
-  backdrop-filter: blur(12px) !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-width: 0 !important;
+  border-color: transparent !important;
+  color: inherit !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
 }
 
 .dark input,
 .dark select,
 .dark textarea {
-  background-color: rgba(26, 22, 20, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  color: #EDE7E0 !important;
-  backdrop-filter: blur(12px) !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-width: 0 !important;
+  border-color: transparent !important;
+  color: inherit !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #B0C4DE !important;
-  box-shadow: 0 0 0 3px rgba(176, 196, 222, 0.25) !important;
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
   outline: none !important;
 }
 
 .dark input:focus,
 .dark select:focus,
 .dark textarea:focus {
-  border-color: #7A8B9C !important;
-  box-shadow: 0 0 0 3px rgba(122, 139, 156, 0.25) !important;
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
   outline: none !important;
 }
 

@@ -5,8 +5,6 @@
  * from this provider, so the conversation survives navigating between tabs —
  * ask something on /chat, switch to /wizard, and the assistant is still there
  * with the same history.
- *
- * Networking behaviour is unchanged: same mock/real switch, same /chat endpoint.
  */
 
 "use client";
@@ -23,6 +21,8 @@ import type { Message } from "@/lib/types";
 import { INITIAL_MESSAGES, mockSendMessage } from "@/lib/mock";
 import { getMockChatNavigation } from "@/lib/chat-navigation";
 import { consumeRecentChat, RECENT_CHAT_EVENT } from "@/lib/recents";
+import { hasSupabaseConfig, supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface ChatContextValue {
   messages: Message[];
@@ -32,8 +32,8 @@ interface ChatContextValue {
   error: string | null;
   clearError: () => void;
   sendMessage: (text: string) => Promise<void>;
+  resetChatHistory: () => Promise<void>;
   retryLast: () => void;
-  /** True once the user has exchanged at least one message. */
   hasConversation: boolean;
 }
 
@@ -47,12 +47,70 @@ function now(): string {
   return new Date().toISOString();
 }
 
+async function persistMessageToSupabase(
+  userId: string,
+  role: "user" | "assistant",
+  content: string,
+  sources: any[] = [],
+  sessionId: string | null = null
+) {
+  if (!supabase || !hasSupabaseConfig) return;
+
+  const payload = {
+    user_id: userId,
+    role,
+    content,
+    sources: sources ?? [],
+    session_id: sessionId,
+    created_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase.from("chat_messages").insert(payload);
+  if (error) console.error("Supabase chat insert failed:", error.message);
+}
+
+async function loadChatHistoryFromSupabase(userId: string): Promise<Message[]> {
+  if (!supabase || !hasSupabaseConfig) return INITIAL_MESSAGES;
+
+  const { data, error } = await supabase
+    .from("chat_messages")
+    .select("id, role, content, sources, created_at, session_id")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true })
+    .limit(200);
+
+  if (error || !data) return INITIAL_MESSAGES;
+
+  return data.map((row: any) => ({
+    id: String(row.id),
+    role: row.role,
+    content: row.content,
+    sources: Array.isArray(row.sources) ? row.sources : [],
+    timestamp: row.created_at ?? now(),
+  }));
+}
+
 export function ChatProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const hydrate = async () => {
+      if (!user?.id) {
+        setMessages(INITIAL_MESSAGES);
+        return;
+      }
+
+      const history = await loadChatHistoryFromSupabase(user.id);
+      setMessages(history.length ? history : INITIAL_MESSAGES);
+    };
+
+    void hydrate();
+  }, [user?.id]);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -62,14 +120,19 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       setInput("");
 
-      // Optimistically add user message
       const userMsg: Message = {
         id: generateId(),
         role: "user",
         content: trimmed,
         timestamp: now(),
       };
+
       setMessages((prev) => [...prev, userMsg]);
+
+      if (user?.id && supabase) {
+        void persistMessageToSupabase(user.id, "user", trimmed, [], sessionId);
+      }
+
       setIsLoading(true);
 
       try {
@@ -120,20 +183,27 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         };
 
         setMessages((prev) => [...prev, assistantMsg]);
+
+        if (user?.id && supabase) {
+          void persistMessageToSupabase(
+            user.id,
+            "assistant",
+            response.answer,
+            response.sources ?? [],
+            response.session_id ?? sessionId
+          );
+        }
       } catch (err) {
         const msg =
           err instanceof Error ? err.message : "An unexpected error occurred.";
         setError(msg);
-        // Don't add a fake error message — show a retry banner instead
       } finally {
         setIsLoading(false);
       }
     },
-    [isLoading, sessionId]
+    [isLoading, sessionId, user?.id]
   );
 
-  // Recents deep-link: a chat picked from the sidebar is replayed here, so it
-  // works from any route now — not only while /chat is mounted.
   useEffect(() => {
     const loadRecentChat = () => {
       const prompt = consumeRecentChat();
@@ -150,6 +220,28 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     if (last) void sendMessage(last.content);
   }, [messages, sendMessage]);
 
+  const resetChatHistory = useCallback(async () => {
+    if (isLoading) return;
+
+    setError(null);
+
+    if (user?.id && supabase && hasSupabaseConfig) {
+      const { error: deleteError } = await supabase
+        .from("chat_messages")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (deleteError) {
+        setError(`Could not reset chat history: ${deleteError.message}`);
+        return;
+      }
+    }
+
+    setMessages(INITIAL_MESSAGES);
+    setSessionId(null);
+    setInput("");
+  }, [isLoading, user?.id]);
+
   const value = useMemo<ChatContextValue>(
     () => ({
       messages,
@@ -159,10 +251,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       error,
       clearError: () => setError(null),
       sendMessage,
+      resetChatHistory,
       retryLast,
       hasConversation: messages.length > 1,
     }),
-    [error, input, isLoading, messages, retryLast, sendMessage]
+    [error, input, isLoading, messages, resetChatHistory, retryLast, sendMessage]
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

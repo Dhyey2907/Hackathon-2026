@@ -17,7 +17,12 @@ const NAV_LINKS = [
   { href: "/documents", label: "Documents", icon: "documents" },
 ] as const;
 
-type NavigationProps = { collapsed: boolean; onToggle: () => void };
+type NavigationProps = {
+  collapsed: boolean;
+  onToggle: () => void;
+  mobileOpen: boolean;
+  onMobileClose: () => void;
+};
 type IconName = (typeof NAV_LINKS)[number]["icon"];
 
 function NavIcon({ name }: { name: IconName }) {
@@ -58,7 +63,7 @@ function ExpiryDot({ expiryDate }: { expiryDate?: string }) {
   return null;
 }
 
-export default function Navigation({ collapsed, onToggle }: NavigationProps) {
+export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileClose }: NavigationProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -71,11 +76,20 @@ export default function Navigation({ collapsed, onToggle }: NavigationProps) {
   }
 
   return (
-    <aside
-      className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm transition-[width] duration-200 ${
-        collapsed ? "w-[72px]" : "w-64"
-      }`}
-    >
+    <>
+      {mobileOpen && (
+        <button
+          type="button"
+          onClick={onMobileClose}
+          className="fixed inset-0 z-40 bg-[#071018]/45 backdrop-blur-sm lg:hidden"
+          aria-label="Close navigation"
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm transition-[transform,width] duration-200 lg:z-40 ${
+          collapsed ? "w-[72px]" : "w-64"
+        } ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+      >
       {/* Logo / brand */}
       <div
         className={`flex h-20 shrink-0 items-center border-b border-[var(--color-border)] ${
@@ -88,7 +102,7 @@ export default function Navigation({ collapsed, onToggle }: NavigationProps) {
           aria-label="BIS Sahayak home"
         >
           <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-navy)] text-white"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--color-navy)] text-white shadow-sm"
             aria-hidden="true"
           >
             <span className="text-[10px] font-bold tracking-tight">BIS</span>
@@ -113,6 +127,16 @@ export default function Navigation({ collapsed, onToggle }: NavigationProps) {
             </svg>
           </button>
         )}
+        <button
+          type="button"
+          onClick={onMobileClose}
+          className="rounded-md p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-navy-lighter)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)] lg:hidden"
+          aria-label="Close navigation"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+            <path strokeLinecap="round" d="m6 6 12 12M18 6 6 18" />
+          </svg>
+        </button>
       </div>
 
       {/* Primary nav + recents */}
@@ -126,7 +150,8 @@ export default function Navigation({ collapsed, onToggle }: NavigationProps) {
                   href={link.href}
                   aria-current={isActive ? "page" : undefined}
                   title={collapsed ? link.label : undefined}
-                  className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(176,196,222,0.45)] focus:outline-none focus:ring-2 focus:ring-[#B0C4DE] ${
+                  onClick={onMobileClose}
+                  className={`group relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:shadow-[0_4px_16px_rgba(123,169,194,0.25)] focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)] ${
                     collapsed ? "justify-center" : ""
                   } ${
                     isActive
@@ -137,7 +162,7 @@ export default function Navigation({ collapsed, onToggle }: NavigationProps) {
                   {/* Active vertical espresso-brown bar indicator */}
                   {isActive && (
                     <span
-                      className="absolute -left-3 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-[#3D2B1F]"
+                      className="absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-[var(--color-dusty-rose)]"
                       aria-hidden="true"
                     />
                   )}
@@ -300,6 +325,7 @@ export default function Navigation({ collapsed, onToggle }: NavigationProps) {
           </button>
         )}
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

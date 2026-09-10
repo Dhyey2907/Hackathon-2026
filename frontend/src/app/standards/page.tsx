@@ -32,7 +32,7 @@ export default function StandardsPage() {
         endBlur={0}
       />
 
-      <div className="mx-auto w-full max-w-5xl px-4 pb-8 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto -mt-8 w-full max-w-5xl px-4 pb-8 sm:px-6 lg:px-8">
         <StandardsBrowser />
       </div>
     </main>

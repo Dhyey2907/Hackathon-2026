@@ -150,7 +150,7 @@ function RadialScore({ score }: { score: number }) {
           cy={50}
           r={radius}
           fill="none"
-          stroke="rgba(255,255,255,0.15)"
+          stroke="var(--color-border)"
           strokeWidth={10}
         />
         {/* Progress */}
@@ -167,14 +167,14 @@ function RadialScore({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-white leading-none">{score}</span>
-        <span className="text-[10px] font-semibold text-white/60 uppercase tracking-wide">/ 100</span>
+        <span className="text-2xl font-bold text-[var(--color-text-primary)] leading-none">{score}</span>
+        <span className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">/ 100</span>
       </div>
     </div>
   );
 }
 
-// ─── Score Card (dark, large) ─────────────────────────────────────────────────
+// ─── Score Card ──────────────────────────────────────────────────────────────
 
 function ScoreCard({
   score,
@@ -198,25 +198,24 @@ function ScoreCard({
     <Link
       href="/documents"
       id="dashboard-score-card"
-      className="group relative flex flex-col items-center justify-between gap-4 rounded-xl p-6 text-center shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[var(--color-navy)] sm:col-span-2 lg:col-span-1"
-      style={{ background: "var(--color-navy)" }}
+      className="group relative flex flex-col items-center justify-between gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-cream-card)] p-6 text-center shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)] focus:ring-offset-2 sm:col-span-2 lg:col-span-1"
       aria-label={`Compliance Score: ${score} out of 100. ${label}. ${criticalPatches} critical patches needed.`}
     >
       <div className="flex flex-col items-center gap-3 w-full">
-        <p className="text-xs font-semibold uppercase tracking-widest text-white/50">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">
           Compliance Score
         </p>
         <RadialScore score={score} />
         <div>
-          <p className="text-sm font-semibold text-white">{label}</p>
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">{label}</p>
           {criticalPatches > 0 && (
-            <p className="mt-1 text-xs text-white/60">
+            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
               {criticalPatches} critical patch{criticalPatches !== 1 ? "es" : ""} needed
             </p>
           )}
         </div>
       </div>
-      <span className="text-xs font-semibold text-white/40 group-hover:text-white/60 transition-colors">
+      <span className="text-xs font-semibold text-[var(--color-text-muted)] group-hover:text-[var(--color-text-primary)] transition-colors">
         View full overview →
       </span>
     </Link>
