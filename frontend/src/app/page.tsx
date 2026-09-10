@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ComplianceDashboard from "@/components/dashboard/ComplianceDashboard";
 import ChatInput from "@/components/chat/ChatInput";
+import Reveal from "@/components/motion/Reveal";
 import { useChat } from "@/components/chat/ChatProvider";
 
 const FEATURES = [
@@ -139,11 +140,11 @@ export default function HomePage() {
 
         {/* Feature grid */}
         <div className="mt-10">
-          <h2 className="mb-5 text-lg font-semibold text-gray-900">Tools &amp; Features</h2>
+          <Reveal as="h2" className="mb-5 text-lg font-semibold text-gray-900">Tools &amp; Features</Reveal>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((feature) => (
+            {FEATURES.map((feature, index) => (
+              <Reveal key={feature.href} delayIndex={index} className="h-full [&>*]:h-full">
               <Link
-                key={feature.href}
                 href={feature.href}
                 className="flex flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)] focus:ring-offset-2"
               >
@@ -153,6 +154,7 @@ export default function HomePage() {
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
                 <p className="text-sm text-gray-600 flex-1">{feature.description}</p>
               </Link>
+              </Reveal>
             ))}
           </div>
         </div>

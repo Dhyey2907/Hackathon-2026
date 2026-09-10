@@ -58,6 +58,10 @@ export interface Message {
   intent?: Intent;
   /** Round-trip latency in ms (assistant only) */
   latency_ms?: number;
+  /** Tool output behind the answer: standards, labs. Empty for prose answers. */
+  structured?: Record<string, unknown>;
+  /** Backend health notes, e.g. "answer cites no sources despite evidence". */
+  warnings?: string[];
   /** ISO timestamp */
   timestamp: string;
   navigation?: ChatNavigation;

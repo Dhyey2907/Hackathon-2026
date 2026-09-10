@@ -76,7 +76,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         onMobileClose={() => setMobileNavOpen(false)}
       />
       <div
-        className={`min-w-0 flex-1 transition-[margin] duration-200 ${collapsed ? "lg:ml-[72px]" : "lg:ml-64"} ${assistantDocked ? "lg:mr-[380px]" : ""}`}
+        // A flex column, which is what the routes already assume: nearly every
+        // page renders `<main class="flex-1 overflow-y-auto">`. Without it the
+        // mobile top bar stacks *above* a full-height child instead of sharing
+        // the height with it, pushing the chat composer below the fold.
+        className={`flex min-h-0 min-w-0 flex-1 flex-col transition-[margin] duration-200 ${collapsed ? "lg:ml-[72px]" : "lg:ml-64"} ${assistantDocked ? "lg:mr-[380px]" : ""}`}
       >
         <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 backdrop-blur lg:hidden">
           <Link href="/" className="flex items-center gap-2.5" aria-label="BIS Sahayak home">

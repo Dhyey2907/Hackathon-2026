@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import StackedCards from "@/components/StackedCards";
+import Reveal from "@/components/motion/Reveal";
 
 type AmendmentItem = {
   id: string;
@@ -69,7 +70,7 @@ export default function AmendmentsPage() {
       <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
 
         {/* Header */}
-        <div className="mb-7">
+        <Reveal className="mb-7">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-navy)] hover:underline"
@@ -95,18 +96,20 @@ export default function AmendmentsPage() {
               {newCount} new amendment{newCount !== 1 ? "s" : ""} this quarter
             </div>
           )}
-        </div>
+        </Reveal>
 
         {/* Stack — newest amendment in front, the rest visibly behind it */}
+        <Reveal delayIndex={1}>
         <StackedCards
           items={AMENDMENTS}
           getKey={(item) => item.id}
           label="Recent amendments"
           renderCard={(item, isFront) => <AmendmentCard item={item} isFront={isFront} />}
         />
+        </Reveal>
 
         {/* Footer */}
-        <div className="mt-8 rounded-xl border border-[var(--color-border)] bg-white p-5">
+        <Reveal delayIndex={2} className="mt-8 rounded-xl border border-[var(--color-border)] bg-white p-5">
           <p className="text-sm font-semibold text-gray-900">Need to look up a specific standard?</p>
           <p className="mt-1 text-sm text-gray-600">
             Search the full BIS Standards catalogue by IS code, title, or product category to find current
@@ -118,7 +121,7 @@ export default function AmendmentsPage() {
           >
             Open Standards Lookup
           </Link>
-        </div>
+        </Reveal>
       </div>
     </main>
   );
