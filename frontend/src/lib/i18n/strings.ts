@@ -120,6 +120,32 @@ const en: Dictionary = {
   "labs.validTo": "Valid to",
   "labs.lapsed": "Lapsed",
   "labs.locationUnknown": "Location not published",
+
+  // BIS updates
+  "nav.updates": "BIS Updates",
+  "updates.eyebrow": "Bureau of Indian Standards",
+  "updates.title": "BIS Updates",
+  "updates.subtitle":
+    "Amendments, quality control orders, licences and announcements, newest first, grouped by the week BIS published them.",
+  "updates.sourceNote": "Every item links to the notice on",
+  "updates.loading": "Loading updates…",
+  "updates.unreachable": "Could not load BIS updates just now.",
+  "updates.filter": "Filter by category",
+  "updates.all": "All",
+  "updates.thisWeek": "This week",
+  "updates.lastWeek": "Last week",
+  "updates.weekOf": "Week of",
+  "updates.undated": "Undated",
+  "updates.noneTitle": "Nothing in this category",
+  "updates.noneBody": "Try another category, or view all updates.",
+  "updates.category.amendment": "Amendment",
+  "updates.category.qco": "Quality Control Order",
+  "updates.category.hallmarking": "Hallmarking",
+  "updates.category.licence": "Licence",
+  "updates.category.standard": "Standard",
+  "updates.category.recruitment": "Recruitment",
+  "updates.category.event": "Event",
+  "updates.category.news": "News",
 };
 
 const hi: Dictionary = {
@@ -214,6 +240,32 @@ const hi: Dictionary = {
   "labs.validTo": "मान्य",
   "labs.lapsed": "समाप्त",
   "labs.locationUnknown": "स्थान प्रकाशित नहीं",
+
+  // BIS updates
+  "nav.updates": "BIS अपडेट",
+  "updates.eyebrow": "भारतीय मानक ब्यूरो",
+  "updates.title": "BIS अपडेट",
+  "updates.subtitle":
+    "संशोधन, गुणवत्ता नियंत्रण आदेश, लाइसेंस और घोषणाएँ — नवीनतम पहले, BIS के प्रकाशन सप्ताह के अनुसार।",
+  "updates.sourceNote": "प्रत्येक प्रविष्टि मूल सूचना से जुड़ी है —",
+  "updates.loading": "अपडेट लोड हो रहे हैं…",
+  "updates.unreachable": "BIS अपडेट अभी लोड नहीं हो सके।",
+  "updates.filter": "श्रेणी से छानें",
+  "updates.all": "सभी",
+  "updates.thisWeek": "इस सप्ताह",
+  "updates.lastWeek": "पिछले सप्ताह",
+  "updates.weekOf": "सप्ताह",
+  "updates.undated": "दिनांक रहित",
+  "updates.noneTitle": "इस श्रेणी में कुछ नहीं",
+  "updates.noneBody": "कोई दूसरी श्रेणी चुनें, या सभी अपडेट देखें।",
+  "updates.category.amendment": "संशोधन",
+  "updates.category.qco": "गुणवत्ता नियंत्रण आदेश",
+  "updates.category.hallmarking": "हॉलमार्किंग",
+  "updates.category.licence": "लाइसेंस",
+  "updates.category.standard": "मानक",
+  "updates.category.recruitment": "भर्ती",
+  "updates.category.event": "आयोजन",
+  "updates.category.news": "समाचार",
 };
 
 const DICTIONARIES: Record<Language, Dictionary> = { en, hi };

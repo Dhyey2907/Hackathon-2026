@@ -22,6 +22,7 @@ import type {
   Standard,
   StandardsSearchResponse,
   StreamEvent,
+  UpdatesResponse,
 } from "./types";
 
 export const API_URL =
@@ -196,6 +197,18 @@ export function findLabs(
   // beats a round trip per keystroke.
   params.set("limit", String(opts.limit ?? 1000));
   return request<LabsResponse>(`/labs?${params}`);
+}
+
+// ------------------------------------------------------------------ updates
+
+export function fetchUpdates(
+  opts: { category?: string; weeks?: number; limit?: number } = {},
+): Promise<UpdatesResponse> {
+  const params = new URLSearchParams();
+  if (opts.category) params.set("category", opts.category);
+  if (opts.weeks) params.set("weeks", String(opts.weeks));
+  params.set("limit", String(opts.limit ?? 200));
+  return request<UpdatesResponse>(`/updates?${params}`);
 }
 
 // ---------------------------------------------------------------- translate

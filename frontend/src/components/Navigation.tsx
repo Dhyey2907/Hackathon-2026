@@ -14,6 +14,7 @@ const NAV_LINKS = [
   { href: "/chat", labelKey: "nav.chat", icon: "chat" },
   { href: "/wizard", labelKey: "nav.wizard", icon: "wizard" },
   { href: "/standards", labelKey: "nav.standards", icon: "standards" },
+  { href: "/updates", labelKey: "nav.updates", icon: "standards" },
   { href: "/labs", labelKey: "nav.labs", icon: "labs" },
   { href: "/verify", labelKey: "nav.verify", icon: "verify" },
   { href: "/documents", labelKey: "nav.documents", icon: "documents" },

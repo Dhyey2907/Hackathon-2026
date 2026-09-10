@@ -423,7 +423,7 @@ export default function ComplianceDashboard() {
         <Reveal delayIndex={4} className="h-full [&>*]:h-full">
           <StatCard
             id="dashboard-amendments-card"
-            href="/amendments"
+            href="/updates"
             label="New Amendments"
             value={AMENDMENTS.length}
             valueColor="navy"
