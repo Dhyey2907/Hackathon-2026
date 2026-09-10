@@ -4,7 +4,7 @@ An AI assistant that answers questions about **Indian Standards and BIS services
 
 Built for Smart India Hackathon problem statement **26107** (Bureau of Indian Standards).
 
-> **Status: backend working end to end.** 6,209 standards and 220 document chunks are indexed in Supabase with hybrid dense + lexical search. The intent router, retrieval tools, chat API and citation guardrails all run against live data. A frontend is in progress separately.
+> **Status: backend working end to end.** 6,209 standards and 790 document chunks are indexed in Supabase with hybrid dense + lexical search. The intent router, retrieval tools, chat API and citation guardrails all run against live data. A frontend is in progress separately.
 
 ---
 
@@ -147,6 +147,10 @@ python -m bis.ingest.index_supabase --upload --embed
 
 # 3. parse, upload and embed the FaQs documents
 python -m bis.ingest.index_supabase --chunks
+
+# 4. fetch, parse and upload the public hallmarking corpus
+python -m bis.ingest.hallmarking --upload
+python -m bis.ingest.index_supabase --embed
 ```
 
 Both embedding steps resume: they select rows where `embedding IS NULL`, so an
@@ -232,8 +236,9 @@ Two files carry most of the design weight:
 - [x] Catalogue indexed — 6,209 standards embedded, hybrid search live
 - [x] Intent router, tools, cited answers, chat + streaming endpoints
 - [x] Scheme / QCO / FAQ document ingestion — 220 chunks with clause locators
-- [ ] Hallmarking and HUID documents — the clearest corpus gap, and the reason
-      hallmarking questions currently abstain
+- [x] Hallmarking and HUID documents — 570 chunks from 26 public BIS sources:
+      the FAQs, the 2018 Regulations, the mandatory-hallmarking order and its
+      amendment chain, and the phase-wise district list
 - [ ] Consumer-complaint and testing-laboratory data
 - [ ] Evaluation harness — recall@k, citation precision, refusal rate
 - [ ] Frontend (in progress separately)
