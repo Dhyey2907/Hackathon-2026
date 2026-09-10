@@ -8,13 +8,27 @@
 import { useRef, useEffect, KeyboardEvent, ChangeEvent } from "react";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 
+/** A document waiting to go with the next message. */
+export interface ComposerAttachment {
+  name: string;
+  status: "reading" | "ready" | "error";
+  message?: string;
+  truncated?: boolean;
+}
+
 interface ChatInputProps {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
   disabled?: boolean;
   placeholder?: string;
+  attachment?: ComposerAttachment | null;
+  /** Only where attaching is supported - the paperclip is not shown otherwise. */
+  onAttach?: (file: File) => void;
+  onRemoveAttachment?: () => void;
 }
+
+const ACCEPT = ".pdf,.docx,.txt,.md,.csv";
 
 export default function ChatInput({
   value,
@@ -24,9 +38,21 @@ export default function ChatInput({
   // Resolved from the dictionary when the caller does not override it, so
   // the composer follows the interface language.
   placeholder,
+  attachment = null,
+  onAttach,
+  onRemoveAttachment,
 }: ChatInputProps) {
   const { t } = useLanguage();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // A ready document can be sent without typing: the window supplies a
+  // default question. Nothing can be sent while it is still being read.
+  const attachmentReady = attachment?.status === "ready";
+  const canSend =
+    !disabled &&
+    attachment?.status !== "reading" &&
+    (value.trim().length > 0 || attachmentReady);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -38,7 +64,7 @@ export default function ChatInput({
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (!disabled && value.trim()) {
+      if (canSend) {
         onSend();
       }
     }
@@ -48,20 +74,83 @@ export default function ChatInput({
     onChange(e.target.value);
   };
 
-  const canSend = !disabled && value.trim().length > 0;
 
   return (
     <div className="px-3 pb-4 sm:px-4">
       <div className="chat-composer-shell mx-auto max-w-2xl rounded-[20px] border p-3">
         <div className="chat-composer-inner rounded-[12px] border p-1.5">
+          {attachment && (
+            <div className="mb-1.5 px-1">
+              <div className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-xs">
+                <PaperclipIcon />
+                <span className="min-w-0 flex-1 truncate font-medium text-[var(--color-text-primary)]">
+                  {attachment.name}
+                </span>
+                <span
+                  className={`shrink-0 font-semibold ${
+                    attachment.status === "ready"
+                      ? "text-emerald-600"
+                      : attachment.status === "error"
+                      ? "text-amber-600"
+                      : "text-[var(--color-text-muted)]"
+                  }`}
+                >
+                  {attachment.status === "reading"
+                    ? t("attach.reading")
+                    : attachment.status === "ready"
+                    ? t("attach.ready")
+                    : t("attach.failed")}
+                </span>
+                {onRemoveAttachment && (
+                  <button
+                    type="button"
+                    onClick={onRemoveAttachment}
+                    aria-label={t("attach.remove")}
+                    className="shrink-0 rounded px-1 text-[var(--color-text-muted)] transition hover:text-[var(--color-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-powder-blue)]"
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+              {attachment.status === "error" && attachment.message && (
+                <p className="mt-1 text-[11px] leading-relaxed text-amber-700">{attachment.message}</p>
+              )}
+              {attachmentReady && (
+                <p className="mt-1 text-[11px] leading-relaxed text-[var(--color-text-muted)]">
+                  {t("attach.note")}
+                  {attachment.truncated ? ` ${t("attach.truncated")}` : ""}
+                </p>
+              )}
+            </div>
+          )}
           <div className="flex items-end gap-2">
-            <button
-              type="button"
-              className="chat-composer-action flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition"
-              aria-label="Attach file"
-            >
-              <PaperclipIcon />
-            </button>
+            {onAttach && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={disabled}
+                  className="chat-composer-action flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition disabled:opacity-50"
+                  aria-label={t("attach.button")}
+                  title={t("attach.button")}
+                >
+                  <PaperclipIcon />
+                </button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept={ACCEPT}
+                  className="sr-only"
+                  tabIndex={-1}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    // Cleared so choosing the same file again still fires.
+                    event.target.value = "";
+                    if (file) onAttach(file);
+                  }}
+                />
+              </>
+            )}
 
             <textarea
               ref={textareaRef}
@@ -77,14 +166,6 @@ export default function ChatInput({
               className="flex-1 resize-none bg-transparent px-2 py-1 text-sm leading-4 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
               style={{ minHeight: "32px", maxHeight: "120px" }}
             />
-
-            <button
-              type="button"
-              className="chat-composer-action flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition"
-              aria-label="Use voice input"
-            >
-              <MicIcon />
-            </button>
 
             <button
               type="button"
@@ -140,24 +221,4 @@ function PaperclipIcon() {
   );
 }
 
-function MicIcon() {
-  return (
-    <svg
-      width="15"
-      height="15"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="9" y="2" width="6" height="11" rx="3" />
-      <path d="M5 11a7 7 0 0 0 14 0" />
-      <path d="M12 18v4" />
-      <path d="M8 22h8" />
-    </svg>
-  );
-}
 

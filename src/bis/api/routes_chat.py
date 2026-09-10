@@ -20,6 +20,13 @@ log = logging.getLogger(__name__)
 router = APIRouter(tags=["chat"])
 
 
+class AttachmentIn(BaseModel):
+    """Text read from a document the user attached, via POST /extract."""
+
+    name: str = Field(min_length=1, max_length=200)
+    text: str = Field(min_length=1, max_length=20000)
+
+
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
     session_id: str | None = None
@@ -27,6 +34,9 @@ class ChatRequest(BaseModel):
     # What the user works with, from POST /context. Shapes how the question is
     # read; never treated as evidence for a factual claim.
     user_context: str | None = Field(default=None, max_length=500)
+    # A document the user attached. Read by the assistant as the user's own
+    # material; never cited as a source and never cached against.
+    attachment: AttachmentIn | None = None
 
 
 class ChatResponse(BaseModel):
@@ -43,7 +53,14 @@ class ChatResponse(BaseModel):
 @router.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
     """Answer a question in one response. Fallback when SSE is unavailable."""
-    result = answer_mod.answer(request.message, user_context=request.user_context)
+    attachment = (
+        answer_mod.Attachment(name=request.attachment.name, text=request.attachment.text)
+        if request.attachment
+        else None
+    )
+    result = answer_mod.answer(
+        request.message, user_context=request.user_context, attachment=attachment
+    )
     return ChatResponse(
         answer=result.text,
         sources=result.sources,

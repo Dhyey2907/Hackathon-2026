@@ -352,6 +352,14 @@ export default function MessageBubble({ message, autoTranslate = false }: Messag
           {/* Matches the assistant bubble's size, so the two sides of the
               conversation read as one exchange rather than two typefaces. */}
           <div className="rounded-2xl rounded-tr-sm bg-navy px-5 py-3.5 text-[15px] text-white shadow-sm">
+            {message.attachmentName && (
+              <p className="mb-1.5 inline-flex max-w-full items-center gap-1.5 rounded-md bg-white/15 px-2 py-0.5 text-[11px] font-medium">
+                <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                </svg>
+                <span className="truncate">{message.attachmentName}</span>
+              </p>
+            )}
             <p className="leading-relaxed whitespace-pre-wrap">{message.content}</p>
           </div>
           <p className="mt-1 text-right text-[11px] text-gray-400">{time}</p>

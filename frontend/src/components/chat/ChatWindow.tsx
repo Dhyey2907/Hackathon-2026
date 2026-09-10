@@ -26,7 +26,9 @@ import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
 import ChatOpeningState from "./ChatOpeningState";
 import FollowUpSuggestions from "./FollowUpSuggestions";
-import ChatInput from "./ChatInput";
+import ChatInput, { type ComposerAttachment } from "./ChatInput";
+import { extractDocument } from "@/lib/api";
+import { useDocuments } from "@/components/documents/DocumentProvider";
 import ChatContextPanel from "./ChatContextPanel";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 
@@ -43,6 +45,9 @@ const BLUR_ANSWERED = 0;
 
 /** Breathing room above the answer the pill jumps to. */
 const TOP_GUTTER_PX = 12;
+
+/** Matches the backend's limit, so an oversized file fails before upload. */
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
 // ---------------------------------------------------------------------------
 // Example questions (shown on empty state, always 4-5 per spec)
@@ -73,7 +78,55 @@ export default function ChatWindow() {
   } = useChat();
 
   const { t } = useLanguage();
+  const { addDocument } = useDocuments();
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // A document waiting to go with the next message, and its extracted text.
+  const [attachment, setAttachment] = useState<(ComposerAttachment & { text?: string }) | null>(null);
+  // Bumped on every attach and removal, so a slow read that finishes after the
+  // user removed the file - or picked another - cannot bring it back.
+  const attachToken = useRef(0);
+
+  async function attach(file: File) {
+    const token = ++attachToken.current;
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      setAttachment({ name: file.name, status: "error", message: t("attach.tooLarge") });
+      return;
+    }
+    setAttachment({ name: file.name, status: "reading" });
+    // Kept in the document vault as well, so it can be found after the chat
+    // has moved on.
+    addDocument(file, "Other");
+    try {
+      const result = await extractDocument(file);
+      if (token !== attachToken.current) return;
+      setAttachment(
+        result.readable
+          ? { name: file.name, status: "ready", text: result.text, truncated: result.truncated }
+          : { name: file.name, status: "error", message: result.message ?? t("attach.failed") }
+      );
+    } catch {
+      if (token === attachToken.current) {
+        setAttachment({ name: file.name, status: "error", message: t("attach.failed") });
+      }
+    }
+  }
+
+  function removeAttachment() {
+    attachToken.current += 1;
+    setAttachment(null);
+  }
+
+  function send() {
+    const ready =
+      attachment?.status === "ready" && attachment.text
+        ? { name: attachment.name, text: attachment.text }
+        : undefined;
+    const question = input.trim() || (ready ? t("attach.defaultQuestion") : "");
+    if (!question) return;
+    void sendMessage(question, ready);
+    removeAttachment();
+  }
   const messageListRef = useRef<HTMLDivElement>(null);
   const outerRef = useRef<HTMLDivElement>(null);
   const listLabelId = useId();
@@ -385,8 +438,11 @@ export default function ChatWindow() {
         <ChatInput
           value={input}
           onChange={setInput}
-          onSend={() => sendMessage(input)}
+          onSend={send}
           disabled={isLoading}
+          attachment={attachment}
+          onAttach={(file) => void attach(file)}
+          onRemoveAttachment={removeAttachment}
         />
       </div>
     </div>
