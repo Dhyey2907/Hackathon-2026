@@ -78,7 +78,7 @@ export const INITIAL_MESSAGES: Message[] = [
       "Namaste! I am **BIS Sahayak**, an AI assistant for the Bureau of Indian Standards.\n\nI can help you with:\n- Which Indian Standards apply to your product\n- Certification schemes and licensing requirements\n- Hallmarking rules (HUID, gold purity, registration)\n- Finding BIS-recognised testing laboratories\n- Consumer rights and complaints\n\nWhat would you like to know?",
     sources: [],
     abstained: false,
-    intent: "unknown",
+    intent: "smalltalk",
     timestamp: new Date(Date.now() - 60_000).toISOString(),
   },
 ];
@@ -109,7 +109,7 @@ function pickResponse(message: string): CannedResponse {
 
   if (lc.includes("hallmark") || lc.includes("huid") || lc.includes("gold")) {
     return {
-      intent: "passage_search",
+      intent: "certification",
       abstained: false,
       sources: SOURCE_HALLMARK,
       answer:
@@ -129,7 +129,7 @@ function pickResponse(message: string): CannedResponse {
 
   if (lc.includes("lab") || lc.includes("test") || lc.includes("gujarat")) {
     return {
-      intent: "find_labs",
+      intent: "labs",
       abstained: false,
       sources: [],
       answer:
@@ -145,7 +145,7 @@ function pickResponse(message: string): CannedResponse {
     lc.includes("stock")
   ) {
     return {
-      intent: "unknown",
+      intent: "smalltalk",
       abstained: true,
       sources: [],
       answer:
@@ -155,7 +155,7 @@ function pickResponse(message: string): CannedResponse {
 
   // Generic fallback
   return {
-    intent: "passage_search",
+    intent: "smalltalk",
     abstained: false,
     sources: [],
     answer:

@@ -23,6 +23,7 @@ def search_standards(
             "is_number": h.payload.get("is_number"),
             "title": h.payload.get("doc_title"),
             "committee": h.payload.get("committee"),
+            "division": h.payload.get("division"),
             "year": h.payload.get("year"),
             "source_url": h.payload.get("source_url"),
             "score": h.score,

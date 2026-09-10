@@ -35,9 +35,11 @@ export interface Source {
 export type Intent =
   | "recommend_standards"
   | "standard_lookup"
-  | "passage_search"
-  | "find_labs"
-  | "unknown";
+  | "certification"
+  | "hallmarking"
+  | "labs"
+  | "consumer"
+  | "smalltalk";
 
 // ---------------------------------------------------------------------------
 // Chat messages
@@ -86,6 +88,14 @@ export interface ChatResponse {
   abstained: boolean;
   intent: Intent;
   latency_ms: number;
+  /** Structured payload for intents that return rows (labs, standards). */
+  structured?: Record<string, unknown>;
+  /**
+   * Guardrail notices. Non-empty means the answer is degraded in a way worth
+   * showing: a citation was stripped, a clause was claimed that no source
+   * supports, or the model cited nothing at all despite having evidence.
+   */
+  warnings?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -93,10 +103,25 @@ export interface ChatResponse {
 // ---------------------------------------------------------------------------
 
 export type StreamEvent =
-  | { event: "intent"; intent: Intent; language: string }
+  | {
+      event: "intent";
+      intent: Intent;
+      product: string | null;
+      is_numbers: string[];
+    }
   | { event: "token"; text: string }
+  | { event: "structured"; data: Record<string, unknown> }
   | { event: "sources"; sources: Source[] }
-  | { event: "done"; session_id: string; abstained: boolean; latency_ms: number }
+  | {
+      event: "done";
+      session_id: string;
+      abstained: boolean;
+      latency_ms: number;
+      /** Markers the model invented; already stripped from the text. */
+      dropped_markers?: string[];
+      /** True when the answer cited nothing despite evidence being retrieved. */
+      uncited?: boolean;
+    }
   | { event: "error"; message: string };
 
 // ---------------------------------------------------------------------------
@@ -109,6 +134,26 @@ export interface Standard {
   committee: string | null;
   year: number | null;
   source_url: string | null;
+  /** BIS technical department code: CED, ETD, LITD, ... */
+  division?: string | null;
+  /** Hybrid-search relevance; present on search results only. */
+  score?: number;
+}
+
+export interface Lab {
+  id: number;
+  name: string;
+  city: string | null;
+  state: string | null;
+  scope: string | null;
+  schemes: string | null;
+  contact: string | null;
+  source_url: string | null;
+}
+
+export interface LabsResponse {
+  results: Lab[];
+  total: number;
 }
 
 export interface StandardsSearchResponse {
@@ -123,12 +168,10 @@ export interface StandardsSearchResponse {
 export interface HealthResponse {
   status: "ok" | "degraded";
   groq: { ok: boolean; model?: string; detail?: string };
-  qdrant: {
+  supabase: {
     ok: boolean;
     url?: string;
-    collection?: string;
-    collection_exists?: boolean;
-    points?: number;
+    rows?: { standards: number; chunks: number; labs: number };
     detail?: string;
   };
   embeddings: { ok: boolean; detail?: string };

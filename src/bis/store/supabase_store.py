@@ -229,6 +229,7 @@ def search_standards(
                     "source_url": row.get("source_url"),
                     "is_number": row["is_number"],
                     "committee": row.get("committee"),
+                    "division": row.get("division"),
                     "year": row.get("year"),
                     "group_keys": row.get("group_keys"),
                     "clause": None,

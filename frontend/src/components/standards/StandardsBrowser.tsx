@@ -1,27 +1,116 @@
 "use client";
 
+/**
+ * Browse the BIS catalogue.
+ *
+ * Searches the backend rather than filtering a local array. That matters
+ * beyond freshness: the fixtures carried invented committee attributions
+ * (IS 13252 was labelled "ETD 35 (IT Equipment)" when BIS files it under
+ * LITD 7, and IS 16046 was "ETD 42" rather than ETD 11). Wrong regulatory
+ * metadata rendered confidently is the failure this project exists to avoid,
+ * so the real catalogue is the only acceptable source once a backend exists.
+ *
+ * Search runs server-side, because hybrid dense + lexical ranking over 6,209
+ * standards cannot be reproduced by substring matching in the browser.
+ */
+
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { searchStandards, USE_MOCK, ApiError } from "@/lib/api";
+import type { Standard } from "@/lib/types";
 import { MOCK_CATALOGUE, standardSlug } from "@/lib/mock-catalogue";
 import EmptyState from "@/components/EmptyState";
 
 const PAGE_SIZE = 8;
+const DEBOUNCE_MS = 300;
+
+/** BIS technical departments, used as the category filter. */
+const DIVISIONS: Record<string, string> = {
+  CED: "Civil Engineering",
+  ETD: "Electrotechnical",
+  LITD: "Electronics & IT",
+  MED: "Mechanical Engineering",
+  CHD: "Chemical",
+  FAD: "Food & Agriculture",
+  TXD: "Textiles",
+  MTD: "Metallurgical",
+  PCD: "Petroleum & Coal",
+  TED: "Transport Engineering",
+  EED: "Environment & Ecology",
+  WRD: "Water Resources",
+  MHD: "Medical Equipment",
+  PGD: "Production & General",
+  SSD: "Service Sector",
+  AYD: "AYUSH",
+  MSD: "Management Systems",
+};
+
+/** A blank query still needs something to rank against. */
+const DEFAULT_QUERY = "specification";
 
 export default function StandardsBrowser() {
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All categories");
+  const [division, setDivision] = useState("All categories");
   const [page, setPage] = useState(1);
-  const categories = ["All categories", ...Array.from(new Set(MOCK_CATALOGUE.map((item) => item.category)))];
-  const filtered = useMemo(() => {
-    const search = query.trim().toLowerCase();
-    return MOCK_CATALOGUE.filter((standard) => {
-      const matchesCategory = category === "All categories" || standard.category === category;
-      const matchesSearch = !search || [standard.is_number, standard.title, standard.committee, standard.scope].some((value) => value?.toLowerCase().includes(search));
-      return matchesCategory && matchesSearch;
-    });
-  }, [category, query]);
+  const [results, setResults] = useState<Standard[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Only the most recent search may write to state: a slow earlier request
+  // must not overwrite the results of a later one the user is now looking at.
+  const requestRef = useRef(0);
+
+  const runSearch = useCallback(async (term: string) => {
+    if (USE_MOCK) {
+      setResults(MOCK_CATALOGUE as unknown as Standard[]);
+      return;
+    }
+    const id = ++requestRef.current;
+    setLoading(true);
+    setError(null);
+    try {
+      // 50 is the backend's documented maximum for this endpoint.
+      const data = await searchStandards(term.trim() || DEFAULT_QUERY, 50);
+      if (id === requestRef.current) setResults(data.results);
+    } catch (err) {
+      if (id !== requestRef.current) return;
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Could not reach the catalogue. Please try again.",
+      );
+      setResults([]);
+    } finally {
+      if (id === requestRef.current) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => runSearch(query), DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [query, runSearch]);
+
+  // Division is applied client-side: it narrows an already-ranked result set,
+  // so re-querying the backend for it would only cost a round trip.
+  const filtered =
+    division === "All categories"
+      ? results
+      : results.filter((s) => DIVISIONS[s.division ?? ""] === division);
+
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const safePage = Math.min(page, pageCount);
+  const visible = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const categories = [
+    "All categories",
+    ...Array.from(
+      new Set(
+        results
+          .map((s) => DIVISIONS[s.division ?? ""])
+          .filter((v): v is string => Boolean(v)),
+      ),
+    ).sort(),
+  ];
 
   function updateQuery(value: string) {
     setQuery(value);
@@ -47,7 +136,7 @@ export default function StandardsBrowser() {
           </label>
           <label className="sm:w-56">
             <span className="sr-only">Filter by category</span>
-            <select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }} className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 shadow-sm focus:border-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]/20">
+            <select value={division} onChange={(event) => { setDivision(event.target.value); setPage(1); }} className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 shadow-sm focus:border-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]/20">
               {categories.map((option) => <option key={option}>{option}</option>)}
             </select>
           </label>
@@ -55,41 +144,59 @@ export default function StandardsBrowser() {
       </section>
 
       <div className="flex items-center justify-between px-1">
-        <p className="text-sm text-gray-600">Showing <strong className="text-gray-900">{filtered.length ? (page - 1) * PAGE_SIZE + 1 : 0}-{Math.min(page * PAGE_SIZE, filtered.length)}</strong> of {filtered.length} matching results</p>
-        <p className="hidden text-xs text-gray-500 sm:block">Representative local catalogue</p>
+        <p className="text-sm text-gray-600">
+          {loading
+            ? "Searching…"
+            : <>Showing <strong className="text-gray-900">{filtered.length ? (safePage - 1) * PAGE_SIZE + 1 : 0}-{Math.min(safePage * PAGE_SIZE, filtered.length)}</strong> of {filtered.length} matching results</>}
+        </p>
+        <p className="hidden text-xs text-gray-500 sm:block">{USE_MOCK ? "Sample data — backend not connected" : "Live BIS catalogue"}</p>
       </div>
 
-      <section className="space-y-3" aria-live="polite">
+      {error && (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
+          <button type="button" onClick={() => runSearch(query)} className="ml-3 font-medium underline">Retry</button>
+        </div>
+      )}
+
+      <section className="space-y-3" aria-live="polite" aria-busy={loading}>
         {visible.map((standard) => (
-          <Link key={`${standard.is_number}-${standard.title}`} href={`/standards/${standardSlug(standard.is_number)}`} className="group block rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm transition hover:border-[var(--color-navy)] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)] focus:ring-offset-2">
+          <Link key={standard.is_number} href={`/standards/${standardSlug(standard.is_number)}`} className="group block rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm transition hover:border-[var(--color-navy)] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)] focus:ring-offset-2">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-sm font-semibold text-[var(--color-navy)]">{standard.is_number}</span><span className="rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">{standard.status}</span></div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-sm font-semibold text-[var(--color-navy)]">{standard.is_number}</span>
+                  {standard.division && DIVISIONS[standard.division] && (
+                    <span className="rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">{DIVISIONS[standard.division]}</span>
+                  )}
+                </div>
                 <h3 className="mt-2 text-base font-semibold text-gray-900 group-hover:text-[var(--color-navy)]">{standard.title}</h3>
-                <p className="mt-2 line-clamp-2 text-sm text-gray-600">{standard.scope}</p>
               </div>
               <span className="shrink-0 text-xs text-gray-500">{standard.year}</span>
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-gray-100 pt-3 text-xs text-gray-500"><span>{standard.committee}</span><span className="text-[var(--color-navy)]">{standard.scheme}</span><span className="ml-auto font-medium text-[var(--color-navy)]">View details →</span></div>
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-gray-100 pt-3 text-xs text-gray-500">
+              <span>{standard.committee}</span>
+              <span className="ml-auto font-medium text-[var(--color-navy)]">View details →</span>
+            </div>
           </Link>
         ))}
-        {!visible.length && (
+        {!visible.length && !loading && !error && (
           <EmptyState
             title="No standards found"
-            description="We couldn't find any Indian Standards matching your query. Try a broader keyword or clear category filters."
-            actionLabel="Get Started"
+            description="We couldn't find any Indian Standards matching your query. Try a broader keyword or clear the category filter."
+            actionLabel="Clear search"
             onAction={() => {
               updateQuery("");
-              setCategory("All categories");
+              setDivision("All categories");
             }}
           />
         )}
       </section>
 
       <nav className="flex items-center justify-center gap-2 pb-4" aria-label="Standards pages">
-        <button type="button" disabled={page === 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40">Previous</button>
-        <span className="px-3 text-sm text-gray-600">Page {page} of {pageCount}</span>
-        <button type="button" disabled={page === pageCount} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40">Next</button>
+        <button type="button" disabled={safePage === 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40">Previous</button>
+        <span className="px-3 text-sm text-gray-600">Page {safePage} of {pageCount}</span>
+        <button type="button" disabled={safePage === pageCount} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40">Next</button>
       </nav>
     </div>
   );
