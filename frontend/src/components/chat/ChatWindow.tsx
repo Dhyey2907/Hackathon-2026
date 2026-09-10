@@ -1,10 +1,10 @@
 /**
- * Main stateful chat window.
+ * Main stateful chat window (the /chat route).
  *
- * Manages:
- * - Message list state
- * - Input state
- * - Sending (calls mock or real API based on NEXT_PUBLIC_USE_MOCK)
+ * Message state, sending and the recents deep-link now live in ChatProvider so
+ * the same conversation is shared with the docked AssistantSidePanel. This
+ * component owns the presentation:
+ * - Message list rendering
  * - Typing indicator
  * - Auto-scroll to latest message
  * - Example question quick-starters
@@ -13,11 +13,8 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useId } from "react";
-import type { Message } from "@/lib/types";
-import { INITIAL_MESSAGES, mockSendMessage } from "@/lib/mock";
-import { getMockChatNavigation } from "@/lib/chat-navigation";
-import { consumeRecentChat, RECENT_CHAT_EVENT } from "@/lib/recents";
+import { useRef, useEffect, useId } from "react";
+import { useChat } from "./ChatProvider";
 import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
 import ChatInput from "./ChatInput";
@@ -45,27 +42,20 @@ const EXAMPLE_QUESTIONS = [
 ] as const;
 
 // ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function generateId(): string {
-  return Math.random().toString(36).slice(2, 10);
-}
-
-function now(): string {
-  return new Date().toISOString();
-}
-
-// ---------------------------------------------------------------------------
 // ChatWindow
 // ---------------------------------------------------------------------------
 
 export default function ChatWindow() {
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    messages,
+    input,
+    setInput,
+    isLoading,
+    error,
+    sendMessage,
+    retryLast,
+    hasConversation,
+  } = useChat();
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
@@ -81,8 +71,6 @@ export default function ChatWindow() {
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
-    const hasConversation = messages.length > 1; // more than initial greeting
-
     let blur: number;
     if (isLoading) {
       blur = BLUR_THINKING; // AI is thinking → deep search atmosphere
@@ -93,7 +81,7 @@ export default function ChatWindow() {
     }
 
     document.documentElement.style.setProperty("--current-blur", `${blur}px`);
-  }, [isLoading, messages]);
+  }, [hasConversation, isLoading]);
 
   // Reset blur to route default when leaving this component
   useEffect(() => {
@@ -101,98 +89,6 @@ export default function ChatWindow() {
       document.documentElement.style.setProperty("--current-blur", "8px");
     };
   }, []);
-
-  // ---------------------------------------------------------------------------
-  // Send
-  // ---------------------------------------------------------------------------
-
-  const sendMessage = useCallback(
-    async (text: string) => {
-      const trimmed = text.trim();
-      if (!trimmed || isLoading) return;
-
-      setError(null);
-      setInput("");
-
-      // Optimistically add user message
-      const userMsg: Message = {
-        id: generateId(),
-        role: "user",
-        content: trimmed,
-        timestamp: now(),
-      };
-      setMessages((prev) => [...prev, userMsg]);
-      setIsLoading(true);
-
-      try {
-        const useMock =
-          process.env.NEXT_PUBLIC_USE_MOCK === "true" ||
-          !process.env.NEXT_PUBLIC_API_URL;
-
-        let response;
-
-        if (useMock) {
-          response = await mockSendMessage({
-            message: trimmed,
-            session_id: sessionId,
-            language: "auto",
-          });
-        } else {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-          const res = await fetch(`${apiUrl}/chat`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              message: trimmed,
-              session_id: sessionId,
-              language: "auto",
-            }),
-          });
-          if (!res.ok) {
-            const text = await res.text();
-            throw new Error(`${res.status}: ${text.slice(0, 200)}`);
-          }
-          response = await res.json();
-        }
-
-        if (response.session_id && !sessionId) {
-          setSessionId(response.session_id);
-        }
-
-        const assistantMsg: Message = {
-          id: generateId(),
-          role: "assistant",
-          content: response.answer,
-          sources: response.sources ?? [],
-          abstained: response.abstained ?? false,
-          intent: response.intent,
-          latency_ms: response.latency_ms,
-          timestamp: now(),
-          navigation: getMockChatNavigation(response.sources ?? []),
-        };
-
-        setMessages((prev) => [...prev, assistantMsg]);
-      } catch (err) {
-        const msg =
-          err instanceof Error ? err.message : "An unexpected error occurred.";
-        setError(msg);
-        // Don't add a fake error message — show a retry banner instead
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [isLoading, sessionId]
-  );
-
-  useEffect(() => {
-    const loadRecentChat = () => {
-      const prompt = consumeRecentChat();
-      if (prompt) window.setTimeout(() => void sendMessage(prompt), 0);
-    };
-    loadRecentChat();
-    window.addEventListener(RECENT_CHAT_EVENT, loadRecentChat);
-    return () => window.removeEventListener(RECENT_CHAT_EVENT, loadRecentChat);
-  }, [sendMessage]);
 
   const handleExampleClick = (question: string) => {
     setInput(question);
@@ -203,7 +99,6 @@ export default function ChatWindow() {
   const showExamples = messages.length === 1 && !isLoading;
 
   // Derive blur state label for the ambient indicator
-  const hasConversation = messages.length > 1;
   const blurStateLabel = isLoading
     ? "thinking"
     : hasConversation
@@ -307,11 +202,7 @@ export default function ChatWindow() {
                 <p className="text-red-700">{error}</p>
               </div>
               <button
-                onClick={() => {
-                  setError(null);
-                  const last = messages.findLast((m) => m.role === "user");
-                  if (last) sendMessage(last.content);
-                }}
+                onClick={retryLast}
                 className="shrink-0 rounded border border-red-300 bg-white px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 Retry
