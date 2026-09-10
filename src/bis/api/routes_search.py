@@ -57,7 +57,17 @@ def get_standard(is_number: str) -> dict:
 def list_labs(
     state: str | None = None,
     scope: str | None = None,
-    limit: int = Query(20, ge=1, le=100),
+    q: str | None = None,
+    recognised_only: bool = False,
+    limit: int = Query(50, ge=1, le=1000),
 ) -> dict:
-    results = supabase_store.find_labs(state=state, scope=scope, limit=limit)
+    """The BIS laboratory directory, from the published Group 1 and 2 lists.
+
+    The limit runs to 1000 because the interface offers the whole directory
+    with client-side filters; 790 rows is a small enough payload to send once
+    rather than round-trip on every keystroke.
+    """
+    results = supabase_store.find_labs(
+        state=state, scope=scope, q=q, recognised_only=recognised_only, limit=limit
+    )
     return {"results": results, "total": len(results)}

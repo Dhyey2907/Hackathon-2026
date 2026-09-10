@@ -1,44 +1,59 @@
 "use client";
 
 /**
- * Testing laboratories, ordered by roughly how far away they are.
+ * Testing laboratories, from BIS's published directory.
  *
- * Two honesty problems this card has to hold at arm's length.
+ * Real rows now - the ten fixtures with invented phone numbers are gone, and
+ * with them the Sample data badge. What remains to be careful about is
+ * position, because BIS publishes a laboratory's city and state and nothing
+ * finer. A lab therefore cannot be pinned to where it is, only to its city,
+ * and for the long tail of towns we do not hold, only to its state. `locate`
+ * reports which of the two it managed and the distance is written to match -
+ * "~12 km" for a city, "same region" for a state, nothing at all otherwise.
  *
- * The directory is not real yet. The `labs` table is empty, so this falls back
- * to the ten fixture rows the Lab Finder screen uses. Several carry the names
- * of genuine institutions with invented contact details, so the badge stays on
- * permanently and the phone numbers and e-mail addresses are not rendered at
- * all - a name plus a fake number is what makes a fixture read as a directory
- * entry someone might actually dial.
- *
- * The distances are city-level. Lab records have no coordinates, only a city,
- * so every number here is the distance to that city's centre and is written
- * with a "≈" in front of it.
- *
- * The map is a slot, not a map. Google Maps has no key configured yet; the box
- * holds its shape and aspect so the embed drops straight in later.
+ * Geolocation is asked for on a click, never on mount: a permission prompt
+ * that appears by itself the moment a chat page loads is startling and, most
+ * of the time, unwanted.
  */
 
-import { useState } from "react";
-import { MOCK_LABS } from "@/lib/mock-labs";
-import { distanceToCityKm, formatApproxKm, type LatLng } from "@/lib/city-coords";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { findLabs } from "@/lib/api";
+import type { Lab } from "@/lib/types";
+import { describeDistance, haversineKm, locate, type LatLng } from "@/lib/geo";
 import ContextCard from "./ContextCard";
 
 type LocationState =
   | { status: "idle" }
   | { status: "locating" }
   | { status: "ready"; at: LatLng }
-  | { status: "denied"; message: string };
+  | { status: "unavailable"; message: string };
 
 const VISIBLE_LABS = 4;
 
 export default function NearbyLabsCard() {
+  const [labs, setLabs] = useState<Lab[] | null>(null);
   const [location, setLocation] = useState<LocationState>({ status: "idle" });
+
+  useEffect(() => {
+    let live = true;
+    // Recognised laboratories only here: the panel has room for four, and a
+    // Group 2 facility is not somewhere you can send a sample for a licence.
+    findLabs({ recognisedOnly: true })
+      .then((response) => live && setLabs(response.results))
+      .catch(() => live && setLabs([]));
+    return () => {
+      live = false;
+    };
+  }, []);
 
   function requestLocation() {
     if (!("geolocation" in navigator)) {
-      setLocation({ status: "denied", message: "This browser cannot share a location." });
+      setLocation({ status: "unavailable", message: "This browser cannot share a location." });
+      return;
+    }
+    if (!window.isSecureContext) {
+      setLocation({ status: "unavailable", message: "Sharing a location needs a secure (https) connection." });
       return;
     }
     setLocation({ status: "locating" });
@@ -49,29 +64,42 @@ export default function NearbyLabsCard() {
           at: { lat: position.coords.latitude, lng: position.coords.longitude },
         }),
       () =>
-        // Denial is a normal answer, not an error state. The list stays.
+        // Declining is a normal answer, not an error. The list stays as it was.
         setLocation({
-          status: "denied",
-          message: "Location not shared — showing labs in directory order.",
+          status: "unavailable",
+          message: "Location not shared — showing laboratories in directory order.",
         }),
-      { timeout: 10000, maximumAge: 600000 }
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
     );
   }
 
   const here = location.status === "ready" ? location.at : null;
-  const labs = MOCK_LABS.map((lab) => ({
-    lab,
-    km: here ? distanceToCityKm(here, lab.city) : null,
-  }));
 
-  if (here) {
-    labs.sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
+  const ranked = (labs ?? [])
+    .map((lab) => {
+      const { at, precision } = locate(lab.city, lab.state);
+      const km = here && at ? haversineKm(here, at) : null;
+      return { lab, km, precision };
+    })
+    .sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
+
+  if (labs === null) {
+    return <ContextCard title="Nearby testing labs" awaiting="Loading the BIS directory…" />;
+  }
+  if (labs.length === 0) {
+    return (
+      <ContextCard
+        title="Nearby testing labs"
+        awaiting="The laboratory directory could not be reached just now."
+      />
+    );
   }
 
   return (
-    <ContextCard title="Nearby testing labs" badge="Sample data" badgeTone="warning">
-      {/* Map slot — keeps its aspect so the page does not reflow when a real
-          map is dropped in here. */}
+    <ContextCard title="Nearby testing labs" badge={`${labs.length}`}>
+      {/* Map slot: keeps its aspect so nothing reflows when a real map is
+          dropped in. When one is, it must be a genuine place search - plotting
+          pins at these city centres would read as surveyed lab addresses. */}
       <div
         id="chat-labs-map"
         className="mb-3 flex aspect-[16/10] items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] bg-gray-50 text-center"
@@ -90,40 +118,48 @@ export default function NearbyLabsCard() {
           disabled={location.status === "locating"}
           className="mb-3 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-xs font-semibold text-[var(--color-navy)] transition hover:bg-[var(--color-navy-lighter)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)] disabled:opacity-60"
         >
-          {location.status === "locating" ? "Finding you…" : "Use my location"}
+          {location.status === "locating" ? "Finding you…" : "Sort by distance from me"}
         </button>
       )}
 
-      {location.status === "denied" && (
+      {location.status === "unavailable" && (
         <p className="mb-3 text-[11px] leading-relaxed text-gray-500">{location.message}</p>
       )}
 
-      <ul className="space-y-3" aria-label="Testing laboratories">
-        {labs.slice(0, VISIBLE_LABS).map(({ lab, km }) => (
-          <li key={lab.id}>
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-xs font-semibold leading-snug text-gray-900">{lab.name}</p>
-              {km !== null && (
-                <span className="shrink-0 text-[11px] tabular-nums text-gray-400">
-                  {formatApproxKm(km)}
-                </span>
+      <ul className="space-y-3" aria-label="BIS recognised testing laboratories">
+        {ranked.slice(0, VISIBLE_LABS).map(({ lab, km, precision }) => {
+          const distance = km === null ? null : describeDistance(km, precision);
+          return (
+            <li key={lab.id}>
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-xs font-semibold leading-snug text-gray-900">{lab.name}</p>
+                {distance && (
+                  <span className="shrink-0 text-[11px] tabular-nums text-gray-400">{distance}</span>
+                )}
+              </div>
+              <p className="mt-0.5 text-[11px] text-gray-500">
+                {[lab.city, lab.state].filter(Boolean).join(", ") || "Location not published"}
+                {lab.category ? ` · ${lab.category}` : ""}
+              </p>
+              {lab.operative === false && (
+                <p className="mt-0.5 text-[11px] font-semibold text-amber-700">
+                  Currently suspended
+                </p>
               )}
-            </div>
-            <p className="mt-0.5 text-[11px] text-gray-500">
-              {lab.city}, {lab.state} · {lab.status}
-            </p>
-            <p className="mt-1 text-[11px] leading-relaxed text-gray-400">
-              {lab.scopes.join(", ")}
-            </p>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
 
-      <p className="mt-3 border-t border-gray-100 pt-2 text-[11px] leading-relaxed text-gray-400">
-        Example entries while the BIS laboratory directory is being loaded — contact details are
-        not shown because these rows do not carry real ones.
-        {here && " Distances are to the city centre, not the laboratory."}
-      </p>
+      <div className="mt-3 border-t border-gray-100 pt-2">
+        <Link href="/labs" className="text-[11px] font-semibold text-[var(--color-navy)] hover:underline">
+          See all {labs.length} recognised laboratories →
+        </Link>
+        <p className="mt-1 text-[11px] leading-relaxed text-gray-400">
+          BIS publishes each laboratory&apos;s city, not its address, so distances are to the city
+          centre. Test scopes are not published in this list.
+        </p>
+      </div>
     </ContextCard>
   );
 }

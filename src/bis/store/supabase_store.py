@@ -284,14 +284,33 @@ def standards_by_committee(
 
 
 def find_labs(
-    state: str | None = None, scope: str | None = None, limit: int = 20
+    state: str | None = None,
+    scope: str | None = None,
+    q: str | None = None,
+    recognised_only: bool = False,
+    limit: int = 20,
 ) -> list[dict[str, Any]]:
+    """Search the laboratory directory.
+
+    `scope` is still accepted because the answering tools pass a product name,
+    but BIS does not publish test scopes in the recognised-laboratory lists, so
+    the column is empty and filtering on it would return nothing. It is matched
+    against the laboratory name instead, where a specialism often shows up
+    ("Central Institute of Plastics Engineering"), and a caller wanting a real
+    scope search belongs on the LIMS standards-wise portal.
+    """
     client = get_client()
     query = client.table("labs").select("*")
     if state:
         query = query.ilike("state", f"%{state}%")
-    if scope:
-        query = query.ilike("scope", f"%{scope}%")
+    if recognised_only:
+        query = query.like("schemes", "BIS recognised%")
+    needle = q or scope
+    if needle:
+        query = query.or_(f"name.ilike.%{needle}%,city.ilike.%{needle}%")
+    # Operative first, then alphabetical, so a suspended laboratory never heads
+    # the list even though it is still shown.
+    query = query.order("operative", desc=True).order("name")
     return query.limit(limit).execute().data or []
 
 
