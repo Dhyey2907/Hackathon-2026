@@ -173,3 +173,40 @@ def test_uncited_flag_is_set_when_evidence_was_ignored():
     assert result.uncited
     assert result.sources == []
     assert not result.is_clean
+
+
+# --- HTML leaking into markdown -------------------------------------------
+
+
+def test_br_tags_are_removed_from_prose():
+    """Regression: <br> reached the screen as literal text.
+
+    The frontend's markdown renderer escapes HTML - correctly, since it must
+    not execute markup an LLM produced - so an unhandled tag is displayed
+    rather than obeyed.
+    """
+    result = validate("First line.<br>Second line. [S1]", [ev(1)])
+    assert "<br>" not in result.text
+    assert "First line.\nSecond line." in result.text
+
+
+def test_br_variants_are_all_caught():
+    for tag in ("<br>", "<br/>", "<br />", "<BR>", "< br >"):
+        result = validate(f"a{tag}b [S1]", [ev(1)])
+        assert "br" not in result.text.lower().replace("brackets", "")
+
+
+def test_br_inside_a_table_row_becomes_a_separator():
+    """A newline inside a table row would terminate the table mid-way."""
+    row = "| Standards | IS 16102 (Part 1)<br>IS 16102 (Part 2) | [S1]"
+    result = validate(row, [ev(1)])
+    assert "\n" not in result.text.strip()
+    assert "·" in result.text
+    assert "<br>" not in result.text
+
+
+def test_table_and_prose_in_one_answer_are_handled_separately():
+    text = "Intro.<br>Detail.\n| A | B<br>C |\n"
+    out = validate(text + " [S1]", [ev(1)]).text
+    assert "Intro.\nDetail." in out
+    assert "B · C" in out
