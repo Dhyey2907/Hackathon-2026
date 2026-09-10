@@ -3,8 +3,6 @@
 import Reveal from "@/components/motion/Reveal";
 import { useCountUp } from "@/components/motion/useCountUp";
 import QuickUpload from "@/components/documents/QuickUpload";
-import { useRoadmapProgress } from "@/components/roadmap/useRoadmapProgress";
-import { progressPercent } from "@/lib/roadmap";
 
 import Link from "next/link";
 import { useAuth, UserType } from "@/components/auth/AuthProvider";

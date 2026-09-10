@@ -179,6 +179,32 @@ const en: Dictionary = {
   "roadmap.reset": "Clear all",
   "roadmap.disclaimer":
     "You are marking your own progress; this is not confirmation from BIS that a step is complete. Fees and timelines are as BIS states them and can change — check",
+
+  // Roadmap intake
+  "intake.subtitle":
+    "Tell us what you are building. The answers decide which BIS scheme applies, and the steps change with it.",
+  "intake.fromChat": "From your chat",
+  "intake.useThis": "Use this",
+  "intake.product": "What do you make or sell?",
+  "intake.productPlaceholder": "e.g. LED bulbs, PVC pipes, gold chains, laptop chargers",
+  "intake.madeIn": "Where is it manufactured?",
+  "intake.madeIn.india": "In India",
+  "intake.madeIn.abroad": "Outside India",
+  "intake.kind": "What kind of product is it?",
+  "intake.kindHint": "We have guessed from your description — change it if it is wrong.",
+  "intake.kind.general": "Other manufactured goods",
+  "intake.kind.electronics": "Electronics or IT",
+  "intake.kind.jewellery": "Gold or silver jewellery",
+  "intake.kind.machinery": "Machinery or electrical equipment",
+  "intake.build": "Build my roadmap",
+  "intake.change": "Change my answers",
+  "intake.startOver": "Start over",
+  "intake.standardsTitle": "Indian Standards matched to your product",
+  "intake.standardsLoading": "Searching the BIS catalogue…",
+  "intake.standardsFailed": "The catalogue could not be searched just now.",
+  "intake.standardsNone": "No close match in the catalogue — try describing the product differently.",
+  "intake.standardsCaveat":
+    "Candidates from the BIS catalogue, not a ruling. Confirm the applicable standard with BIS before you apply.",
 };
 
 const hi: Dictionary = {
@@ -332,6 +358,32 @@ const hi: Dictionary = {
   "roadmap.reset": "सभी हटाएँ",
   "roadmap.disclaimer":
     "आप अपनी स्वयं की प्रगति चिह्नित कर रहे हैं; यह BIS की ओर से पुष्टि नहीं है कि कोई चरण पूरा हो चुका है। शुल्क और समयसीमा BIS द्वारा बताए अनुसार हैं और बदल सकते हैं — देखें",
+
+  // Roadmap intake
+  "intake.subtitle":
+    "बताइए आप क्या बना रहे हैं। आपके उत्तर तय करते हैं कि कौन-सी BIS योजना लागू होगी, और चरण उसी के अनुसार बदलते हैं।",
+  "intake.fromChat": "आपकी चैट से",
+  "intake.useThis": "यही उपयोग करें",
+  "intake.product": "आप क्या बनाते या बेचते हैं?",
+  "intake.productPlaceholder": "जैसे LED बल्ब, PVC पाइप, सोने की चेन, लैपटॉप चार्जर",
+  "intake.madeIn": "इसका निर्माण कहाँ होता है?",
+  "intake.madeIn.india": "भारत में",
+  "intake.madeIn.abroad": "भारत के बाहर",
+  "intake.kind": "यह किस प्रकार का उत्पाद है?",
+  "intake.kindHint": "आपके विवरण से अनुमान लगाया गया है — गलत हो तो बदल दें।",
+  "intake.kind.general": "अन्य निर्मित वस्तुएँ",
+  "intake.kind.electronics": "इलेक्ट्रॉनिक्स या IT",
+  "intake.kind.jewellery": "सोने या चाँदी के आभूषण",
+  "intake.kind.machinery": "मशीनरी या विद्युत उपकरण",
+  "intake.build": "मेरा रोडमैप बनाएँ",
+  "intake.change": "मेरे उत्तर बदलें",
+  "intake.startOver": "फिर से शुरू करें",
+  "intake.standardsTitle": "आपके उत्पाद से मेल खाते भारतीय मानक",
+  "intake.standardsLoading": "BIS सूची में खोजा जा रहा है…",
+  "intake.standardsFailed": "सूची अभी खोजी नहीं जा सकी।",
+  "intake.standardsNone": "सूची में कोई निकट मेल नहीं मिला — उत्पाद का वर्णन अलग ढंग से करके देखें।",
+  "intake.standardsCaveat":
+    "BIS सूची से संभावित मानक, कोई निर्णय नहीं। आवेदन से पहले लागू मानक की पुष्टि BIS से करें।",
 };
 
 const DICTIONARIES: Record<Language, Dictionary> = { en, hi };
