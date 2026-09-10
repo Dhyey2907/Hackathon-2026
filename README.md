@@ -35,7 +35,7 @@ The assistant will describe what a standard covers and link to its BIS page; it 
 ingestion (offline)          retrieval (online)              generation
 ─────────────────            ──────────────────              ──────────
 BIS portal API ─┐            query → detect language
-public PDFs     ├→ chunks →  → hybrid search (dense+sparse)  → Groq LLM
+BIS documents   ├→ chunks →  → hybrid search (dense+lexical) → Groq LLM
 seed CSVs       ┘  + metadata → RRF fuse → rerank            → cited answer
                       ↓                  ↑                        ↓
              Supabase pgvector     structured lookup          citation
@@ -47,7 +47,7 @@ Answering is an **intent-routed agent**, not one RAG chain — the eight require
 | Intent | Tool | Source |
 |---|---|---|
 | Which standard applies to my product? | `recommend_standards` | catalogue vectors + committee taxonomy |
-| What does standard X cover? | `standard_lookup` | SQLite catalogue |
+| What does standard X cover? | `standard_lookup` | Supabase catalogue |
 | Certification scheme / licensing | `passage_search` | scheme documents |
 | Hallmarking (HUID, purity, registration) | `passage_search` | hallmarking documents |
 | Find a testing lab | `find_labs` | BIS lab directory |
@@ -61,7 +61,7 @@ Answering is an **intent-routed agent**, not one RAG chain — the eight require
 | Fallback | `qwen/qwen3.8-27b` (Groq) | different family, so one provider-side fault can't take out both; strong Hindi |
 | Routing | `openai/gpt-oss-20b` (Groq) | ~0.4 s intent classification, clean JSON |
 | Embeddings | `jina-embeddings-v3` (Jina, 1024d) | multilingual — a Hindi question matches English source text; free tier covers the corpus |
-| Reranking | `openai/gpt-oss-20b` (Groq) | Gemini has no reranker; one call scores the whole candidate list |
+| Reranking | `openai/gpt-oss-20b` (Groq) | no hosted reranker in the stack; one call scores the whole candidate list |
 
 Everything runs on hosted APIs — **no model weights are downloaded**. Things worth knowing before changing providers:
 
@@ -124,17 +124,33 @@ Add your Groq API key to `.env` (get one at [console.groq.com/keys](https://cons
 GROQ_API_KEY=gsk_...
 ```
 
-You also need a **Gemini** key ([aistudio.google.com/apikey](https://aistudio.google.com/apikey)) for embeddings, and **Supabase** credentials for the vector store.
+You also need a free **Jina** key ([jina.ai/embeddings](https://jina.ai/embeddings)) for embeddings, and **Supabase** credentials for the vector store:
+
+```
+JINA_API_KEY=jina_...
+SUPABASE_URL=https://<project>.supabase.co
+SUPABASE_KEY=sb_publishable_...        # reads
+SUPABASE_SERVICE_KEY=...               # ingestion writes only
+```
 
 Apply the schema once by pasting [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) into the Supabase SQL Editor. It creates the tables, the pgvector and full-text indexes, and the `match_chunks` / `match_standards` hybrid-search functions.
 
-### Ingest the catalogue
+### Ingest
 
 ```bash
-python -m bis.ingest.scrape_catalogue --check-mapping   # validate config first
+# 1. catalogue: BIS portal -> local SQLite staging
+python -m bis.ingest.scrape_catalogue --check-mapping   # validate the mapping first
 python -m bis.ingest.scrape_catalogue                   # ~6,200 standards
-python -m bis.ingest.scrape_catalogue --stats
+
+# 2. push to Supabase and embed
+python -m bis.ingest.index_supabase --upload --embed
+
+# 3. parse, upload and embed the FaQs documents
+python -m bis.ingest.index_supabase --chunks
 ```
+
+Both embedding steps resume: they select rows where `embedding IS NULL`, so an
+interrupted run costs nothing and re-running picks up exactly where it stopped.
 
 ### Run the API
 
@@ -142,7 +158,20 @@ python -m bis.ingest.scrape_catalogue --stats
 uvicorn bis.api.main:app --reload
 ```
 
-`GET /health` reports on Groq, Qdrant and the embedding model. Interactive docs at `/docs`.
+`GET /health` reports on Groq, Supabase and the embedding provider. Interactive docs at `/docs`.
+
+### API
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /chat` | one-shot answer — `answer, sources, intent, abstained, warnings, structured, latency_ms, session_id` |
+| `POST /chat/stream` | same, as SSE: `intent` → `token`* → `sources` → `done` |
+| `GET /standards/search?q=` | hybrid search over the catalogue |
+| `GET /standards/{is_number}` | one standard plus siblings from its committee |
+| `GET /labs?state=&scope=` | recognised testing laboratories |
+| `GET /health` | dependency status |
+
+Each entry in `sources` carries `marker, title, url, locator, is_number, doc_type, chunk_uid` — `locator` being the `clause 4.2.1, p. 12` string a citation displays. The full contract, including the streaming events, is in [`docs/FRONTEND_PROMPT.md`](docs/FRONTEND_PROMPT.md).
 
 ### Tests
 
@@ -161,18 +190,30 @@ src/bis/
 ├── ingest/
 │   ├── bis_api.py      # BIS portal API client (throttled, cached)
 │   ├── scrape_catalogue.py
+│   ├── parse_docs.py   # FaQs PDFs/DOCX -> citable sections
+│   ├── index_supabase.py  # upload + resumable embedding backfill
 │   └── chunk.py        # section-aware chunking, never splits a clause
 ├── store/
 │   ├── db.py           # SQLAlchemy models (ingestion staging)
 │   └── supabase_store.py  # pgvector + FTS hybrid search over REST
 ├── retrieval/
-│   ├── embed.py        # Gemini embeddings (1536d, task-typed)
+│   ├── embed.py        # embeddings (Jina 1024d default, task-typed)
 │   ├── rerank.py       # LLM reranking + abstention threshold
 │   └── fusion.py       # client-side RRF across result sets
 ├── guardrails/
 │   └── citations.py    # marker validation, clause-claim grounding
-└── api/main.py
-data/seed/              # committee mapping, curated CSVs
+├── agent/
+│   ├── router.py       # intent + entity extraction
+│   ├── tools.py        # one retrieval strategy per intent
+│   ├── prompts.py      # the citation contract
+│   └── answer.py       # orchestration, abstention, validation
+└── api/
+    ├── main.py
+    ├── routes_chat.py
+    └── routes_search.py
+FaQs/                   # public BIS scheme and FAQ documents
+data/seed/              # committee mapping
+supabase/migrations/    # schema + hybrid search functions
 tests/
 ```
 
@@ -187,14 +228,15 @@ Two files carry most of the design weight:
 
 - [x] Project skeleton, schema, health checks
 - [x] Catalogue ingestion — 6,209 standards, per-group verification
-- [ ] Public scheme / QCO / hallmarking PDF ingestion
-- [x] Cloud retrieval stack — Gemini embeddings, Supabase pgvector, LLM reranking
-- [x] Catalogue uploaded to Supabase — 6,209 standards, hybrid search live
-- [x] Intent router, tools, cited answers, chat endpoints
-- [ ] Generate embeddings (needs GEMINI_API_KEY)
-- [ ] Multilingual (Hindi first, using BIS's own Hindi titles)
+- [x] Cloud retrieval stack — Jina embeddings, Supabase pgvector, LLM reranking
+- [x] Catalogue indexed — 6,209 standards embedded, hybrid search live
+- [x] Intent router, tools, cited answers, chat + streaming endpoints
+- [x] Scheme / QCO / FAQ document ingestion — 220 chunks with clause locators
+- [ ] Hallmarking and HUID documents — the clearest corpus gap, and the reason
+      hallmarking questions currently abstain
+- [ ] Consumer-complaint and testing-laboratory data
 - [ ] Evaluation harness — recall@k, citation precision, refusal rate
-- [ ] Frontend
+- [ ] Frontend (in progress separately)
 
 ## Data & licence
 
