@@ -6,15 +6,17 @@ import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getExpiryStatus, useDocuments } from "@/components/documents/DocumentProvider";
 import { RECENT_CHATS, selectRecentChat } from "@/lib/recents";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import LanguageToggle from "@/components/i18n/LanguageToggle";
 
 const NAV_LINKS = [
-  { href: "/", label: "Home", icon: "home" },
-  { href: "/chat", label: "Chat Assistant", icon: "chat" },
-  { href: "/wizard", label: "Product Wizard", icon: "wizard" },
-  { href: "/standards", label: "Standards", icon: "standards" },
-  { href: "/labs", label: "Lab Finder", icon: "labs" },
-  { href: "/verify", label: "Verify License", icon: "verify" },
-  { href: "/documents", label: "Documents", icon: "documents" },
+  { href: "/", labelKey: "nav.home", icon: "home" },
+  { href: "/chat", labelKey: "nav.chat", icon: "chat" },
+  { href: "/wizard", labelKey: "nav.wizard", icon: "wizard" },
+  { href: "/standards", labelKey: "nav.standards", icon: "standards" },
+  { href: "/labs", labelKey: "nav.labs", icon: "labs" },
+  { href: "/verify", labelKey: "nav.verify", icon: "verify" },
+  { href: "/documents", labelKey: "nav.documents", icon: "documents" },
 ] as const;
 
 type NavigationProps = {
@@ -69,6 +71,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
   const { user, logout } = useAuth();
   const { documents } = useDocuments();
   const [recentsOpen, setRecentsOpen] = useState(true);
+  const { t } = useLanguage();
 
   function handleLogout() {
     logout();
@@ -109,8 +112,8 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <h1 className="truncate text-sm font-semibold leading-tight text-[var(--color-text-primary)]">BIS Sahayak</h1>
-              <p className="mt-0.5 truncate text-[10px] text-[var(--color-text-muted)]">Bureau of Indian Standards</p>
+              <h1 className="truncate text-sm font-semibold leading-tight text-[var(--color-text-primary)]">{t("app.name")}</h1>
+              <p className="mt-0.5 truncate text-[10px] text-[var(--color-text-muted)]">{t("app.tagline")}</p>
             </div>
           )}
         </Link>
@@ -149,7 +152,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
                 <Link
                   href={link.href}
                   aria-current={isActive ? "page" : undefined}
-                  title={collapsed ? link.label : undefined}
+                  title={collapsed ? t(link.labelKey) : undefined}
                   onClick={onMobileClose}
                   className={`group relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:shadow-[0_4px_16px_rgba(123,169,194,0.25)] focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)] ${
                     collapsed ? "justify-center" : ""
@@ -167,12 +170,20 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
                     />
                   )}
                   <NavIcon name={link.icon} />
-                  {!collapsed && <span>{link.label}</span>}
+                  {!collapsed && <span>{t(link.labelKey)}</span>}
                 </Link>
               </li>
             );
           })}
         </ul>
+
+        {/* Language switch — above Recents so it is reachable without
+            scrolling, and hidden when the rail is collapsed to icons. */}
+        {!collapsed && (
+          <div className="mt-4 px-2">
+            <LanguageToggle className="w-full justify-center" />
+          </div>
+        )}
 
         {/* Recents section — hidden when sidebar is collapsed */}
         {!collapsed && (
@@ -183,7 +194,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
               aria-expanded={recentsOpen}
               className="flex w-full items-center justify-between px-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] hover:text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]"
             >
-              <span>Recents</span>
+              <span>{t("nav.recents")}</span>
               <svg
                 className={`h-4 w-4 transition-transform ${recentsOpen ? "rotate-180" : ""}`}
                 fill="none"
@@ -198,7 +209,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
               <div className="mt-3 space-y-4">
                 {/* Recent Chats */}
                 <div>
-                  <p className="px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Recent Chats</p>
+                  <p className="px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">{t("nav.recentChats")}</p>
                   <ul className="mt-1 space-y-0.5">
                     {RECENT_CHATS.slice(0, 5).map((chat) => (
                       <li key={chat.id}>
@@ -217,13 +228,13 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
                     ))}
                   </ul>
                   <Link href="/chat" className="mt-1 block px-2 text-[11px] font-medium text-[var(--color-navy)] hover:underline">
-                    View all
+                    {t("nav.viewAll")}
                   </Link>
                 </div>
 
                 {/* Recent Documents — with expiry dot indicators */}
                 <div>
-                  <p className="px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Recent Documents</p>
+                  <p className="px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">{t("nav.recentDocuments")}</p>
                   <ul className="mt-1 space-y-0.5">
                     {documents.slice(0, 5).map((doc) => (
                       <li key={doc.id}>
@@ -243,7 +254,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
                     ))}
                   </ul>
                   <Link href="/documents" className="mt-1 block px-2 text-[11px] font-medium text-[var(--color-navy)] hover:underline">
-                    View all
+                    {t("nav.viewAll")}
                   </Link>
                 </div>
               </div>
@@ -273,7 +284,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
             <circle cx="12" cy="8" r="3" />
             <path d="M5 20a7 7 0 0 1 14 0" />
           </svg>
-          {!collapsed && <span>Profile</span>}
+          {!collapsed && <span>{t("nav.profile")}</span>}
         </Link>
         <Link
           href="/settings"
@@ -289,7 +300,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
             <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" />
             <circle cx="12" cy="12" r="3.5" />
           </svg>
-          {!collapsed && <span>Settings</span>}
+          {!collapsed && <span>{t("nav.settings")}</span>}
         </Link>
         <div className={`flex ${collapsed ? "justify-center" : "items-center justify-between"}`}>
           <button
@@ -302,7 +313,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
             <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 16l4-4-4-4M19 12H9" />
             </svg>
-            {!collapsed && <span>Log out</span>}
+            {!collapsed && <span>{t("nav.logout")}</span>}
           </button>
           {!collapsed && (
             <div className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-muted)]">

@@ -316,9 +316,11 @@ function AbstentionNotice() {
 
 interface MessageBubbleProps {
   message: Message;
+  /** Translate this one without being asked when the UI is not in English. */
+  autoTranslate?: boolean;
 }
 
-export default function MessageBubble({ message }: MessageBubbleProps) {
+export default function MessageBubble({ message, autoTranslate = false }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const sources = message.sources ?? [];
 
@@ -402,6 +404,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
             <TranslateAnswer
               source={message.content}
               active={language}
+              auto={autoTranslate}
               onShow={(text, code) => {
                 setTranslated(text);
                 setLanguage(code);

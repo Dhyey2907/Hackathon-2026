@@ -25,6 +25,7 @@ import type { DocType } from "@/lib/types";
 import { useAuth } from "@/components/auth/AuthProvider";
 import ContextCard from "./ContextCard";
 import { useLatestAnswer } from "./useLatestAnswer";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 /** Document kinds that actually describe schemes and obligations. */
 const SCHEME_DOC_TYPES: DocType[] = ["scheme_guideline", "qco", "act_rules", "hallmarking"];
@@ -39,6 +40,7 @@ const DOC_TYPE_LABEL: Partial<Record<DocType, string>> = {
 export default function CertificationCard() {
   const answer = useLatestAnswer();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const schemeSources = (answer?.sources ?? []).filter(
     (source) => source.doc_type && SCHEME_DOC_TYPES.includes(source.doc_type)
@@ -52,18 +54,18 @@ export default function CertificationCard() {
   if (schemeSources.length === 0 && stated.length === 0) {
     return (
       <ContextCard
-        title="Certification"
-        awaiting="Ask about licensing, a scheme or a QCO and the documents behind the answer land here."
+        title={t("panel.certification")}
+        awaiting={t("panel.certificationEmpty")}
       />
     );
   }
 
   return (
-    <ContextCard title="Certification">
+    <ContextCard title={t("panel.certification")}>
       {schemeSources.length > 0 && (
         <div>
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-            Cited in this answer
+            {t("panel.citedInAnswer")}
           </p>
           <ul className="space-y-2.5">
             {schemeSources.map((source) => (
@@ -110,7 +112,7 @@ export default function CertificationCard() {
           {/* Deliberately headed "You told us" - this is unverified free text
               from onboarding, not anything BIS has confirmed. */}
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-            You told us
+            {t("panel.youToldUs")}
           </p>
           <dl className="space-y-1.5">
             {stated.map((entry) => (
@@ -121,7 +123,7 @@ export default function CertificationCard() {
             ))}
           </dl>
           <p className="mt-2 text-[11px] leading-relaxed text-gray-400">
-            As entered during onboarding. Not checked against BIS records.
+            {t("panel.unverified")}
           </p>
         </div>
       )}

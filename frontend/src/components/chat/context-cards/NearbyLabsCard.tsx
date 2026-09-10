@@ -22,6 +22,7 @@ import { findLabs } from "@/lib/api";
 import type { Lab } from "@/lib/types";
 import { describeDistance, haversineKm, locate, type LatLng } from "@/lib/geo";
 import ContextCard from "./ContextCard";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 type LocationState =
   | { status: "idle" }
@@ -32,6 +33,7 @@ type LocationState =
 const VISIBLE_LABS = 4;
 
 export default function NearbyLabsCard() {
+  const { t } = useLanguage();
   const [labs, setLabs] = useState<Lab[] | null>(null);
   const [location, setLocation] = useState<LocationState>({ status: "idle" });
 
@@ -67,7 +69,7 @@ export default function NearbyLabsCard() {
         // Declining is a normal answer, not an error. The list stays as it was.
         setLocation({
           status: "unavailable",
-          message: "Location not shared — showing laboratories in directory order.",
+          message: "locationDeclined",
         }),
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
     );
@@ -84,19 +86,19 @@ export default function NearbyLabsCard() {
     .sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
 
   if (labs === null) {
-    return <ContextCard title="Nearby testing labs" awaiting="Loading the BIS directory…" />;
+    return <ContextCard title={t("panel.labs")} awaiting={t("panel.labsLoading")} />;
   }
   if (labs.length === 0) {
     return (
       <ContextCard
-        title="Nearby testing labs"
-        awaiting="The laboratory directory could not be reached just now."
+        title={t("panel.labs")}
+        awaiting={t("panel.labsUnreachable")}
       />
     );
   }
 
   return (
-    <ContextCard title="Nearby testing labs" badge={`${labs.length}`}>
+    <ContextCard title={t("panel.labs")} badge={`${labs.length}`}>
       {/* Map slot: keeps its aspect so nothing reflows when a real map is
           dropped in. When one is, it must be a genuine place search - plotting
           pins at these city centres would read as surveyed lab addresses. */}
@@ -105,9 +107,9 @@ export default function NearbyLabsCard() {
         className="mb-3 flex aspect-[16/10] items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] bg-gray-50 text-center"
       >
         <p className="px-4 text-[11px] leading-relaxed text-gray-400">
-          Map view
+          {t("panel.mapView")}
           <br />
-          Google Maps key not configured
+          {t("panel.mapNoKey")}
         </p>
       </div>
 
@@ -118,12 +120,14 @@ export default function NearbyLabsCard() {
           disabled={location.status === "locating"}
           className="mb-3 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-xs font-semibold text-[var(--color-navy)] transition hover:bg-[var(--color-navy-lighter)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)] disabled:opacity-60"
         >
-          {location.status === "locating" ? "Finding you…" : "Sort by distance from me"}
+          {location.status === "locating" ? t("panel.locating") : t("panel.sortByDistance")}
         </button>
       )}
 
       {location.status === "unavailable" && (
-        <p className="mb-3 text-[11px] leading-relaxed text-gray-500">{location.message}</p>
+        <p className="mb-3 text-[11px] leading-relaxed text-gray-500">
+          {location.message === "locationDeclined" ? t("panel.locationDeclined") : location.message}
+        </p>
       )}
 
       <ul className="space-y-3" aria-label="BIS recognised testing laboratories">
@@ -143,7 +147,7 @@ export default function NearbyLabsCard() {
               </p>
               {lab.operative === false && (
                 <p className="mt-0.5 text-[11px] font-semibold text-amber-700">
-                  Currently suspended
+                  {t("panel.suspended")}
                 </p>
               )}
             </li>
@@ -156,8 +160,7 @@ export default function NearbyLabsCard() {
           See all {labs.length} recognised laboratories →
         </Link>
         <p className="mt-1 text-[11px] leading-relaxed text-gray-400">
-          BIS publishes each laboratory&apos;s city, not its address, so distances are to the city
-          centre. Test scopes are not published in this list.
+          {t("panel.labsCaveat")}
         </p>
       </div>
     </ContextCard>

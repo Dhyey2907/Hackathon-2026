@@ -6,6 +6,7 @@
 "use client";
 
 import { useRef, useEffect, KeyboardEvent, ChangeEvent } from "react";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 interface ChatInputProps {
   value: string;
@@ -20,8 +21,11 @@ export default function ChatInput({
   onChange,
   onSend,
   disabled = false,
-  placeholder = "Ask about Indian Standards, certification, hallmarking, testing labs…",
+  // Resolved from the dictionary when the caller does not override it, so
+  // the composer follows the interface language.
+  placeholder,
 }: ChatInputProps) {
+  const { t } = useLanguage();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -66,9 +70,9 @@ export default function ChatInput({
               onChange={handleChange}
               onKeyDown={handleKeyDown}
               disabled={disabled}
-              placeholder={placeholder}
+              placeholder={placeholder ?? t("chat.placeholder")}
               rows={1}
-              aria-label="Message"
+              aria-label={t("chat.messages")}
               aria-multiline="true"
               className="flex-1 resize-none bg-transparent px-2 py-1 text-sm leading-4 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
               style={{ minHeight: "32px", maxHeight: "120px" }}
@@ -86,7 +90,7 @@ export default function ChatInput({
               type="button"
               onClick={onSend}
               disabled={!canSend}
-              aria-label="Send message"
+              aria-label={t("chat.send")}
               className="chat-composer-send flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-lg transition hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)] focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <SendIcon />

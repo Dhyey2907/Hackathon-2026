@@ -16,6 +16,7 @@
  */
 
 import { useChat } from "../ChatProvider";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import ContextCard from "./ContextCard";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -26,12 +27,13 @@ const ROLE_LABEL: Record<string, string> = {
 
 export default function BusinessCard() {
   const { businessContext } = useChat();
+  const { t } = useLanguage();
 
   if (!businessContext?.is_usable) {
     return (
       <ContextCard
-        title="Your business"
-        awaiting="Tell me what you make or sell and I'll tailor answers to it."
+        title={t("panel.business")}
+        awaiting={t("panel.businessEmpty")}
       />
     );
   }
@@ -41,7 +43,7 @@ export default function BusinessCard() {
   const facts = [roleLabel, industry, business_type].filter(Boolean) as string[];
 
   return (
-    <ContextCard title="Your business">
+    <ContextCard title={t("panel.business")}>
       {headline && (
         <p className="text-sm font-medium leading-relaxed text-gray-900 first-letter:uppercase">
           {headline}
@@ -68,7 +70,7 @@ export default function BusinessCard() {
       {topics.length > 0 && (
         <div className="mt-3">
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-            You&apos;ve asked about
+            {t("panel.askedAbout")}
           </p>
           <p className="text-xs text-gray-600">{topics.join(", ")}</p>
         </div>
@@ -78,7 +80,7 @@ export default function BusinessCard() {
         // Shown so the inference is checkable. The backend only keeps evidence
         // it could match against the user's own words.
         <blockquote className="mt-3 border-l-2 border-[var(--color-border)] pl-3 text-xs italic leading-relaxed text-gray-500">
-          You said: &ldquo;{evidence}&rdquo;
+          {t("panel.youSaid")}: &ldquo;{evidence}&rdquo;
         </blockquote>
       )}
     </ContextCard>
