@@ -22,6 +22,8 @@ import { INITIAL_MESSAGES, mockSendMessage } from "@/lib/mock";
 import { getMockChatNavigation } from "@/lib/chat-navigation";
 import { consumeRecentChat, RECENT_CHAT_EVENT } from "@/lib/recents";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
+import { getContext } from "@/lib/api";
+import type { BusinessContext } from "@/lib/types";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 interface ChatContextValue {
@@ -32,6 +34,12 @@ interface ChatContextValue {
   error: string | null;
   clearError: () => void;
   sendMessage: (text: string) => Promise<void>;
+  /** What the assistant has gathered about the user's business, or null. */
+  businessContext: BusinessContext | null;
+  /** True until we know enough to personalise; drives the onboarding state. */
+  isNewUser: boolean;
+  /** Next actions, regenerated after each answer. */
+  suggestions: string[];
   resetChatHistory: () => Promise<void>;
   retryLast: () => void;
   hasConversation: boolean;
@@ -90,6 +98,21 @@ async function loadChatHistoryFromSupabase(userId: string): Promise<Message[]> {
   }));
 }
 
+/**
+ * Flatten the structured context into the short string the backend accepts.
+ *
+ * Only usable context is sent. A low-confidence guess would make the assistant
+ * answer as though it knew something about the user that it does not.
+ */
+function businessContextToPrompt(context: BusinessContext | null): string | null {
+  if (!context?.is_usable) return null;
+  const parts: string[] = [];
+  if (context.products.length) parts.push(`works with: ${context.products.join(", ")}`);
+  if (context.role !== "unknown") parts.push(`role: ${context.role}`);
+  if (context.industry) parts.push(`industry: ${context.industry}`);
+  return parts.join("; ") || null;
+}
+
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
@@ -97,6 +120,34 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [businessContext, setBusinessContext] = useState<BusinessContext | null>(null);
+  const [isNewUser, setIsNewUser] = useState(true);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  /**
+   * Ask the backend what it can tell about this user from their own history.
+   *
+   * Deliberately never throws: personalisation is an enhancement, and a user
+   * whose context cannot be inferred simply sees the opening question instead
+   * of a broken screen.
+   */
+  const refreshContext = useCallback(
+    async (history: Message[], lastQuestion?: string) => {
+      if (!process.env.NEXT_PUBLIC_API_URL) return;
+      try {
+        const result = await getContext(
+          history.map((m) => ({ role: m.role, content: m.content })),
+          lastQuestion,
+        );
+        setBusinessContext(result.business_context);
+        setIsNewUser(result.is_new_user);
+        setSuggestions(result.suggestions);
+      } catch {
+        // Leave the onboarding state as it is.
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     const hydrate = async () => {
@@ -107,6 +158,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
       const history = await loadChatHistoryFromSupabase(user.id);
       setMessages(history.length ? history : INITIAL_MESSAGES);
+      // Decide onboarding vs welcome-back from the history we just loaded.
+      void refreshContext(history);
     };
 
     void hydrate();
@@ -157,6 +210,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
               message: trimmed,
               session_id: sessionId,
               language: "auto",
+              // Lets the assistant read "my product" without the user having
+              // to restate their business every turn. The backend treats this
+              // as context for interpreting the question, never as evidence.
+              user_context: businessContextToPrompt(businessContext),
             }),
           });
           if (!res.ok) {
@@ -182,7 +239,14 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           navigation: getMockChatNavigation(response.sources ?? []),
         };
 
-        setMessages((prev) => [...prev, assistantMsg]);
+        setMessages((prev) => {
+          const next = [...prev, assistantMsg];
+          // Re-read context from the conversation including this turn, so a
+          // business mentioned just now takes effect immediately and a
+          // correction ("I only sell them") is picked up straight away.
+          void refreshContext(next, trimmed);
+          return next;
+        });
 
         if (user?.id && supabase) {
           void persistMessageToSupabase(
@@ -254,8 +318,22 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       resetChatHistory,
       retryLast,
       hasConversation: messages.length > 1,
+      businessContext,
+      isNewUser,
+      suggestions,
     }),
-    [error, input, isLoading, messages, resetChatHistory, retryLast, sendMessage]
+    [
+      businessContext,
+      error,
+      input,
+      isLoading,
+      isNewUser,
+      messages,
+      resetChatHistory,
+      retryLast,
+      sendMessage,
+      suggestions,
+    ]
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
