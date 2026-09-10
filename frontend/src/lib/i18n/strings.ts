@@ -162,6 +162,15 @@ const en: Dictionary = {
   "upload.close": "Close",
   "upload.added": "Added",
   "upload.tooLarge": "Too large to add",
+  "attach.button": "Attach a document",
+  "attach.reading": "Reading…",
+  "attach.ready": "Read",
+  "attach.failed": "Could not read",
+  "attach.remove": "Remove attachment",
+  "attach.note": "Sent with your next question for the assistant to read. It is never cited as a BIS source.",
+  "attach.truncated": "It is long, so only the first part is read.",
+  "attach.tooLarge": "The file is larger than 10 MB.",
+  "attach.defaultQuestion": "Summarise this document and tell me what it means for BIS compliance.",
   "upload.privacy":
     "Files stay in this browser. Nothing is sent to BIS or to a server, and the assistant does not read their contents.",
 
@@ -341,6 +350,15 @@ const hi: Dictionary = {
   "upload.close": "बंद करें",
   "upload.added": "जोड़ा गया",
   "upload.tooLarge": "बहुत बड़ी है, जोड़ी नहीं गई",
+  "attach.button": "दस्तावेज़ संलग्न करें",
+  "attach.reading": "पढ़ा जा रहा है…",
+  "attach.ready": "पढ़ लिया गया",
+  "attach.failed": "पढ़ा नहीं जा सका",
+  "attach.remove": "संलग्नक हटाएँ",
+  "attach.note": "यह आपके अगले प्रश्न के साथ सहायक को पढ़ने के लिए भेजा जाएगा। इसे कभी BIS स्रोत के रूप में उद्धृत नहीं किया जाता।",
+  "attach.truncated": "यह लंबा है, इसलिए केवल शुरुआती भाग पढ़ा गया।",
+  "attach.tooLarge": "फ़ाइल 10 MB से बड़ी है।",
+  "attach.defaultQuestion": "इस दस्तावेज़ का सारांश दें और बताएँ कि BIS अनुपालन के लिए इसका क्या अर्थ है।",
   "upload.privacy":
     "फ़ाइलें इसी ब्राउज़र में रहती हैं। कुछ भी BIS या किसी सर्वर पर नहीं भेजा जाता, और सहायक उनकी सामग्री नहीं पढ़ता।",
 

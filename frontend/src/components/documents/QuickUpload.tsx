@@ -25,12 +25,16 @@ const MAX_BYTES = 20 * 1024 * 1024;
 
 const ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx";
 
-export default function QuickUpload() {
+/**
+ * `inline` renders the drop zone open and without a close button, for use
+ * inside a form - onboarding - rather than behind a dashboard button.
+ */
+export default function QuickUpload({ inline = false }: { inline?: boolean } = {}) {
   const { t } = useLanguage();
   const { addDocument } = useDocuments();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(inline);
   const [dragging, setDragging] = useState(false);
   const [category, setCategory] = useState<DocumentCategory>("License");
   const [expiry, setExpiry] = useState("");
@@ -75,7 +79,7 @@ export default function QuickUpload() {
   }
 
   return (
-    <div className="w-full sm:max-w-sm">
+    <div className={inline ? "w-full" : "w-full sm:max-w-sm"}>
       <div
         onDragOver={(event) => {
           event.preventDefault();
@@ -139,13 +143,15 @@ export default function QuickUpload() {
           >
             {t("upload.choose")}
           </button>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-500 transition hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)]"
-          >
-            {t("upload.close")}
-          </button>
+          {!inline && (
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-500 transition hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)]"
+            >
+              {t("upload.close")}
+            </button>
+          )}
         </div>
       </div>
 

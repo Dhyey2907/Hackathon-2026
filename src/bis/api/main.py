@@ -5,17 +5,20 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from bis.api import (
     routes_chat,
     routes_context,
+    routes_extract,
     routes_search,
     routes_translate,
     routes_updates,
 )
 from bis.config import get_settings
+from bis.llm import LLMUnavailable
 from bis.store.db import init_db
 
 logging.basicConfig(
@@ -67,6 +70,19 @@ app.include_router(routes_search.router)
 app.include_router(routes_context.router)
 app.include_router(routes_translate.router)
 app.include_router(routes_updates.router)
+app.include_router(routes_extract.router)
+
+
+@app.exception_handler(LLMUnavailable)
+def llm_unavailable(request: Request, exc: LLMUnavailable) -> JSONResponse:
+    # Groq's free tier limits tokens per minute. Uncaught, that surfaced as a
+    # bare 500 without CORS headers, and the browser reported only "Failed to
+    # fetch". A 503 with a reason lets the chat say what actually happened.
+    logging.getLogger(__name__).warning("model unavailable: %s", str(exc)[:200])
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "The language model is busy or rate-limited. Wait a minute and retry."},
+    )
 
 
 @app.get("/health", tags=["ops"])

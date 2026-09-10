@@ -9,15 +9,8 @@
 
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import type { Message } from "@/lib/types";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useRef } from "react";
+import type { Message, ChatAttachment } from "@/lib/types";
 import { INITIAL_MESSAGES, mockSendMessage } from "@/lib/mock";
 import { getMockChatNavigation } from "@/lib/chat-navigation";
 import { consumeRecentChat, RECENT_CHAT_EVENT } from "@/lib/recents";
@@ -33,7 +26,8 @@ interface ChatContextValue {
   isLoading: boolean;
   error: string | null;
   clearError: () => void;
-  sendMessage: (text: string) => Promise<void>;
+  /** `attachment` is text read from a document; sent once, with this message. */
+  sendMessage: (text: string, attachment?: ChatAttachment) => Promise<void>;
   /** What the assistant has gathered about the user's business, or null. */
   businessContext: BusinessContext | null;
   /** True until we know enough to personalise; drives the onboarding state. */
@@ -165,8 +159,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     void hydrate();
   }, [user?.id]);
 
+  // The document sent with the latest message, kept for Retry.
+  const lastAttachment = useRef<ChatAttachment | undefined>(undefined);
+
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, attachment?: ChatAttachment) => {
       const trimmed = text.trim();
       if (!trimmed || isLoading) return;
 
@@ -177,10 +174,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         id: generateId(),
         role: "user",
         content: trimmed,
+        ...(attachment ? { attachmentName: attachment.name } : {}),
         timestamp: now(),
       };
 
       setMessages((prev) => [...prev, userMsg]);
+      lastAttachment.current = attachment;
 
       if (user?.id && supabase) {
         void persistMessageToSupabase(user.id, "user", trimmed, [], sessionId);
@@ -214,6 +213,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
               // to restate their business every turn. The backend treats this
               // as context for interpreting the question, never as evidence.
               user_context: businessContextToPrompt(businessContext),
+              // Read as the user's own material, never cited as a source.
+              attachment: attachment ?? null,
             }),
           });
           if (!res.ok) {
@@ -285,7 +286,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const retryLast = useCallback(() => {
     setError(null);
     const last = messages.findLast((m) => m.role === "user");
-    if (last) void sendMessage(last.content);
+    // The composer clears the attachment on send, so a retry after a failed
+    // request would otherwise re-ask the question without the document.
+    if (last) void sendMessage(last.content, last.attachmentName ? lastAttachment.current : undefined);
   }, [messages, sendMessage]);
 
   const resetChatHistory = useCallback(async () => {

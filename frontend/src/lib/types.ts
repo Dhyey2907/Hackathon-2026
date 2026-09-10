@@ -65,6 +65,8 @@ export interface Message {
   /** ISO timestamp */
   timestamp: string;
   navigation?: ChatNavigation;
+  /** Name of a document sent with this (user) message. */
+  attachmentName?: string;
 }
 
 export interface ChatNavigation {
@@ -103,8 +105,16 @@ export interface ContextResponse {
   suggestions: string[];
 }
 
+/** Text read from a document the user attached, sent with a question. */
+export interface ChatAttachment {
+  name: string;
+  text: string;
+}
+
 export interface ChatRequest {
   message: string;
+  /** Read by the assistant as the user's own material, never cited. */
+  attachment?: ChatAttachment | null;
   /** Existing session UUID, or null to start a new session */
   session_id: string | null;
   /** "auto" | "en" | "hi" */
@@ -224,6 +234,19 @@ export interface UpdatesResponse {
   since: string | null;
   by_category: Record<string, number>;
   source: string;
+}
+
+/** POST /extract: the text read from an uploaded document. */
+export interface ExtractResponse {
+  filename: string;
+  kind: string;
+  text: string;
+  pages: number | null;
+  characters: number;
+  truncated: boolean;
+  /** False when no text could be read - a scan, an image; `message` says why. */
+  readable: boolean;
+  message: string | null;
 }
 
 export interface LabsResponse {

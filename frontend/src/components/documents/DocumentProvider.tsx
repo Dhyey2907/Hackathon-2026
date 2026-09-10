@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 export type DocumentCategory = "License" | "Test Report" | "Certificate" | "Other";
 
@@ -99,6 +99,58 @@ const INITIAL_DOCUMENTS: DocumentRecord[] = [
   },
 ];
 
+// --- persistence ------------------------------------------------------------
+//
+// Uploads are kept in IndexedDB, in this browser. They used to live in React
+// state alone, so a document submitted at signup vanished on the first reload -
+// the one place a user most expects a file to stay. IndexedDB rather than
+// localStorage because these are whole files: localStorage holds a few MB of
+// strings, IndexedDB holds Blobs.
+//
+// Nothing here leaves the browser. The document vault is local storage for the
+// user's own files; sending one to the assistant is a separate, explicit act in
+// the chat.
+
+const DB_NAME = "bis-sahayak-documents";
+const STORE = "files";
+
+type StoredDocument = Omit<DocumentRecord, "previewUrl"> & { blob: Blob };
+
+function openDatabase(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(STORE, { keyPath: "id" });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function withStore<T>(
+  mode: IDBTransactionMode,
+  run: (store: IDBObjectStore) => IDBRequest<T>,
+): Promise<T> {
+  const db = await openDatabase();
+  try {
+    return await new Promise<T>((resolve, reject) => {
+      const request = run(db.transaction(STORE, mode).objectStore(STORE));
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  } finally {
+    // Closing waits for the transaction to finish; it does not abort it.
+    db.close();
+  }
+}
+
+const persistence = {
+  available: () => typeof indexedDB !== "undefined",
+  loadAll: () => withStore<StoredDocument[]>("readonly", (store) => store.getAll() as IDBRequest<StoredDocument[]>),
+  save: (document: StoredDocument) => withStore("readwrite", (store) => store.put(document)),
+  remove: (id: string) => withStore("readwrite", (store) => store.delete(id)),
+};
+
 const DocumentContext = createContext<DocumentContextValue | null>(null);
 
 function fileType(file: File) {
@@ -109,6 +161,32 @@ function fileType(file: File) {
 
 export function DocumentProvider({ children }: { children: React.ReactNode }) {
   const [documents, setDocuments] = useState<DocumentRecord[]>(INITIAL_DOCUMENTS);
+
+  // Restore uploads from earlier visits, ahead of the shipped samples.
+  useEffect(() => {
+    if (!persistence.available()) return;
+    let live = true;
+    persistence
+      .loadAll()
+      .then((stored) => {
+        if (!live || stored.length === 0) return;
+        const restored: DocumentRecord[] = stored.map(({ blob, ...rest }) => ({
+          ...rest,
+          previewUrl: URL.createObjectURL(blob),
+        }));
+        setDocuments((current) => {
+          const known = new Set(current.map((document) => document.id));
+          return [...restored.filter((document) => !known.has(document.id)), ...current];
+        });
+      })
+      .catch(() => {
+        // Private windows and blocked site data refuse IndexedDB. Uploads still
+        // work for this visit; they just will not be there next time.
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
 
   function addDocument(file: File, category: DocumentCategory, expiryDate?: string) {
     const document: DocumentRecord = {
@@ -122,10 +200,24 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
       expiryDate: expiryDate || undefined,
     };
     setDocuments((current) => [document, ...current]);
+    if (persistence.available()) {
+      const stored: StoredDocument = {
+        id: document.id,
+        name: document.name,
+        type: document.type,
+        size: document.size,
+        uploadedAt: document.uploadedAt,
+        category: document.category,
+        expiryDate: document.expiryDate,
+        blob: file,
+      };
+      void persistence.save(stored).catch(() => {});
+    }
     return document;
   }
 
   function deleteDocument(id: string) {
+    if (persistence.available()) void persistence.remove(id).catch(() => {});
     setDocuments((current) => {
       const target = current.find((document) => document.id === id);
       if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);

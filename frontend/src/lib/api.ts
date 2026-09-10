@@ -23,6 +23,7 @@ import type {
   StandardsSearchResponse,
   StreamEvent,
   UpdatesResponse,
+  ExtractResponse,
 } from "./types";
 
 export const API_URL =
@@ -209,6 +210,32 @@ export function fetchUpdates(
   if (opts.weeks) params.set("weeks", String(opts.weeks));
   params.set("limit", String(opts.limit ?? 200));
   return request<UpdatesResponse>(`/updates?${params}`);
+}
+
+// ---------------------------------------------------------------- documents
+
+/** The file as base64, without the data-URL prefix. */
+function toBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result ?? "");
+      resolve(result.slice(result.indexOf(",") + 1));
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("could not read the file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Read the text out of a document so it can go with the next question.
+ * The backend reads it in memory and does not keep it.
+ */
+export async function extractDocument(file: File): Promise<ExtractResponse> {
+  return request<ExtractResponse>("/extract", {
+    method: "POST",
+    body: JSON.stringify({ filename: file.name, content_base64: await toBase64(file) }),
+  });
 }
 
 // ---------------------------------------------------------------- translate
