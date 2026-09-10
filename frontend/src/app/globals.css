@@ -1,0 +1,98 @@
+/* ── Imports must come first ─────────────────────────────────────────────── */
+@import "tailwindcss";
+
+/* ── Design tokens ───────────────────────────────────────────────────────────
+   BIS Sahayak palette:
+   - Navy (#1e3a5f) as the single accent — conveys authority, not fun
+   - Neutral grays for text hierarchy
+   - No gradients, no glassmorphism (per design spec in docs/FRONTEND_PROMPT.md)
+   Font is loaded via next/font/google in layout.tsx and exposed as --font-inter.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Accent */
+  --color-navy: #1e3a5f;
+  --color-navy-light: #2a4f7c;
+  --color-navy-lighter: #e8eef5;
+
+  /* Surface */
+  --color-bg: #f8f9fb;
+  --color-surface: #ffffff;
+  --color-border: #e5e7eb;
+
+  /* Text */
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6b7280;
+
+  /* Fonts — --font-inter is injected by next/font/google in layout.tsx */
+  --font-sans: var(--font-inter, "Inter", system-ui, -apple-system, sans-serif);
+  --font-mono: ui-monospace, "Cascadia Code", "Fira Code", monospace;
+}
+
+/* Dark mode — override surface and text only; accent stays the same */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0f1117;
+    --color-surface: #1a1d24;
+    --color-border: #2d3139;
+    --color-text-primary: #f1f3f5;
+    --color-text-secondary: #c9cdd4;
+    --color-text-muted: #8b9099;
+  }
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbars ──────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ── Focus rings ─────────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--color-navy);
+  outline-offset: 2px;
+}
+
+/* ── Utility — navy background ───────────────────────────────────────────── */
+
+.bg-navy {
+  background-color: var(--color-navy);
+}
+.bg-navy:hover {
+  background-color: var(--color-navy-light);
+}
