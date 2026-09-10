@@ -14,6 +14,7 @@ import AppShell from "@/components/AppShell";
 import RouteBlurEffect from "@/components/RouteBlurEffect";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { DocumentProvider } from "@/components/documents/DocumentProvider";
+import { ChatProvider } from "@/components/chat/ChatProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -46,7 +47,9 @@ export default function RootLayout({
 
         <AuthProvider>
           <DocumentProvider>
-            <AppShell>{children}</AppShell>
+            <ChatProvider>
+              <AppShell>{children}</AppShell>
+            </ChatProvider>
           </DocumentProvider>
         </AuthProvider>
       </body>
