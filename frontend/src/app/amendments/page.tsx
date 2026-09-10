@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import StackedCards from "@/components/StackedCards";
 
 type AmendmentItem = {
   id: string;
@@ -96,49 +97,13 @@ export default function AmendmentsPage() {
           )}
         </div>
 
-        {/* List */}
-        <ol className="flex flex-col gap-4">
-          {AMENDMENTS.map((item) => (
-            <li key={item.id}>
-              <article className="rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <code className="rounded bg-[var(--color-navy-lighter)] px-2 py-0.5 font-mono text-xs font-semibold text-[var(--color-navy)]">
-                      {item.code}
-                    </code>
-                    <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
-                      {item.sector}
-                    </span>
-                    {item.isNew && (
-                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                        New
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                    <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-                    </svg>
-                    Effective {item.effectiveDate}
-                  </div>
-                </div>
-
-                <h2 className="mt-3 text-sm font-semibold text-gray-900">{item.title}</h2>
-                <p className="mt-2 text-sm text-gray-600 leading-relaxed">{item.change}</p>
-
-                <Link
-                  href={item.href}
-                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-navy)] hover:underline"
-                >
-                  View in Standards Lookup
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                  </svg>
-                </Link>
-              </article>
-            </li>
-          ))}
-        </ol>
+        {/* Stack — newest amendment in front, the rest visibly behind it */}
+        <StackedCards
+          items={AMENDMENTS}
+          getKey={(item) => item.id}
+          label="Recent amendments"
+          renderCard={(item, isFront) => <AmendmentCard item={item} isFront={isFront} />}
+        />
 
         {/* Footer */}
         <div className="mt-8 rounded-xl border border-[var(--color-border)] bg-white p-5">
@@ -156,5 +121,57 @@ export default function AmendmentsPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+/**
+ * One amendment, unchanged from the list version that preceded the stack.
+ *
+ * `isFront` only lifts the shadow. The card behind must stay legible - it is
+ * what tells the reader there are more amendments underneath - so nothing is
+ * hidden or truncated by depth.
+ */
+function AmendmentCard({ item, isFront }: { item: AmendmentItem; isFront: boolean }) {
+  return (
+    <article
+      className={`rounded-xl border border-[var(--color-border)] bg-white p-5 transition-shadow duration-500 ${
+        isFront ? "shadow-lg" : "shadow-sm"
+      }`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <code className="rounded bg-[var(--color-navy-lighter)] px-2 py-0.5 font-mono text-xs font-semibold text-[var(--color-navy)]">
+            {item.code}
+          </code>
+          <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
+            {item.sector}
+          </span>
+          {item.isNew && (
+            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+              New
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+          </svg>
+          Effective {item.effectiveDate}
+        </div>
+      </div>
+
+      <h2 className="mt-3 text-sm font-semibold text-gray-900">{item.title}</h2>
+      <p className="mt-2 text-sm leading-relaxed text-gray-600">{item.change}</p>
+
+      <Link
+        href={item.href}
+        className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-navy)] hover:underline"
+      >
+        View in Standards Lookup
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+        </svg>
+      </Link>
+    </article>
   );
 }
