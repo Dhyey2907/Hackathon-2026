@@ -18,6 +18,7 @@ import { useChat } from "./ChatProvider";
 import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
 import ChatOpeningState from "./ChatOpeningState";
+import FollowUpSuggestions from "./FollowUpSuggestions";
 import ChatInput from "./ChatInput";
 
 // ---------------------------------------------------------------------------
@@ -181,6 +182,9 @@ export default function ChatWindow() {
 
           {/* Typing indicator */}
           {isLoading && <TypingIndicator />}
+
+          {/* Where the conversation could go next, from this user's context. */}
+          <FollowUpSuggestions />
 
           {/* Example questions */}
           {showExamples && (
