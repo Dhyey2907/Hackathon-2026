@@ -1,0 +1,1 @@
+Mock uploaded document for browser validation.
