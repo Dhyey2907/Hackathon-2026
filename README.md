@@ -41,7 +41,7 @@ The assistant will describe what a standard covers and link to its BIS page; it 
 - **Context panel** beside the chat — four cards: *your business*, *certification documents behind the answer*, *sources*, and *nearby testing labs* (sorted by distance once you share your location; the map slot is ready for a Google Maps key).
 - **Translate any answer** into Hindi, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada or Malayalam. Translation runs on the finished, already-validated English answer; if a citation marker does not survive translation, the translation is refused.
 - **The scroll stays where you are reading** when an answer arrives; a *New answer ↓* pill takes you to it.
-- **Chat history** is saved to Supabase for signed-in users, with row-level security confining each account to its own messages.
+- **Real chat history.** Every conversation is saved to Supabase for signed-in users, with row-level security confining each account to its own messages. The sidebar's **Recents** lists your actual conversations, newest first, titled by their opening question; clicking one reopens it. **New chat** starts a fresh one, and **Reset chat history** (confirmed in the page) deletes them all. Changes are live: a message sent in one tab or device appears in the others through Supabase Realtime, and a reset clears every open tab.
 - **Fast repeats**: an answer cache and a verbatim FAQ fast path (223 BIS FAQs) skip the model entirely for questions BIS has already answered.
 
 ### Compliance Roadmap
@@ -200,7 +200,7 @@ SUPABASE_KEY=sb_publishable_...        # reads
 SUPABASE_SERVICE_KEY=...               # ingestion writes only
 ```
 
-Apply the schema by running the files in [`supabase/migrations/`](supabase/migrations) in order in the Supabase SQL Editor. `0001_init.sql` creates the tables, the pgvector and full-text indexes, and the `match_chunks` / `match_standards` hybrid-search functions; the later files add chat history, lab recognition fields, the BIS updates table, and the private `user-documents` bucket with the `user_documents` table. Auth setup for the app is in [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md).
+Apply the schema by running the files in [`supabase/migrations/`](supabase/migrations) in order in the Supabase SQL Editor. `0001_init.sql` creates the tables, the pgvector and full-text indexes, and the `match_chunks` / `match_standards` hybrid-search functions; the later files add chat history, lab recognition fields, the BIS updates table, the private `user-documents` bucket with the `user_documents` table, and Realtime for `chat_messages`. Auth setup for the app is in [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md).
 
 Run the API:
 
@@ -367,6 +367,7 @@ Two files carry most of the design weight:
 - [x] Compliance Roadmap with five certification tracks and progress tracking
 - [x] Document upload — read by the assistant in chat, stored in the vault, added at signup
 - [x] Document vault in the user's account, with previews for PDF, images, text and Word
+- [x] Real chat history — conversations under Recents, New chat, reset, live across tabs and devices
 - [ ] OCR for scanned documents and photos
 - [ ] Live data for the product wizard, licence verification and standard detail pages
 - [ ] Hindi for the remaining screens (wizard, verification, documents, profile, settings, onboarding)
