@@ -54,7 +54,9 @@ Amendments, QCOs, licence notices and announcements pulled from the Bureau's own
 BIS's published directory — 790 laboratories from the Group 1 (recognised) and Group 2 (used by BIS) lists, with OSL codes, recognition validity and suspension status. Search by state, city or scope.
 
 ### Documents
-A document vault for licences, test reports and certificates, with expiry dates and warnings before they lapse. Files are stored in the browser (IndexedDB) and survive a reload; they are not uploaded anywhere unless you attach one in the chat. Documents can also be added during signup.
+A document vault for licences, test reports and certificates, with expiry dates and warnings before they lapse. For signed-in users files are saved to a **private Supabase Storage bucket** in their own account, with their details in `user_documents`; row-level security confines every account to its own folder, and the browser uploads with the user's own session, so no service key is involved. Local accounts, and any upload that fails, keep the file in the browser (IndexedDB), and it moves into the account at the next sign-in.
+
+Every file has a working **preview and download**: PDFs and images render in place, text files show their text, and Word (.docx) files show their text as read by the backend's `/extract`. Older .doc files download only. Documents can also be added during signup and from the chat.
 
 ### Home dashboard
 A compliance score that counts up to its value, missing requirements, expiring documents, and a quick upload box.
@@ -77,7 +79,7 @@ A compliance score that counts up to its value, missing requirements, expiring d
 | Product wizard questions | Demo questions |
 | Licence verification | Demo — only selected sample records |
 | Dashboard amendments list | Demo list; the score is a formula over missing requirements and expiring documents |
-| Document vault | Your files, plus four clearly marked samples |
+| Document vault | **Live** — your files in your Supabase account, plus four clearly marked samples |
 
 ---
 
@@ -198,7 +200,7 @@ SUPABASE_KEY=sb_publishable_...        # reads
 SUPABASE_SERVICE_KEY=...               # ingestion writes only
 ```
 
-Apply the schema by running the files in [`supabase/migrations/`](supabase/migrations) in order in the Supabase SQL Editor. `0001_init.sql` creates the tables, the pgvector and full-text indexes, and the `match_chunks` / `match_standards` hybrid-search functions; the later files add chat history, lab recognition fields and the BIS updates table. Auth setup for the app is in [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md).
+Apply the schema by running the files in [`supabase/migrations/`](supabase/migrations) in order in the Supabase SQL Editor. `0001_init.sql` creates the tables, the pgvector and full-text indexes, and the `match_chunks` / `match_standards` hybrid-search functions; the later files add chat history, lab recognition fields, the BIS updates table, and the private `user-documents` bucket with the `user_documents` table. Auth setup for the app is in [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md).
 
 Run the API:
 
@@ -364,6 +366,7 @@ Two files carry most of the design weight:
 - [x] Answer translation into eight Indian languages; Hindi interface
 - [x] Compliance Roadmap with five certification tracks and progress tracking
 - [x] Document upload — read by the assistant in chat, stored in the vault, added at signup
+- [x] Document vault in the user's account, with previews for PDF, images, text and Word
 - [ ] OCR for scanned documents and photos
 - [ ] Live data for the product wizard, licence verification and standard detail pages
 - [ ] Hindi for the remaining screens (wizard, verification, documents, profile, settings, onboarding)
@@ -373,4 +376,4 @@ Two files carry most of the design weight:
 
 ## Data & licence
 
-All data is retrieved from public BIS endpoints; `robots.txt` permits the catalogue paths. **No paywalled standard texts are included or redistributed.** Documents users upload are read in memory to answer their question and are not stored by the backend. This is an independent hackathon project and is not affiliated with or endorsed by the Bureau of Indian Standards.
+All data is retrieved from public BIS endpoints; `robots.txt` permits the catalogue paths. **No paywalled standard texts are included or redistributed.** Documents attached in the chat are read in memory to answer the question and are not stored by the API; documents saved to the vault are stored privately in the user's own Supabase account. This is an independent hackathon project and is not affiliated with or endorsed by the Bureau of Indian Standards.

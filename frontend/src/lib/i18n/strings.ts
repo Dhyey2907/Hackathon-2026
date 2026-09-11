@@ -151,7 +151,7 @@ const en: Dictionary = {
   // Document upload
   "upload.button": "Upload a document",
   "upload.dropHere": "Drop a file here, or choose one",
-  "upload.formats": "PDF, image or Word · up to 20 MB",
+  "upload.formats": "PDF, image, Word or text · up to 20 MB",
   "upload.category": "Category",
   "upload.category.License": "Licence",
   "upload.category.TestReport": "Test report",
@@ -172,7 +172,7 @@ const en: Dictionary = {
   "attach.tooLarge": "The file is larger than 10 MB.",
   "attach.defaultQuestion": "Summarise this document and tell me what it means for BIS compliance.",
   "upload.privacy":
-    "Files stay in this browser. Nothing is sent to BIS or to a server, and the assistant does not read their contents.",
+    "Signed in, files are saved privately to your account - only you can open them. Without an account they stay in this browser. Nothing is sent to BIS, and the assistant reads a file only when you attach it in the chat.",
 
   // Certification roadmap
   "roadmap.eyebrow": "What to do next",
@@ -339,7 +339,7 @@ const hi: Dictionary = {
   // Document upload
   "upload.button": "दस्तावेज़ अपलोड करें",
   "upload.dropHere": "फ़ाइल यहाँ छोड़ें, या चुनें",
-  "upload.formats": "PDF, चित्र या Word · अधिकतम 20 MB",
+  "upload.formats": "PDF, चित्र, Word या टेक्स्ट · अधिकतम 20 MB",
   "upload.category": "श्रेणी",
   "upload.category.License": "लाइसेंस",
   "upload.category.TestReport": "परीक्षण रिपोर्ट",
@@ -360,7 +360,7 @@ const hi: Dictionary = {
   "attach.tooLarge": "फ़ाइल 10 MB से बड़ी है।",
   "attach.defaultQuestion": "इस दस्तावेज़ का सारांश दें और बताएँ कि BIS अनुपालन के लिए इसका क्या अर्थ है।",
   "upload.privacy":
-    "फ़ाइलें इसी ब्राउज़र में रहती हैं। कुछ भी BIS या किसी सर्वर पर नहीं भेजा जाता, और सहायक उनकी सामग्री नहीं पढ़ता।",
+    "साइन इन होने पर फ़ाइलें आपके खाते में निजी रूप से सहेजी जाती हैं - केवल आप उन्हें खोल सकते हैं। खाते के बिना वे इसी ब्राउज़र में रहती हैं। कुछ भी BIS को नहीं भेजा जाता, और सहायक किसी फ़ाइल को तभी पढ़ता है जब आप उसे चैट में संलग्न करते हैं।",
 
   // Certification roadmap
   "roadmap.eyebrow": "आगे क्या करें",

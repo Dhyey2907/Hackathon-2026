@@ -23,7 +23,7 @@ const CATEGORIES: DocumentCategory[] = ["License", "Test Report", "Certificate",
 /** Anything bigger is almost certainly not a certificate or a test report. */
 const MAX_BYTES = 20 * 1024 * 1024;
 
-const ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx";
+const ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.txt,.md,.csv";
 
 /**
  * `inline` renders the drop zone open and without a close button, for use

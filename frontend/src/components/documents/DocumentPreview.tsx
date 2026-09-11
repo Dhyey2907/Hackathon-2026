@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useDocuments } from "./DocumentProvider";
 import ExpiryBadge from "./ExpiryBadge";
+import DocumentViewer, { StorageBadge } from "./DocumentViewer";
 import EmptyState from "@/components/EmptyState";
 
 function formatSize(bytes: number) {
@@ -15,8 +16,18 @@ function formatDate(date: string) {
 }
 
 export default function DocumentPreview({ id }: { id: string }) {
-  const { getDocument, deleteDocument } = useDocuments();
+  const { getDocument, deleteDocument, isLoading } = useDocuments();
   const document = getDocument(id);
+
+  // Documents in the account arrive a moment after the page does; "not found"
+  // before they have would be wrong.
+  if (!document && isLoading) {
+    return (
+      <main className="flex-1 bg-transparent" id="main-content">
+        <p className="mx-auto max-w-xl px-4 py-16 text-sm text-[var(--color-text-muted)]">Loading document…</p>
+      </main>
+    );
+  }
 
   if (!document) {
     return (
@@ -24,7 +35,7 @@ export default function DocumentPreview({ id }: { id: string }) {
         <div className="mx-auto max-w-xl px-4 py-16">
           <EmptyState
             title="Document not found"
-            description="The document you are looking for may have been removed or does not exist in this session."
+            description="The document you are looking for may have been removed."
             actionLabel="Get Started"
             actionHref="/documents"
           />
@@ -32,9 +43,6 @@ export default function DocumentPreview({ id }: { id: string }) {
       </main>
     );
   }
-
-  const isPdf = document.type === "PDF";
-  const isImage = document.type === "Image";
 
   return (
     <main className="flex-1 overflow-y-auto bg-gray-50" id="main-content">
@@ -55,8 +63,9 @@ export default function DocumentPreview({ id }: { id: string }) {
                 {document.expiryDate ? ` · Expires ${formatDate(document.expiryDate)}` : null}
               </p>
               {/* Expiry status badge — shown prominently on the detail page */}
-              <div className="mt-3">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 <ExpiryBadge expiryDate={document.expiryDate} size="md" />
+                <StorageBadge document={document} />
               </div>
             </div>
             <button
@@ -68,41 +77,9 @@ export default function DocumentPreview({ id }: { id: string }) {
             </button>
           </div>
 
-          {/* PDF preview */}
-          {document.previewUrl && isPdf && (
-            <iframe
-              src={document.previewUrl}
-              title={`Preview of ${document.name}`}
-              className="mt-8 h-[560px] w-full rounded-lg border border-gray-200"
-            />
-          )}
-
-          {/* Image preview */}
-          {document.previewUrl && isImage && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={document.previewUrl}
-              alt={`Preview of ${document.name}`}
-              className="mx-auto mt-8 max-h-[560px] max-w-full rounded-lg border border-gray-200 object-contain"
-            />
-          )}
-
-          {/* Fallback for other file types */}
-          {(!document.previewUrl || (!isPdf && !isImage)) && (
-            <div className="mt-8 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-16 text-center">
-              <p className="font-semibold text-gray-900">Preview unavailable for this local record</p>
-              <p className="mt-2 text-sm text-gray-600">
-                The metadata is available above. A backend document viewer can be connected later.
-              </p>
-              <button
-                type="button"
-                onClick={() => window.alert("Mock download: this document is only available in the current browser session.")}
-                className="mt-5 rounded-lg bg-[var(--color-navy)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-navy-light)]"
-              >
-                Download mock file
-              </button>
-            </div>
-          )}
+          <div className="mt-8">
+            <DocumentViewer document={document} height={640} />
+          </div>
         </section>
       </div>
     </main>
