@@ -5,6 +5,7 @@ import { Suspense, useRef, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { DocumentCategory, DocumentRecord, getExpiryStatus, useDocuments } from "./DocumentProvider";
 import ExpiryBadge from "./ExpiryBadge";
+import DocumentViewer, { StorageBadge } from "./DocumentViewer";
 import EmptyState from "@/components/EmptyState";
 import ScrollOverHero from "@/components/ScrollOverHero";
 
@@ -32,7 +33,9 @@ function expiryPriority(doc: DocumentRecord): number {
 }
 
 function DocumentsManagerInner() {
-  const { documents, addDocument, deleteDocument } = useDocuments();
+  const { documents, addDocument, deleteDocument, savesToAccount } = useDocuments();
+  // Real progress now: true while any file is still on its way to the account.
+  const uploading = documents.some((d) => d.syncing);
   const inputRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const searchParams = useSearchParams();
@@ -43,7 +46,6 @@ function DocumentsManagerInner() {
   const [category, setCategory] = useState<DocumentCategory>("Other");
   const [expiryDateInput, setExpiryDateInput] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
 
   // Filter state — pre-initialised from ?filter= query param
@@ -55,15 +57,16 @@ function DocumentsManagerInner() {
   const filterValid = searchParams.get("filter") === "valid";
 
   function upload(file: File) {
-    setUploading(true);
-    setUploadMessage(`Uploading ${file.name}...`);
-    window.setTimeout(() => {
-      const newDoc = addDocument(file, category, expiryDateInput || undefined);
-      setUploading(false);
-      setUploadMessage(`${file.name} uploaded successfully.`);
-      setExpiryDateInput("");
-      setSelectedId(newDoc.id);
-    }, 500);
+    if (file.size > 20 * 1024 * 1024) {
+      setUploadMessage(`${file.name} is larger than 20 MB.`);
+      return;
+    }
+    const newDoc = addDocument(file, category, expiryDateInput || undefined);
+    setUploadMessage(
+      savesToAccount ? `${file.name} is uploading to your account.` : `${file.name} saved in this browser.`,
+    );
+    setExpiryDateInput("");
+    setSelectedId(newDoc.id);
   }
 
   function handleFiles(files: FileList | null) {
@@ -116,8 +119,6 @@ function DocumentsManagerInner() {
     return status === "expired" || status === "expiring-soon";
   }).length;
 
-  const isPdf = activeDoc?.type === "PDF";
-  const isImage = activeDoc?.type === "Image";
 
   return (
     <main ref={mainRef} className="flex-1 overflow-y-auto bg-transparent" id="main-content">
@@ -218,6 +219,7 @@ function DocumentsManagerInner() {
             <input
               ref={inputRef}
               type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.txt,.md,.csv"
               className="sr-only"
               onChange={(e) => { handleFiles(e.target.files); e.currentTarget.value = ""; }}
             />
@@ -363,6 +365,7 @@ function DocumentsManagerInner() {
                                   Sample
                                 </span>
                               )}
+                              <StorageBadge document={doc} />
                             </p>
                           </div>
                         </div>
@@ -461,40 +464,7 @@ function DocumentsManagerInner() {
 
                   {/* Preview Body */}
                   <div className="mt-6 flex-1 flex flex-col justify-center">
-                    {activeDoc.previewUrl && isPdf ? (
-                      <iframe
-                        src={activeDoc.previewUrl}
-                        title={`Preview of ${activeDoc.name}`}
-                        className="h-[520px] w-full rounded-xl border border-white/50 bg-white/50"
-                      />
-                    ) : activeDoc.previewUrl && isImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={activeDoc.previewUrl}
-                        alt={`Preview of ${activeDoc.name}`}
-                        className="mx-auto max-h-[500px] max-w-full rounded-xl border border-white/50 object-contain shadow-sm"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#3D2B1F]/20 bg-[rgba(61,43,31,0.02)] p-10 text-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(176,196,222,0.3)] text-[#3D2B1F] mb-3">
-                          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                          </svg>
-                        </div>
-                        <h3 className="text-base font-bold text-[#3D2B1F]">Preview not generated for seed record</h3>
-                        <p className="mt-1.5 max-w-md text-xs text-[#5C4A3E] leading-relaxed">
-                          This document is stored as a verified local session record. All metadata and expiry schedules are active.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => window.alert("Mock download: this document is preserved in the current browser session.")}
-                          className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-[#3D2B1F] px-4 py-2 text-xs font-semibold text-[#FDFBF7] shadow-sm hover:bg-[#4E382A]"
-                        >
-                          <span>Download mock file</span>
-                          <span aria-hidden="true">↓</span>
-                        </button>
-                      </div>
-                    )}
+                    <DocumentViewer document={activeDoc} />
                   </div>
                 </>
               ) : (
