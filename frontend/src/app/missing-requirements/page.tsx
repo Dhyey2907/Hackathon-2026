@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { fill } from "@/lib/i18n/format";
 import Link from "next/link";
 import { useAuth, UserType } from "@/components/auth/AuthProvider";
 
@@ -97,16 +99,77 @@ const MISSING_REQUIREMENTS: Record<UserType, RequirementItem[]> = {
   ],
 };
 
-const SECTOR_LABELS: Record<UserType, string> = {
-  existing_business: "Running a Business",
-  new_business: "Starting a Business",
-  consumer: "Consumer",
+const SECTOR_KEYS: Record<UserType, string> = {
+  existing_business: "onb.existing_business.title",
+  new_business: "onb.new_business.title",
+  consumer: "onb.consumer.title",
+};
+
+/** Hindi for the demo requirements above, by id. */
+const MR_HI: Record<string, Pick<RequirementItem, "title" | "description" | "hrefLabel">> = {
+  "mr-1": {
+    title: "BIS ISI लाइसेंस — IS 9000 (इलेक्ट्रॉनिक्स)",
+    description:
+      "इलेक्ट्रॉनिक्स और IT वस्तु गुणवत्ता नियंत्रण आदेश (QCO) के तहत विद्युत वस्तुओं के लिए अनिवार्य ISI प्रमाणन। इस मार्क के बिना उत्पाद भारत में नहीं बेचे जा सकते।",
+    hrefLabel: "आवश्यकताएँ जाँचने के लिए उत्पाद विज़ार्ड का उपयोग करें",
+  },
+  "mr-2": {
+    title: "वार्षिक फ़ैक्टरी निरीक्षण रिपोर्ट",
+    description:
+      "IS अधिनियम की अनुसूची IV के तहत BIS लाइसेंस के नवीनीकरण के लिए पिछले 12 महीनों की फ़ैक्टरी निरीक्षण रिपोर्ट ज़रूरी है। इसे अपनी दस्तावेज़ तिजोरी में अपलोड करें।",
+    hrefLabel: "दस्तावेज़ों में अपलोड करें",
+  },
+  "mr-3": {
+    title: "परीक्षण रिपोर्ट — IS 616 (लैंप)",
+    description:
+      "LED लैंप उत्पादों के अनुपालन के प्रमाण के रूप में BIS-मान्यता प्राप्त प्रयोगशाला की तृतीय-पक्ष परीक्षण रिपोर्ट ज़रूरी है। यह 2 वर्ष से पुरानी नहीं होनी चाहिए।",
+    hrefLabel: "BIS-मान्यता प्राप्त प्रयोगशाला खोजें",
+  },
+  "mr-4": {
+    title: "BIS पंजीकरण — अनिवार्य पंजीकरण योजना (CRS)",
+    description:
+      "भारत में अधिकांश IT और इलेक्ट्रॉनिक्स उत्पादों के आयात या बिक्री से पहले CRS पंजीकरण ज़रूरी है। बाज़ार में उतारने से पहले BIS से पंजीकरण लेना होगा।",
+    hrefLabel: "आवश्यकताएँ जाँचने के लिए उत्पाद विज़ार्ड का उपयोग करें",
+  },
+  "mr-5": {
+    title: "FSSAI लाइसेंस (यदि खाद्य / पैकेजिंग क्षेत्र)",
+    description:
+      "खाद्य व्यवसायों को काम शुरू करने से पहले FSSAI पंजीकरण या लाइसेंस लेना होगा। यह खाद्य उत्पादों के निर्माताओं, व्यापारियों और आयातकों के लिए अनिवार्य है।",
+    hrefLabel: "खाद्य से जुड़े मानक देखें",
+  },
+  "mr-6": {
+    title: "ISO 9001 गुणवत्ता प्रबंधन प्रणाली प्रमाणन",
+    description:
+      "BIS लाइसेंस आवेदनों के लिए अनुशंसित पूर्व-आवश्यकता। ISO 9001-प्रमाणित QMS से BIS स्वीकृति की प्रक्रिया काफ़ी आसान होती है और परिचालन नियंत्रण दिखता है।",
+    hrefLabel: "IS / ISO मानक देखें",
+  },
+  "mr-7": {
+    title: "NABL-मान्यता प्राप्त प्रयोगशाला से परीक्षण रिपोर्ट",
+    description:
+      "BIS योजना में प्रवेश के लिए उत्पाद परीक्षण NABL-मान्यता प्राप्त प्रयोगशाला में होना चाहिए। अपने निर्माण स्थान के पास स्वीकृत प्रयोगशाला खोजें।",
+    hrefLabel: "BIS-मान्यता प्राप्त प्रयोगशाला खोजें",
+  },
+  "mr-8": {
+    title: "ख़रीदने से पहले उत्पाद का ISI / FSSAI मार्क सत्यापित करें",
+    description:
+      "ख़रीदने से पहले सत्यापन टूल से जाँचें कि उत्पाद का BIS मार्क या HUID हॉलमार्क संख्या असली है और अभी मान्य है।",
+    hrefLabel: "BIS मार्क सत्यापन पर जाएँ",
+  },
+  "mr-9": {
+    title: "उपभोक्ता शिकायत दर्ज करें (यदि लागू हो)",
+    description:
+      "बिना मान्य ISI मार्क के बेचे जा रहे उत्पादों की सूचना BIS उपभोक्ता मामले विभाग को दी जा सकती है। इससे दूसरे उपभोक्ताओं की सुरक्षा होती है और बाज़ार में अनुपालन बना रहता है।",
+    hrefLabel: "उपभोक्ता अधिकारों के बारे में जानें",
+  },
 };
 
 export default function MissingRequirementsPage() {
   const { user } = useAuth();
   const userType: UserType = user?.userType ?? "existing_business";
-  const items = MISSING_REQUIREMENTS[userType];
+  const { t, language } = useLanguage();
+  const items = MISSING_REQUIREMENTS[userType].map((item) =>
+    language === "hi" && MR_HI[item.id] ? { ...item, ...MR_HI[item.id] } : item,
+  );
   const urgentCount = items.filter((i) => i.isUrgent).length;
 
   return (
@@ -122,22 +185,21 @@ export default function MissingRequirementsPage() {
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
             </svg>
-            Back to Dashboard
+            {t("mr.back")}
           </Link>
           <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-[var(--color-navy)]">
-            Compliance · {SECTOR_LABELS[userType]}
+            {t("mr.compliance")} · {t(SECTOR_KEYS[userType])}
           </p>
-          <h1 className="mt-1 text-2xl font-bold text-gray-900">Missing Requirements</h1>
+          <h1 className="mt-1 text-2xl font-bold text-gray-900">{t("dash.missing")}</h1>
           <p className="mt-2 text-sm text-gray-600 max-w-xl">
-            The following certifications, licenses, or reports are typically required for your business category
-            but have not been detected in your document vault.
+            {t("mr.intro")}
           </p>
           {urgentCount > 0 && (
             <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700">
               <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
               </svg>
-              {urgentCount} item{urgentCount !== 1 ? "s" : ""} need immediate action
+              {fill(t("mr.urgentCount"), { n: urgentCount })}
             </div>
           )}
         </div>
@@ -168,7 +230,7 @@ export default function MissingRequirementsPage() {
                       <h2 className="text-sm font-semibold text-gray-900">{item.title}</h2>
                       {item.isUrgent && (
                         <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
-                          Urgent
+                          {t("mr.urgent")}
                         </span>
                       )}
                     </div>
@@ -191,16 +253,15 @@ export default function MissingRequirementsPage() {
 
         {/* Footer nudge */}
         <div className="mt-8 rounded-xl border border-[var(--color-border)] bg-white p-5">
-          <p className="text-sm font-semibold text-gray-900">Not sure which certifications apply to you?</p>
+          <p className="text-sm font-semibold text-gray-900">{t("mr.notSure")}</p>
           <p className="mt-1 text-sm text-gray-600">
-            Use the Product Wizard to answer a few questions and get a tailored list of applicable Indian
-            Standards and certification schemes for your product or sector.
+            {t("mr.notSureHint")}
           </p>
           <Link
             href="/wizard"
             className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[var(--color-navy)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-navy-light)] transition"
           >
-            Launch Product Wizard
+            {t("mr.launch")}
           </Link>
         </div>
       </div>

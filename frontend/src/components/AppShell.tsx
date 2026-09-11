@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import LanguageToggle from "@/components/i18n/LanguageToggle";
 import Link from "next/link";
 import { useState } from "react";
 import { useEffect, useSyncExternalStore } from "react";
@@ -41,6 +43,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  const { t } = useLanguage();
   const isAuthRoute = pathname === "/login" || pathname === "/signup";
   const isOnboardingRoute = pathname === "/onboarding";
   // On /chat the assistant *is* the page, so the side rail stands down.
@@ -59,11 +62,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   if (isLoading || (!user && !isAuthRoute) || (user && isAuthRoute) || (user?.isNewUser && !isOnboardingRoute) || (user && !user.isNewUser && isOnboardingRoute)) {
-    return <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)]"><span className="text-sm text-[var(--color-text-muted)]">Loading BIS Sahayak...</span></div>;
+    return <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)]"><span className="text-sm text-[var(--color-text-muted)]">{t("shell.loading")}</span></div>;
   }
 
-  if (isAuthRoute) return <>{children}</>;
-  if (isOnboardingRoute) return <>{children}</>;
+  // Sign-in and onboarding have no sidebar, so the language switch rides along
+  // in a corner - a Hindi speaker should not have to get through an English
+  // form to find it.
+  if (isAuthRoute || isOnboardingRoute) {
+    return (
+      <>
+        {children}
+        <div className="fixed right-4 top-4 z-50">
+          <LanguageToggle />
+        </div>
+      </>
+    );
+  }
 
   const assistantDocked = showAssistant && assistantOpen;
 
@@ -91,7 +105,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             type="button"
             onClick={() => setMobileNavOpen(true)}
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-navy-lighter)] focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)]"
-            aria-label="Open navigation"
+            aria-label={t("nav.openNavigation")}
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
               <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />

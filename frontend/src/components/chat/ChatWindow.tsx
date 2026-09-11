@@ -53,12 +53,8 @@ const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 // Example questions (shown on empty state, always 4-5 per spec)
 // ---------------------------------------------------------------------------
 
-const EXAMPLE_QUESTIONS = [
-  "I manufacture LED bulbs. Which BIS standards apply and what licence do I need?",
-  "गोल्ड हॉलमार्किंग में HUID क्या है?",
-  "Which labs near Gujarat can test cement?",
-  "What does IS 456 cover?",
-] as const;
+// Dictionary keys: the examples are offered, and sent, in the interface language.
+const EXAMPLE_QUESTIONS = ["chat.ex1", "chat.ex2", "chat.ex3", "chat.ex4"] as const;
 
 // ---------------------------------------------------------------------------
 // ChatWindow
@@ -288,7 +284,7 @@ export default function ChatWindow() {
                   : "bg-[var(--color-text-muted)]"
               }`}
             />
-            {blurStateLabel === "thinking" ? "Deep Search" : "Ambient"}
+            {blurStateLabel === "thinking" ? t("chat.deepSearch") : t("chat.ambient")}
           </span>
         </div>
       )}
@@ -392,7 +388,7 @@ export default function ChatWindow() {
                 {t("chat.tryAsking")}
               </p>
               <div className="grid gap-2 sm:grid-cols-2">
-                {EXAMPLE_QUESTIONS.map((q) => (
+                {EXAMPLE_QUESTIONS.map((key) => t(key)).map((q) => (
                   <button
                     key={q}
                     onClick={() => handleExampleClick(q)}

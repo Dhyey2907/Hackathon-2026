@@ -14,6 +14,8 @@
  * standards cannot be reproduced by substring matching in the browser.
  */
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { fill } from "@/lib/i18n/format";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { searchStandards, USE_MOCK, ApiError } from "@/lib/api";
@@ -50,7 +52,10 @@ const DEFAULT_QUERY = "specification";
 
 export default function StandardsBrowser() {
   const [query, setQuery] = useState("");
-  const [division, setDivision] = useState("All categories");
+  // A division code, or "all". Codes rather than names, so the filter keeps
+  // working when the names are shown in Hindi.
+  const [division, setDivision] = useState("all");
+  const { t } = useLanguage();
   const [page, setPage] = useState(1);
   const [results, setResults] = useState<Standard[]>([]);
   const [loading, setLoading] = useState(false);
@@ -77,7 +82,7 @@ export default function StandardsBrowser() {
       setError(
         err instanceof ApiError
           ? err.message
-          : "Could not reach the catalogue. Please try again.",
+          : "std.error",
       );
       setResults([]);
     } finally {
@@ -93,23 +98,19 @@ export default function StandardsBrowser() {
   // Division is applied client-side: it narrows an already-ranked result set,
   // so re-querying the backend for it would only cost a round trip.
   const filtered =
-    division === "All categories"
+    division === "all"
       ? results
-      : results.filter((s) => DIVISIONS[s.division ?? ""] === division);
+      : results.filter((s) => s.division === division);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
   const visible = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const categories = [
-    "All categories",
-    ...Array.from(
-      new Set(
-        results
-          .map((s) => DIVISIONS[s.division ?? ""])
-          .filter((v): v is string => Boolean(v)),
-      ),
-    ).sort(),
+    "all",
+    ...Array.from(new Set(results.map((s) => s.division ?? "").filter((code) => Boolean(DIVISIONS[code])))).sort(
+      (a, b) => t(`div.${a}`).localeCompare(t(`div.${b}`)),
+    ),
   ];
 
   function updateQuery(value: string) {
@@ -122,22 +123,22 @@ export default function StandardsBrowser() {
       <section className="rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-navy)]">BIS catalogue</p>
-            <h2 className="mt-1 text-xl font-semibold text-gray-900">Find an Indian Standard</h2>
-            <p className="mt-1 max-w-xl text-sm text-gray-600">Search by IS number, product name, or the committee responsible for the standard.</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-navy)]">{t("std.eyebrow")}</p>
+            <h2 className="mt-1 text-xl font-semibold text-gray-900">{t("std.find")}</h2>
+            <p className="mt-1 max-w-xl text-sm text-gray-600">{t("std.findHint")}</p>
           </div>
-          <span className="text-sm text-gray-500"><strong className="text-gray-900">6,209</strong> standards in catalogue</span>
+          <span className="text-sm text-gray-500"><strong className="text-gray-900">6,209</strong> {t("std.inCatalogue")}</span>
         </div>
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           <label className="relative flex-1">
-            <span className="sr-only">Search standards</span>
+            <span className="sr-only">{t("std.searchLabel")}</span>
             <svg className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
-            <input value={query} onChange={(event) => updateQuery(event.target.value)} placeholder="Try “IS 456” or “cement”" className="h-11 w-full rounded-lg border border-gray-300 bg-white pl-10 pr-3 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]/20" />
+            <input value={query} onChange={(event) => updateQuery(event.target.value)} placeholder={t("std.placeholder")} className="h-11 w-full rounded-lg border border-gray-300 bg-white pl-10 pr-3 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]/20" />
           </label>
           <label className="sm:w-56">
-            <span className="sr-only">Filter by category</span>
+            <span className="sr-only">{t("docs.filterCategory")}</span>
             <select value={division} onChange={(event) => { setDivision(event.target.value); setPage(1); }} className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 shadow-sm focus:border-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]/20">
-              {categories.map((option) => <option key={option}>{option}</option>)}
+              {categories.map((option) => <option key={option} value={option}>{option === "all" ? t("std.allCategories") : t(`div.${option}`)}</option>)}
             </select>
           </label>
         </div>
@@ -146,16 +147,16 @@ export default function StandardsBrowser() {
       <div className="flex items-center justify-between px-1">
         <p className="text-sm text-gray-600">
           {loading
-            ? "Searching…"
-            : <>Showing <strong className="text-gray-900">{filtered.length ? (safePage - 1) * PAGE_SIZE + 1 : 0}-{Math.min(safePage * PAGE_SIZE, filtered.length)}</strong> of {filtered.length} matching results</>}
+            ? t("std.searching")
+            : <>{t("std.showingPrefix")} <strong className="text-gray-900">{filtered.length ? (safePage - 1) * PAGE_SIZE + 1 : 0}-{Math.min(safePage * PAGE_SIZE, filtered.length)}</strong> {fill(t("std.showingSuffix"), { n: filtered.length })}</>}
         </p>
-        <p className="hidden text-xs text-gray-500 sm:block">{USE_MOCK ? "Sample data — backend not connected" : "Live BIS catalogue"}</p>
+        <p className="hidden text-xs text-gray-500 sm:block">{USE_MOCK ? t("std.sample") : t("std.live")}</p>
       </div>
 
       {error && (
         <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-          <button type="button" onClick={() => runSearch(query)} className="ml-3 font-medium underline">Retry</button>
+          {error === "std.error" ? t("std.error") : error}
+          <button type="button" onClick={() => runSearch(query)} className="ml-3 font-medium underline">{t("chat.retry")}</button>
         </div>
       )}
 
@@ -167,7 +168,7 @@ export default function StandardsBrowser() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-sm font-semibold text-[var(--color-navy)]">{standard.is_number}</span>
                   {standard.division && DIVISIONS[standard.division] && (
-                    <span className="rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">{DIVISIONS[standard.division]}</span>
+                    <span className="rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">{t(`div.${standard.division}`)}</span>
                   )}
                 </div>
                 <h3 className="mt-2 text-base font-semibold text-gray-900 group-hover:text-[var(--color-navy)]">{standard.title}</h3>
@@ -176,27 +177,27 @@ export default function StandardsBrowser() {
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-gray-100 pt-3 text-xs text-gray-500">
               <span>{standard.committee}</span>
-              <span className="ml-auto font-medium text-[var(--color-navy)]">View details →</span>
+              <span className="ml-auto font-medium text-[var(--color-navy)]">{t("common.viewDetails")}</span>
             </div>
           </Link>
         ))}
         {!visible.length && !loading && !error && (
           <EmptyState
-            title="No standards found"
-            description="We couldn't find any Indian Standards matching your query. Try a broader keyword or clear the category filter."
-            actionLabel="Clear search"
+            title={t("std.none")}
+            description={t("std.noneHint")}
+            actionLabel={t("std.clear")}
             onAction={() => {
               updateQuery("");
-              setDivision("All categories");
+              setDivision("all");
             }}
           />
         )}
       </section>
 
-      <nav className="flex items-center justify-center gap-2 pb-4" aria-label="Standards pages">
-        <button type="button" disabled={safePage === 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40">Previous</button>
-        <span className="px-3 text-sm text-gray-600">Page {safePage} of {pageCount}</span>
-        <button type="button" disabled={safePage === pageCount} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40">Next</button>
+      <nav className="flex items-center justify-center gap-2 pb-4" aria-label={t("std.pages")}>
+        <button type="button" disabled={safePage === 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40">{t("common.previous")}</button>
+        <span className="px-3 text-sm text-gray-600">{fill(t("std.page"), { a: safePage, b: pageCount })}</span>
+        <button type="button" disabled={safePage === pageCount} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40">{t("common.next")}</button>
       </nav>
     </div>
   );

@@ -16,6 +16,7 @@
  * of the time, unwanted.
  */
 
+import { fill } from "@/lib/i18n/format";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { findLabs } from "@/lib/api";
@@ -51,11 +52,11 @@ export default function NearbyLabsCard() {
 
   function requestLocation() {
     if (!("geolocation" in navigator)) {
-      setLocation({ status: "unavailable", message: "This browser cannot share a location." });
+      setLocation({ status: "unavailable", message: "noGeo" });
       return;
     }
     if (!window.isSecureContext) {
-      setLocation({ status: "unavailable", message: "Sharing a location needs a secure (https) connection." });
+      setLocation({ status: "unavailable", message: "needHttps" });
       return;
     }
     setLocation({ status: "locating" });
@@ -126,13 +127,15 @@ export default function NearbyLabsCard() {
 
       {location.status === "unavailable" && (
         <p className="mb-3 text-[11px] leading-relaxed text-gray-500">
-          {location.message === "locationDeclined" ? t("panel.locationDeclined") : location.message}
+          {t(`panel.${location.message}`)}
         </p>
       )}
 
-      <ul className="space-y-3" aria-label="BIS recognised testing laboratories">
+      <ul className="space-y-3" aria-label={t("panel.labsAria")}>
         {ranked.slice(0, VISIBLE_LABS).map(({ lab, km, precision }) => {
-          const distance = km === null ? null : describeDistance(km, precision);
+          const described = km === null ? null : describeDistance(km, precision);
+          const distance =
+            described === "your city" ? t("geo.yourCity") : described === "same state" ? t("geo.sameState") : described;
           return (
             <li key={lab.id}>
               <div className="flex items-start justify-between gap-2">
@@ -142,7 +145,7 @@ export default function NearbyLabsCard() {
                 )}
               </div>
               <p className="mt-0.5 text-[11px] text-gray-500">
-                {[lab.city, lab.state].filter(Boolean).join(", ") || "Location not published"}
+                {[lab.city, lab.state].filter(Boolean).join(", ") || t("labs.locationUnknown")}
                 {lab.category ? ` · ${lab.category}` : ""}
               </p>
               {lab.operative === false && (
@@ -157,7 +160,7 @@ export default function NearbyLabsCard() {
 
       <div className="mt-3 border-t border-gray-100 pt-2">
         <Link href="/labs" className="text-[11px] font-semibold text-[var(--color-navy)] hover:underline">
-          See all {labs.length} recognised laboratories →
+          {fill(t("panel.seeAll"), { n: labs.length })}
         </Link>
         <p className="mt-1 text-[11px] leading-relaxed text-gray-400">
           {t("panel.labsCaveat")}

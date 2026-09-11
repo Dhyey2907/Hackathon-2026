@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import type { Metadata } from "next";
 import StandardsBrowser from "@/components/standards/StandardsBrowser";
 import ScrollOverHero from "@/components/ScrollOverHero";
@@ -15,6 +16,7 @@ import { useRef } from "react";
  */
 export default function StandardsPage() {
   const mainRef = useRef<HTMLElement>(null);
+  const { t } = useLanguage();
 
   return (
     <main
@@ -24,9 +26,9 @@ export default function StandardsPage() {
     >
       {/* ── Atmospheric hero with peeking blur: 8px → 0px on scroll */}
       <ScrollOverHero
-        eyebrow="BIS Catalogue"
-        title="Standards Lookup"
-        subtitle="Search the full catalogue of Indian Standards — scope, codes, and certification pathways."
+        eyebrow={t("std.heroEyebrow")}
+        title={t("std.heroTitle")}
+        subtitle={t("std.heroSub")}
         scrollContainerRef={mainRef}
         startBlur={8}
         endBlur={0}

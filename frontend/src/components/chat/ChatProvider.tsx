@@ -16,6 +16,7 @@
 
 "use client";
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Message, ChatAttachment, BusinessContext } from "@/lib/types";
 import { INITIAL_MESSAGES, mockSendMessage } from "@/lib/mock";
@@ -184,6 +185,7 @@ function businessContextToPrompt(context: BusinessContext | null): string | null
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const { language } = useLanguage();
   // Local accounts ("local-<email>") have no Supabase identity to save under.
   const accountId =
     supabase && hasSupabaseConfig && user?.id && !user.id.startsWith("local-") ? user.id : null;
@@ -208,6 +210,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const broadcast = useRef<BroadcastChannel | null>(null);
   // The document sent with the latest message, kept for Retry.
   const lastAttachment = useRef<ChatAttachment | undefined>(undefined);
+  // The language suggestions are asked for in. A ref, so refreshContext - and
+  // every load that depends on it - does not change when the language does.
+  const languageRef = useRef(language);
 
   /**
    * Ask the backend what it can tell about this user from their own history.
@@ -222,6 +227,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       const result = await getContext(
         history.map((m) => ({ role: m.role, content: m.content })),
         lastQuestion,
+        languageRef.current,
       );
       setBusinessContext(result.business_context);
       setIsNewUser(result.is_new_user);
@@ -230,6 +236,15 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       // Leave the onboarding state as it is.
     }
   }, []);
+
+  // Suggestions and the business headline come back in the interface
+  // language, so ask again when it changes - without reloading the
+  // conversation the user is reading.
+  useEffect(() => {
+    if (languageRef.current === language) return;
+    languageRef.current = language;
+    void refreshContext(cache.current.get(activeRef.current) ?? []);
+  }, [language, refreshContext]);
 
   const activate = useCallback((id: string, shown: Message[]) => {
     activeRef.current = id;

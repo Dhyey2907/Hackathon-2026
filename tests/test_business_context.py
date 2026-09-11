@@ -227,3 +227,45 @@ def test_absent_context_leaves_the_question_untouched():
     from bis.agent.answer import _with_user_context
 
     assert _with_user_context("What is BIS?", None) == "What is BIS?"
+
+
+# --------------------------------------------------------------- Hindi
+
+
+def test_hindi_headline_keeps_the_hedge():
+    stated = bc.BusinessContext(products=["helmets"], confidence="high")
+    inferred = bc.BusinessContext(products=["helmets"], confidence="medium")
+    assert stated.headline("hi") == "आप helmets के साथ काम करते हैं"
+    assert inferred.headline("hi") == "आप helmets के बारे में पूछते रहे हैं"
+    # English is unchanged, and remains the default.
+    assert stated.headline() == "you're working with helmets"
+    assert stated.to_dict("hi")["headline"] == stated.headline("hi")
+
+
+def test_a_new_hindi_user_gets_hindi_starters():
+    assert bc.suggest(bc.BusinessContext(), language="hi") == bc.GENERIC_SUGGESTIONS_HI
+
+
+def test_hindi_suggestions_are_asked_for_in_hindi(monkeypatch):
+    seen = {}
+
+    def capture(messages, **kwargs):
+        seen["system"] = messages[0]["content"]
+        return {"suggestions": ["परीक्षण प्रयोगशाला खोजें", "आवश्यक दस्तावेज़", "लागू मानक जाँचें"]}
+
+    monkeypatch.setattr(bc, "chat_json", capture)
+    out = bc.suggest(bc.BusinessContext(products=["helmets"], confidence="high"), language="hi")
+    assert "Hindi" in seen["system"]
+    assert out[0] == "परीक्षण प्रयोगशाला खोजें"
+
+
+def test_english_suggestions_prompt_is_unchanged(monkeypatch):
+    seen = {}
+
+    def capture(messages, **kwargs):
+        seen["system"] = messages[0]["content"]
+        return {"suggestions": ["Find a testing lab", "Required documents", "Check applicable standards"]}
+
+    monkeypatch.setattr(bc, "chat_json", capture)
+    bc.suggest(bc.BusinessContext(products=["helmets"], confidence="high"))
+    assert seen["system"] == bc.SUGGEST_PROMPT

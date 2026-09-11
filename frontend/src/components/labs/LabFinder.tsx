@@ -20,6 +20,7 @@
  * from one needs to be able to find out - but they sort last and say so.
  */
 
+import { formatDate } from "@/lib/i18n/format";
 import { useEffect, useMemo, useState } from "react";
 import { findLabs } from "@/lib/api";
 import type { Lab } from "@/lib/types";
@@ -43,7 +44,7 @@ function hasLapsed(lab: Lab): boolean {
 }
 
 export default function LabFinder() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [labs, setLabs] = useState<Lab[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -54,7 +55,7 @@ export default function LabFinder() {
     let live = true;
     findLabs()
       .then((response) => live && setLabs(response.results))
-      .catch(() => live && setError("Could not load the laboratory directory."));
+      .catch(() => live && setError("labs.loadError"));
     return () => {
       live = false;
     };
@@ -92,17 +93,16 @@ export default function LabFinder() {
               {t("labs.subtitle")}
             </p>
             <p className="mt-2 max-w-xl text-xs leading-relaxed text-gray-500">
-              BIS does not publish what each laboratory can test. To find one for a particular
-              standard, use the{" "}
+              {t("labs.scopeNote")}{" "}
               <a
                 href={LIMS_SCOPE_SEARCH}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-semibold text-[var(--color-navy)] hover:underline"
               >
-                LIMS standards-wise search
+                {t("labs.limsLink")}
               </a>
-              .
+              {language === "hi" ? " " : ""}{t("labs.scopeTail")}
             </p>
           </div>
           <span className="whitespace-nowrap text-sm text-gray-500">
@@ -113,7 +113,7 @@ export default function LabFinder() {
 
         <div className="mt-5 grid gap-3 md:grid-cols-[1fr_190px_190px]">
           <label className="relative">
-            <span className="sr-only">Search laboratories</span>
+            <span className="sr-only">{t("labs.searchLabel")}</span>
             <svg className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" />
             </svg>
@@ -126,7 +126,7 @@ export default function LabFinder() {
           </label>
 
           <label>
-            <span className="sr-only">Filter by state</span>
+            <span className="sr-only">{t("labs.filterState")}</span>
             <select
               value={state}
               onChange={(event) => setState(event.target.value)}
@@ -141,7 +141,7 @@ export default function LabFinder() {
           </label>
 
           <label>
-            <span className="sr-only">Filter by recognition</span>
+            <span className="sr-only">{t("labs.filterRecognition")}</span>
             <select
               value={kind}
               onChange={(event) => setKind(event.target.value)}
@@ -156,7 +156,7 @@ export default function LabFinder() {
 
       {error && (
         <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
+          {t(error)}
         </p>
       )}
 
@@ -181,7 +181,7 @@ export default function LabFinder() {
 }
 
 function LabCard({ lab }: { lab: Lab }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const recognised = isRecognised(lab);
   const lapsed = hasLapsed(lab);
   const suspended = lab.operative === false;
@@ -220,11 +220,7 @@ function LabCard({ lab }: { lab: Lab }) {
           <div className="flex gap-1.5">
             <dt>{lapsed ? t("labs.lapsed") : t("labs.validTo")}</dt>
             <dd className={lapsed ? "font-semibold text-amber-700" : "text-gray-700"}>
-              {new Date(lab.valid_to).toLocaleDateString("en-IN", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              })}
+              {formatDate(lab.valid_to, language)}
             </dd>
           </div>
         )}

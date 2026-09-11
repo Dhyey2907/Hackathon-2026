@@ -150,6 +150,7 @@ export async function streamMessage(
 export function getContext(
   messages: { role: string; content: string }[],
   lastQuestion?: string,
+  language: string = "en",
 ): Promise<ContextResponse> {
   return request<ContextResponse>("/context", {
     method: "POST",
@@ -158,6 +159,8 @@ export function getContext(
       // without adding signal.
       messages: messages.slice(-60),
       last_question: lastQuestion ?? null,
+      // The headline and suggestions are written in this language.
+      language,
     }),
   });
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { useEffect, useId, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 
@@ -17,6 +18,7 @@ export default function QrScanner({ onDecoded }: QrScannerProps) {
   const decodedRef = useRef(false);
   const startedRef = useRef(false);
   const [state, setState] = useState<ScannerState>("requesting");
+  const { t } = useLanguage();
 
   useEffect(() => {
     onDecodedRef.current = onDecoded;
@@ -74,19 +76,13 @@ export default function QrScanner({ onDecoded }: QrScannerProps) {
     };
   }, [elementId]);
 
-  const stateCopy = {
-    requesting: { title: "Requesting camera access", body: "Allow camera access in your browser to scan a BIS QR code." },
-    scanning: { title: "Align the QR code inside the frame", body: "Keep the code steady and well lit." },
-    success: { title: "QR code captured", body: "Checking the encoded identifier..." },
-    denied: { title: "Camera access is unavailable", body: "Allow camera access in your browser settings, or use Manual Entry below." },
-    "no-camera": { title: "No camera found", body: "Connect a camera or use Manual Entry to verify the identifier." },
-    error: { title: "Scanner unavailable", body: "Use Manual Entry while the scanner is unavailable." },
-  }[state];
+  const copyKey = state === "no-camera" ? "noCamera" : state;
+  const stateCopy = { title: t(`qr.${copyKey}.title`), body: t(`qr.${copyKey}.body`) };
 
   return (
     <div className="mt-5">
       <div className="relative overflow-hidden rounded-xl bg-[#0f2238] p-3">
-        <div id={elementId} className="min-h-[280px] overflow-hidden rounded-lg bg-[#0b1828]" aria-label="QR code camera preview" />
+        <div id={elementId} className="min-h-[280px] overflow-hidden rounded-lg bg-[#0b1828]" aria-label={t("qr.preview")} />
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className={`relative h-56 w-56 rounded-2xl border-2 ${state === "success" ? "border-green-400" : "border-white"} shadow-[0_0_0_999px_rgba(4,15,28,0.48)]`}>
             <span className="absolute -left-0.5 -top-0.5 h-7 w-7 rounded-tl-xl border-l-4 border-t-4 border-green-300" />

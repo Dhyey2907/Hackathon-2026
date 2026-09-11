@@ -72,7 +72,7 @@ class BusinessContext:
         """
         return self.confidence in ("high", "medium") and bool(self.products or self.business_type)
 
-    def headline(self) -> str | None:
+    def headline(self, language: str = "en") -> str | None:
         """How to say it back to the user, hedged to match the confidence.
 
         High confidence means they told us outright, so it can be stated. Medium
@@ -82,14 +82,19 @@ class BusinessContext:
         subject = ", ".join(self.products) or self.business_type
         if not subject or not self.is_usable:
             return None
+        if language == "hi":
+            # The same hedge in Hindi: stated outright, or only asked about.
+            if self.confidence == "high":
+                return f"आप {subject} के साथ काम करते हैं"
+            return f"आप {subject} के बारे में पूछते रहे हैं"
         if self.confidence == "high":
             return f"you're working with {subject}"
         return f"you've been asking about {subject}"
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, language: str = "en") -> dict[str, Any]:
         data = asdict(self)
         data["is_usable"] = self.is_usable
-        data["headline"] = self.headline()
+        data["headline"] = self.headline(language)
         return data
 
     def prompt_block(self) -> str | None:
@@ -293,6 +298,19 @@ GENERIC_SUGGESTIONS = [
     "Find a testing laboratory",
 ]
 
+GENERIC_SUGGESTIONS_HI = [
+    "BIS प्रमाणन क्या है?",
+    "मेरे उत्पाद पर कौन-सा मानक लागू होता है?",
+    "परीक्षण प्रयोगशाला खोजें",
+]
+
+# Added to the prompt when the interface is in Hindi. The terms a user will
+# meet on BIS's own pages stay as BIS writes them, so they can be matched.
+HINDI_SUGGESTIONS = (
+    "\n\nWrite every suggestion in Hindi, in Devanagari script. Keep BIS, ISI, "
+    "HUID, CRS, QCO, scheme names and product names as they are usually written."
+)
+
 # A suggestion naming a specific standard is unverifiable. It carries no
 # sources, so the citation validator never sees it, and a wrong IS number shown
 # as a next step is exactly the fabrication this project exists to prevent.
@@ -314,10 +332,12 @@ def suggest(
     context: BusinessContext,
     last_question: str | None = None,
     last_answer_topic: str | None = None,
+    language: str = "en",
 ) -> list[str]:
     """Next actions for this user. Falls back to generic prompts, never to nothing."""
+    generic = GENERIC_SUGGESTIONS_HI if language == "hi" else GENERIC_SUGGESTIONS
     if not context.is_usable and not last_question:
-        return list(GENERIC_SUGGESTIONS)
+        return list(generic)
 
     lines = []
     if context.is_usable:
@@ -335,7 +355,7 @@ def suggest(
     try:
         raw = chat_json(
             [
-                {"role": "system", "content": SUGGEST_PROMPT},
+                {"role": "system", "content": SUGGEST_PROMPT + (HINDI_SUGGESTIONS if language == "hi" else "")},
                 {"role": "user", "content": "\n".join(lines)},
             ],
             model=get_settings().groq_router_model,
@@ -344,7 +364,7 @@ def suggest(
         suggestions = _clean_list(raw.get("suggestions"), 6)
     except Exception as exc:
         log.warning("suggestion generation failed: %s", str(exc)[:160])
-        return list(GENERIC_SUGGESTIONS)
+        return list(generic)
 
     kept = []
     for suggestion in suggestions:
@@ -354,13 +374,13 @@ def suggest(
         kept.append(suggestion)
 
     # Top up rather than show a lone suggestion, but never pad past four.
-    for fallback in GENERIC_SUGGESTIONS:
+    for fallback in generic:
         if len(kept) >= 3:
             break
         if fallback not in kept:
             kept.append(fallback)
 
-    return kept[:4] or list(GENERIC_SUGGESTIONS)
+    return kept[:4] or list(generic)
 
 
 def clear_cache() -> None:

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -18,6 +19,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const isSignup = mode === "signup";
+  const { t } = useLanguage();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -33,7 +35,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
         const result = await signUp(name, identifier, password);
         if (result.requiresEmailConfirmation) {
           setSuccess(
-            "Account created. Check your email to confirm your address, then sign in.",
+            t("auth.created"),
           );
           return;
         }
@@ -45,7 +47,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "We could not complete that request. Please try again.",
+          : t("auth.failed"),
       );
     } finally {
       setIsSubmitting(false);
@@ -71,17 +73,17 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 BIS Sahayak
               </span>
               <span className="block text-xs text-[var(--color-text-muted)]">
-                Bureau of Indian Standards
+                {t("auth.bureau")}
               </span>
             </span>
           </Link>
           <h1 className="mt-8 text-2xl font-bold text-gray-900">
-            {isSignup ? "Create your account" : "Welcome back"}
+            {isSignup ? t("auth.createTitle") : t("auth.welcome")}
           </h1>
           <p className="mt-2 text-sm text-gray-600">
             {isSignup
-              ? "Start exploring Indian Standards and BIS services."
-              : "Sign in to continue to BIS Sahayak."}
+              ? t("auth.createSub")
+              : t("auth.signInSub")}
           </p>
         </div>
         <section className="rounded-xl border border-[var(--color-border)] bg-white p-6 shadow-sm sm:p-8">
@@ -108,7 +110,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   htmlFor="name"
                   className="text-sm font-semibold text-gray-900"
                 >
-                  Name
+                  {t("common.name")}
                 </label>
                 <input
                   id="name"
@@ -118,7 +120,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   className="mt-2 h-11 w-full rounded-lg border border-gray-300 px-3 text-sm text-gray-900 shadow-sm focus:border-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]/20"
                 />
                 {submitted && !name.trim() && (
-                  <p className="mt-1 text-xs text-red-700">Enter your name.</p>
+                  <p className="mt-1 text-xs text-red-700">{t("auth.nameReq")}</p>
                 )}
               </div>
             )}
@@ -127,7 +129,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 htmlFor="identifier"
                 className="text-sm font-semibold text-gray-900"
               >
-                Email or username
+                {t("auth.identifier")}
               </label>
               <input
                 id="identifier"
@@ -138,7 +140,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               />
               {submitted && !identifier.trim() && (
                 <p className="mt-1 text-xs text-red-700">
-                  Enter your email or username.
+                  {t("auth.identifierReq")}
                 </p>
               )}
             </div>
@@ -147,7 +149,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 htmlFor="password"
                 className="text-sm font-semibold text-gray-900"
               >
-                Password
+                {t("auth.password")}
               </label>
               <input
                 id="password"
@@ -159,7 +161,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               />
               {submitted && !password.trim() && (
                 <p className="mt-1 text-xs text-red-700">
-                  Enter your password.
+                  {t("auth.passwordReq")}
                 </p>
               )}
             </div>
@@ -170,21 +172,21 @@ export default function AuthForm({ mode }: AuthFormProps) {
             >
               {isSubmitting
                 ? isSignup
-                  ? "Creating account..."
-                  : "Signing in..."
+                  ? t("auth.creating")
+                  : t("auth.signingIn")
                 : isSignup
-                  ? "Sign Up"
-                  : "Sign In"}
+                  ? t("auth.signUp")
+                  : t("auth.signIn")}
             </button>
           </form>
         </section>
         <p className="mt-5 text-center text-sm text-gray-600">
-          {isSignup ? "Already have an account? " : "Don't have an account? "}
+          {isSignup ? t("auth.haveAccount") : t("auth.noAccount")}{" "}
           <Link
             href={isSignup ? "/login" : "/signup"}
             className="font-semibold text-[var(--color-navy)] hover:underline"
           >
-            {isSignup ? "Sign in" : "Sign up"}
+            {isSignup ? t("auth.signInLink") : t("auth.signUpLink")}
           </Link>
         </p>
       </div>

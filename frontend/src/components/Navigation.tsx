@@ -59,11 +59,12 @@ function NavIcon({ name }: { name: IconName }) {
 /** Small colored dot shown next to document names in the sidebar Recents section. */
 function ExpiryDot({ expiryDate }: { expiryDate?: string }) {
   const { status } = getExpiryStatus(expiryDate);
+  const { t } = useLanguage();
   if (status === "expired") {
-    return <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-red-500" title="Expired" aria-label="Expired" />;
+    return <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-red-500" title={t("expiry.expired")} aria-label={t("expiry.expired")} />;
   }
   if (status === "expiring-soon") {
-    return <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-amber-400" title="Expiring soon" aria-label="Expiring soon" />;
+    return <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-amber-400" title={t("expiry.soonShort")} aria-label={t("expiry.soonShort")} />;
   }
   return null;
 }
@@ -90,7 +91,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
           type="button"
           onClick={onMobileClose}
           className="fixed inset-0 z-40 bg-[#071018]/45 backdrop-blur-sm lg:hidden"
-          aria-label="Close navigation"
+          aria-label={t("nav.closeNavigation")}
         />
       )}
       <aside
@@ -127,8 +128,8 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
             type="button"
             onClick={onToggle}
             className="rounded-md p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-navy-lighter)] hover:text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]"
-            aria-label="Collapse sidebar"
-            title="Collapse sidebar"
+            aria-label={t("nav.collapse")}
+            title={t("nav.collapse")}
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5 4 12l7 7M4 12h16" />
@@ -139,7 +140,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
           type="button"
           onClick={onMobileClose}
           className="rounded-md p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-navy-lighter)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)] lg:hidden"
-          aria-label="Close navigation"
+          aria-label={t("nav.closeNavigation")}
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
             <path strokeLinecap="round" d="m6 6 12 12M18 6 6 18" />
@@ -148,7 +149,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
       </div>
 
       {/* Primary nav + recents */}
-      <nav className="flex-1 overflow-y-auto px-3 py-5" aria-label="Primary navigation">
+      <nav className="flex-1 overflow-y-auto px-3 py-5" aria-label={t("nav.primary")}>
         <ul className="space-y-1.5">
           {NAV_LINKS.map((link) => {
             const isActive = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
@@ -192,7 +193,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
 
         {/* Recents section — hidden when sidebar is collapsed */}
         {!collapsed && (
-          <section className="mt-6 border-t border-[var(--color-border)] pt-4" aria-label="Recents">
+          <section className="mt-6 border-t border-[var(--color-border)] pt-4" aria-label={t("nav.recents")}>
             <button
               type="button"
               onClick={() => setRecentsOpen((open) => !open)}
@@ -303,7 +304,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
         <Link
           href="/profile"
           aria-current={pathname === "/profile" ? "page" : undefined}
-          title={collapsed ? "Profile" : undefined}
+          title={collapsed ? t("nav.profile") : undefined}
           className={`mb-2 flex items-center gap-2 rounded-md px-2 py-2 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)] ${
             pathname === "/profile"
               ? "bg-[var(--color-navy-lighter)] text-[var(--color-navy)]"
@@ -319,7 +320,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
         <Link
           href="/settings"
           aria-current={pathname === "/settings" ? "page" : undefined}
-          title={collapsed ? "Settings" : undefined}
+          title={collapsed ? t("nav.settings") : undefined}
           className={`mb-2 flex items-center gap-2 rounded-md px-2 py-2 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)] ${
             pathname === "/settings"
               ? "bg-[var(--color-navy-lighter)] text-[var(--color-navy)]"
@@ -336,8 +337,8 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
           <button
             type="button"
             onClick={handleLogout}
-            aria-label="Log out"
-            title="Log out"
+            aria-label={t("nav.logout")}
+            title={t("nav.logout")}
             className={`flex items-center gap-2 rounded-md p-2 text-xs font-medium text-[var(--color-text-muted)] hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)] ${collapsed ? "justify-center" : ""}`}
           >
             <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -348,7 +349,7 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
           {!collapsed && (
             <div className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-muted)]">
               <span className="h-2 w-2 rounded-full bg-green-400" aria-hidden="true" />
-              <span>Mock Mode</span>
+              <span>{t("nav.mockMode")}</span>
             </div>
           )}
         </div>
@@ -356,8 +357,8 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
           <button
             type="button"
             onClick={onToggle}
-            aria-label="Expand sidebar"
-            title="Expand sidebar"
+            aria-label={t("nav.expand")}
+            title={t("nav.expand")}
             className="mt-2 w-full rounded-md p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-navy-lighter)] hover:text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]"
           >
             <svg className="mx-auto h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { useEffect, useRef } from "react";
 
 interface ScrollOverHeroProps {
@@ -46,6 +47,7 @@ export default function ScrollOverHero({
   endBlur = 0,
 }: ScrollOverHeroProps) {
   const heroRef = useRef<HTMLDivElement>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Set initial blur when the component mounts
@@ -134,7 +136,7 @@ export default function ScrollOverHero({
           {/* Decorative scroll hint */}
           <div className="page-hero-hint mt-8 flex items-center gap-2">
             <span className="text-[11px] font-medium" style={{ color: "var(--color-text-muted)" }}>
-              Scroll to focus
+              {t("hero.scroll")}
             </span>
             <svg
               className="h-3.5 w-3.5 animate-bounce"
