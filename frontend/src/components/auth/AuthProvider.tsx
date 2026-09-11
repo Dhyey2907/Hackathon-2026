@@ -17,6 +17,8 @@ export type OnboardingData = {
   productName?: string;
   productionStatus?: string;
   productDescription?: string;
+  /** "india" or "abroad": decides the certification scheme. */
+  madeIn?: string;
 };
 
 type AuthUser = {
