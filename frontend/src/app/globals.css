@@ -707,6 +707,23 @@ textarea {
   box-shadow: none !important;
 }
 
+/* A <select>'s open list is drawn by the browser, not by the transparent
+   control above. The control hands its options the inherited text colour -
+   light, in dark mode - while the list kept the browser's light default
+   ground, so every option read as blank until hover highlighted it. Give
+   options the theme's own ground and text, and tell the browser the page is
+   dark so its native popups and scrollbars follow. */
+option,
+optgroup {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+.dark,
+:root.dark {
+  color-scheme: dark;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
