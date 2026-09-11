@@ -73,6 +73,8 @@ export default function ChatWindow() {
     error,
     sendMessage,
     resetChatHistory,
+    conversations,
+    startNewChat,
     retryLast,
     hasConversation,
   } = useChat();
@@ -82,6 +84,10 @@ export default function ChatWindow() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // A document waiting to go with the next message, and its extracted text.
+  // Reset asks in the page rather than through the browser's confirm dialog, which some
+  // embedded browsers suppress - the click then did nothing at all.
+  const [confirmingReset, setConfirmingReset] = useState(false);
+
   const [attachment, setAttachment] = useState<(ComposerAttachment & { text?: string }) | null>(null);
   // Bumped on every attach and removal, so a slow read that finishes after the
   // user removed the file - or picked another - cannot bring it back.
@@ -287,20 +293,57 @@ export default function ChatWindow() {
         </div>
       )}
 
-      {hasConversation && (
-        <div className="flex shrink-0 justify-end px-4 pt-2 sm:px-6">
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm(t("chat.resetConfirm"))) {
-                void resetChatHistory();
-              }
-            }}
-            disabled={isLoading}
-            className="rounded-md px-2 py-1 text-xs font-medium text-gray-500 transition-colors hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {t("chat.reset")}
-          </button>
+      {(hasConversation || conversations.length > 0) && (
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 px-4 pt-2 sm:px-6">
+          {confirmingReset ? (
+            <div
+              role="alertdialog"
+              aria-label={t("chat.reset")}
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-red-200 px-3 py-1.5 text-xs"
+            >
+              <span className="text-[var(--color-text-primary)]">{t("chat.resetConfirm")}</span>
+              <button
+                type="button"
+                onClick={async () => {
+                  await resetChatHistory();
+                  setConfirmingReset(false);
+                }}
+                disabled={isLoading}
+                className="rounded-md bg-red-600 px-2 py-1 font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {t("chat.resetYes")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingReset(false)}
+                className="rounded-md px-2 py-1 font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]"
+              >
+                {t("chat.cancel")}
+              </button>
+            </div>
+          ) : (
+            <>
+              {hasConversation && (
+                <button
+                  type="button"
+                  onClick={startNewChat}
+                  className="rounded-md border border-[var(--color-border)] px-2 py-1 text-xs font-semibold text-[var(--color-navy)] transition-colors hover:bg-[var(--color-navy-lighter)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]"
+                >
+                  + {t("chat.newChat")}
+                </button>
+              )}
+              {conversations.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingReset(true)}
+                  disabled={isLoading}
+                  className="rounded-md px-2 py-1 text-xs font-medium text-gray-500 transition-colors hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {t("chat.reset")}
+                </button>
+              )}
+            </>
+          )}
         </div>
       )}
 

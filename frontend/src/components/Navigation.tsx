@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getExpiryStatus, useDocuments } from "@/components/documents/DocumentProvider";
-import { RECENT_CHATS, selectRecentChat } from "@/lib/recents";
+import { useChat } from "@/components/chat/ChatProvider";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 import LanguageToggle from "@/components/i18n/LanguageToggle";
 
@@ -73,6 +73,8 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
   const router = useRouter();
   const { user, logout } = useAuth();
   const { documents } = useDocuments();
+  const { conversations, activeConversationId, startNewChat, openConversation } = useChat();
+  const [showAllChats, setShowAllChats] = useState(false);
   const [recentsOpen, setRecentsOpen] = useState(true);
   const { t } = useLanguage();
 
@@ -210,29 +212,54 @@ export default function Navigation({ collapsed, onToggle, mobileOpen, onMobileCl
 
             {recentsOpen && (
               <div className="mt-3 space-y-4">
-                {/* Recent Chats */}
+                {/* Recent Chats - the user's own conversations, newest first */}
                 <div>
-                  <p className="px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">{t("nav.recentChats")}</p>
-                  <ul className="mt-1 space-y-0.5">
-                    {RECENT_CHATS.slice(0, 5).map((chat) => (
-                      <li key={chat.id}>
-                        <button
-                          type="button"
-                          onClick={() => { selectRecentChat(chat.prompt); if (pathname !== "/chat") router.push("/chat"); }}
-                          title={chat.title}
-                          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-navy-lighter)] hover:text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]"
-                        >
-                          <svg className="h-3.5 w-3.5 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.7 8.7 0 0 1-4-.9L4 20l1.5-3.8A7.2 7.2 0 0 1 4 11.5 7.5 7.5 0 0 1 12 4a7.5 7.5 0 0 1 8 7.5Z" />
-                          </svg>
-                          <span className="truncate">{chat.title}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link href="/chat" className="mt-1 block px-2 text-[11px] font-medium text-[var(--color-navy)] hover:underline">
-                    {t("nav.viewAll")}
-                  </Link>
+                  <div className="flex items-center justify-between px-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{t("nav.recentChats")}</p>
+                    <button
+                      type="button"
+                      onClick={() => { startNewChat(); if (pathname !== "/chat") router.push("/chat"); }}
+                      className="rounded px-1.5 py-0.5 text-[11px] font-semibold text-[var(--color-navy)] hover:bg-[var(--color-navy-lighter)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]"
+                    >
+                      + {t("chat.newChat")}
+                    </button>
+                  </div>
+                  {conversations.length === 0 ? (
+                    <p className="mt-1 px-2 py-1.5 text-xs text-[var(--color-text-muted)]">{t("nav.noChats")}</p>
+                  ) : (
+                    <ul className="mt-1 space-y-0.5">
+                      {(showAllChats ? conversations : conversations.slice(0, 5)).map((chat) => {
+                        const active = pathname === "/chat" && chat.id === activeConversationId;
+                        return (
+                          <li key={chat.id}>
+                            <button
+                              type="button"
+                              onClick={() => { openConversation(chat.id); if (pathname !== "/chat") router.push("/chat"); }}
+                              title={`${chat.title} · ${new Date(chat.updatedAt).toLocaleString()}`}
+                              aria-current={active ? "true" : undefined}
+                              className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs hover:bg-[var(--color-navy-lighter)] hover:text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)] ${
+                                active ? "bg-[var(--color-navy-lighter)] font-medium text-[var(--color-navy)]" : "text-[var(--color-text-secondary)]"
+                              }`}
+                            >
+                              <svg className="h-3.5 w-3.5 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.7 8.7 0 0 1-4-.9L4 20l1.5-3.8A7.2 7.2 0 0 1 4 11.5 7.5 7.5 0 0 1 12 4a7.5 7.5 0 0 1 8 7.5Z" />
+                              </svg>
+                              <span className="truncate">{chat.title}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                  {conversations.length > 5 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllChats((open) => !open)}
+                      className="mt-1 block px-2 text-[11px] font-medium text-[var(--color-navy)] hover:underline"
+                    >
+                      {showAllChats ? t("nav.showLess") : `${t("nav.viewAll")} (${conversations.length})`}
+                    </button>
+                  )}
                 </div>
 
                 {/* Recent Documents — with expiry dot indicators */}
