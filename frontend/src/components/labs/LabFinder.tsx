@@ -20,6 +20,8 @@
  * from one needs to be able to find out - but they sort last and say so.
  */
 
+import LabsMap from "./LabsMap";
+import { fill } from "@/lib/i18n/format";
 import { formatDate } from "@/lib/i18n/format";
 import { useEffect, useMemo, useState } from "react";
 import { findLabs } from "@/lib/api";
@@ -29,6 +31,8 @@ import Reveal from "@/components/motion/Reveal";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 const LIMS_SCOPE_SEARCH = "https://lims.bis.gov.in/home/search_is_number/";
+/** Each pin costs a Places search, so the map covers the first matches only. */
+const MAP_LABS = 8;
 // Stable internal values; the visible labels come from the dictionary, so
 // switching language never changes what is selected.
 const ALL_STATES = "__all_states__";
@@ -169,6 +173,18 @@ export default function LabFinder() {
           title={t("labs.noneTitle")}
           description={t("labs.noneBody")}
         />
+      )}
+
+      {results.length > 0 && (
+        <Reveal as="section" className="rounded-xl border border-[var(--color-border)] bg-white p-4 shadow-sm sm:p-5">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-sm font-semibold text-gray-900">{t("map.title")}</h2>
+            {results.length > MAP_LABS && (
+              <p className="text-[11px] text-gray-500">{fill(t("map.firstN"), { n: MAP_LABS })}</p>
+            )}
+          </div>
+          <LabsMap labs={results.slice(0, MAP_LABS)} className="h-80" />
+        </Reveal>
       )}
 
       <Reveal as="section" delayIndex={1} className="grid gap-4 md:grid-cols-2" aria-live="polite">

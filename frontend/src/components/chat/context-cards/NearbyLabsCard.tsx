@@ -16,6 +16,7 @@
  * of the time, unwanted.
  */
 
+import LabsMap from "@/components/labs/LabsMap";
 import { fill } from "@/lib/i18n/format";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -100,18 +101,16 @@ export default function NearbyLabsCard() {
 
   return (
     <ContextCard title={t("panel.labs")} badge={`${labs.length}`}>
-      {/* Map slot: keeps its aspect so nothing reflows when a real map is
-          dropped in. When one is, it must be a genuine place search - plotting
-          pins at these city centres would read as surveyed lab addresses. */}
-      <div
-        id="chat-labs-map"
-        className="mb-3 flex aspect-[16/10] items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] bg-gray-50 text-center"
-      >
-        <p className="px-4 text-[11px] leading-relaxed text-gray-400">
-          {t("panel.mapView")}
-          <br />
-          {t("panel.mapNoKey")}
-        </p>
+      {/* Pins come from a Google Maps search of each lab's published name and
+          town, never from these city centres - those would read as surveyed
+          lab addresses. Without a key this is the placeholder it always was. */}
+      <div className="mb-3">
+        <LabsMap
+          id="chat-labs-map"
+          labs={ranked.slice(0, VISIBLE_LABS).map((entry) => entry.lab)}
+          here={here}
+          className="aspect-[16/10]"
+        />
       </div>
 
       {location.status !== "ready" && (
