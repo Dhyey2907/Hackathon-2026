@@ -29,6 +29,17 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
 type Dictionary = Record<string, string>;
 
 const en: Dictionary = {
+  "map.title": "Laboratories on the map",
+  "map.loading": "Loading map…",
+  "map.locating": "Finding {n} laboratories on Google Maps…",
+  "map.found": "{found} of {n} shown on the map. Pins come from a Google Maps search of each laboratory's name and town — check the address before you visit.",
+  "map.authFailed": "Google Maps rejected the key. Check that Maps JavaScript API and Places API (New) are enabled for it, that billing is on, and that it allows this site.",
+  "map.loadFailed": "Could not reach Google Maps.",
+  "map.you": "You are here",
+  "map.fromSearch": "Location from a Google Maps search — check the address.",
+  "map.openInMaps": "Open in Google Maps",
+  "map.keyHint": "Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to frontend/.env.local, then restart the frontend.",
+  "map.firstN": "The map shows the first {n} matches.",
   "labs.scopeNote": "BIS does not publish what each laboratory can test. To find one for a particular standard, use the",
   "labs.limsLink": "LIMS standards-wise search",
   "labs.scopeTail": ".",
@@ -652,6 +663,17 @@ const en: Dictionary = {
 };
 
 const hi: Dictionary = {
+  "map.title": "मानचित्र पर प्रयोगशालाएँ",
+  "map.loading": "मानचित्र लोड हो रहा है…",
+  "map.locating": "Google Maps पर {n} प्रयोगशालाएँ खोजी जा रही हैं…",
+  "map.found": "{n} में से {found} मानचित्र पर दिखाई गईं। पिन हर प्रयोगशाला के नाम और शहर की Google Maps खोज से आते हैं — जाने से पहले पता जाँच लें।",
+  "map.authFailed": "Google Maps ने कुंजी अस्वीकार कर दी। जाँचें कि इसके लिए Maps JavaScript API और Places API (New) चालू हैं, बिलिंग चालू है, और यह इस साइट की अनुमति देती है।",
+  "map.loadFailed": "Google Maps तक नहीं पहुँच सके।",
+  "map.you": "आप यहाँ हैं",
+  "map.fromSearch": "स्थान Google Maps खोज से — पता जाँच लें।",
+  "map.openInMaps": "Google Maps में खोलें",
+  "map.keyHint": "frontend/.env.local में NEXT_PUBLIC_GOOGLE_MAPS_API_KEY जोड़ें, फिर फ़्रंटएंड दोबारा शुरू करें।",
+  "map.firstN": "मानचित्र पर पहले {n} परिणाम दिखाए गए हैं।",
   "labs.scopeNote": "BIS यह प्रकाशित नहीं करता कि कौन-सी प्रयोगशाला क्या जाँच सकती है। किसी विशेष मानक के लिए प्रयोगशाला खोजने हेतु",
   "labs.limsLink": "LIMS मानक-वार खोज",
   "labs.scopeTail": "का उपयोग करें।",

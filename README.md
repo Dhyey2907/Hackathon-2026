@@ -38,7 +38,7 @@ The assistant will describe what a standard covers and link to its BIS page; it 
 - **Attach a document** with the paperclip — PDF, Word (.docx) or text, up to 10 MB. The assistant reads it alongside your question (*"does this test report meet the standard?"*). Scanned PDFs and photos are refused with a reason rather than read as empty, since OCR is not wired in yet.
 - **Personalised from your own conversation.** `POST /context` infers what you make and what you care about; that shapes later answers, clearly labelled as your context.
 - **Follow-up suggestions** after each answer.
-- **Context panel** beside the chat — four cards: *your business*, *certification documents behind the answer*, *sources*, and *nearby testing labs* (sorted by distance once you share your location; the map slot is ready for a Google Maps key).
+- **Context panel** beside the chat — four cards: *your business*, *certification documents behind the answer*, *sources*, and *nearby testing labs* (sorted by distance once you share your location, and shown on Google Maps when a key is configured).
 - **Translate any answer** into Hindi, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada or Malayalam. Translation runs on the finished, already-validated English answer; if a citation marker does not survive translation, the translation is refused.
 - **The scroll stays where you are reading** when an answer arrives; a *New answer ↓* pill takes you to it.
 - **Real chat history.** Every conversation is saved to Supabase for signed-in users, with row-level security confining each account to its own messages. The sidebar's **Recents** lists your actual conversations, newest first, titled by their opening question; clicking one reopens it. **New chat** starts a fresh one, and **Reset chat history** (confirmed in the page) deletes them all. Changes are live: a message sent in one tab or device appears in the others through Supabase Realtime, and a reset clears every open tab.
@@ -223,10 +223,13 @@ npm run dev                            # http://localhost:3000
 NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...   # never the service key — it ships to the browser
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...                # optional — lab maps; restrict it (below)
 # NEXT_PUBLIC_USE_MOCK=true                        # develop against fixtures, no backend
 ```
 
 Without Supabase settings the app still runs, with a local account kept in the browser and no saved chat history.
+
+**Google Maps (optional).** In the Google Cloud console, enable **Maps JavaScript API** and **Places API (New)** (billing must be on; both have a monthly free allowance), create an API key, and restrict it: *Application restrictions → Websites* with `http://localhost:3000/*` and your deployed address, and *API restrictions* to those two APIs. Put it in `frontend/.env.local` as `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` and restart the frontend. Maps then appear in the chat's lab card and on `/labs`. BIS publishes no lab addresses, so each lab is found by a Places search of its name and town and pinned only when Google's address is in that same city or state; without a key the map area says where the key goes.
 
 On Windows, [`Start BIS Sahayak.bat`](Start%20BIS%20Sahayak.bat) starts both servers and opens the browser — set `PROJECT_ROOT` at the top of the file to where you cloned the repo.
 
@@ -370,7 +373,7 @@ Two files carry most of the design weight:
 - [x] Real chat history — conversations under Recents, New chat, reset, live across tabs and devices
 - [ ] OCR for scanned documents and photos
 - [ ] Live data for the product wizard, licence verification and standard detail pages
-- [ ] Map view for nearby labs (needs a Google Maps key)
+- [x] Lab maps on Google Maps — Maps JavaScript API + Places API (New), key in `frontend/.env.local`
 - [ ] Consumer-complaint data
 - [ ] Evaluation harness — recall@k, citation precision, refusal rate
 
