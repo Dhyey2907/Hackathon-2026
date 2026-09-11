@@ -12,6 +12,7 @@
 
 "use client";
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { useEffect, useRef } from "react";
 import { useChat } from "./ChatProvider";
 import MessageBubble from "./MessageBubble";
@@ -21,11 +22,8 @@ import TypingIndicator from "./TypingIndicator";
 export const ASSISTANT_PANEL_WIDTH = 380;
 
 /** Short prompts offered when the side panel has no conversation yet. */
-const QUICK_PROMPTS = [
-  "What BIS standards and licences apply to my product?",
-  "Explain this page and what I can do here",
-  "Which documents and lab steps do I need?",
-] as const;
+/** Dictionary keys: the prompts are offered, and sent, in the interface language. */
+const QUICK_PROMPTS = ["side.q1", "side.q2", "side.q3"] as const;
 
 interface AssistantSidePanelProps {
   open: boolean;
@@ -46,6 +44,9 @@ export default function AssistantSidePanel({
     retryLast,
     hasConversation,
   } = useChat();
+  const { t } = useLanguage();
+  // Same rule as the chat page: only the newest answer translates itself.
+  const latestAnswerId = [...messages].reverse().find((m) => m.role === "assistant" && m.id !== "seed-1")?.id;
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -61,11 +62,11 @@ export default function AssistantSidePanel({
       <button
         type="button"
         onClick={onToggle}
-        aria-label="Open AI assistant"
+        aria-label={t("side.open")}
         className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium text-[var(--color-text-primary)] shadow-lg backdrop-blur transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)]"
       >
         <SparkIcon />
-        <span className="hidden sm:inline">Ask Sahayak</span>
+        <span className="hidden sm:inline">{t("side.ask")}</span>
         {isLoading && (
           <span className="h-2 w-2 animate-ping rounded-full bg-[var(--color-powder-blue)]" />
         )}
@@ -76,7 +77,7 @@ export default function AssistantSidePanel({
   // ── Expanded: docked rail ─────────────────────────────────────────────
   return (
     <aside
-      aria-label="AI assistant"
+      aria-label={t("side.aria")}
       className="fixed inset-y-0 right-0 z-40 flex w-full max-w-[380px] flex-col border-l border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl"
       style={{ width: ASSISTANT_PANEL_WIDTH }}
     >
@@ -84,15 +85,15 @@ export default function AssistantSidePanel({
       <div className="flex shrink-0 items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
         <SparkIcon />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">Sahayak Assistant</p>
+          <p className="truncate text-sm font-semibold">{t("side.title")}</p>
           <p className="truncate text-[11px] text-[var(--color-text-muted)]">
-            {isLoading ? "Thinking…" : "Here while you work"}
+            {isLoading ? t("side.thinking") : t("side.here")}
           </p>
         </div>
         <button
           type="button"
           onClick={onToggle}
-          aria-label="Close AI assistant"
+          aria-label={t("side.close")}
           className="rounded-md p-1.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-navy-lighter)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)]"
         >
           <svg
@@ -118,7 +119,7 @@ export default function AssistantSidePanel({
       >
         <div className="space-y-4 text-sm">
           {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} />
+            <MessageBubble key={msg.id} message={msg} autoTranslate={msg.id === latestAnswerId} />
           ))}
 
           {isLoading && <TypingIndicator />}
@@ -127,7 +128,7 @@ export default function AssistantSidePanel({
             <div className="pt-1">
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                  Quick asks
+                  {t("side.quick")}
                 </p>
                 <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-navy-lighter)] px-2 py-0.5 text-[9px] uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
                   FAQ
@@ -135,7 +136,7 @@ export default function AssistantSidePanel({
               </div>
 
               <div className="space-y-2 rounded-[20px] border border-[var(--color-border)] bg-[rgba(255,255,255,0.02)] p-2">
-                {QUICK_PROMPTS.map((q) => (
+                {QUICK_PROMPTS.map((key) => t(key)).map((q) => (
                   <button
                     key={q}
                     type="button"
@@ -144,7 +145,7 @@ export default function AssistantSidePanel({
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[9px] font-medium uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
-                        Help
+                        {t("side.help")}
                       </span>
                       <span className="flex h-5 w-5 items-center justify-center rounded-full border border-[var(--color-border)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-muted)] transition-transform duration-200 group-hover:translate-x-0.5">
                         <svg
@@ -177,14 +178,14 @@ export default function AssistantSidePanel({
               role="alert"
               className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800"
             >
-              <p className="font-medium">Request failed</p>
+              <p className="font-medium">{t("chat.requestFailed")}</p>
               <p className="mt-0.5 break-words text-red-700">{error}</p>
               <button
                 type="button"
                 onClick={retryLast}
                 className="mt-2 rounded border border-red-300 bg-white px-2 py-1 font-medium text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
-                Retry
+                {t("chat.retry")}
               </button>
             </div>
           )}
@@ -207,15 +208,15 @@ export default function AssistantSidePanel({
             }}
             disabled={isLoading}
             rows={1}
-            aria-label="Message the assistant"
-            placeholder="Ask anything…"
+            aria-label={t("side.message")}
+            placeholder={t("side.placeholder")}
             className="max-h-24 flex-1 resize-none bg-transparent text-sm leading-relaxed text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none disabled:opacity-60"
           />
           <button
             type="button"
             onClick={() => sendMessage(input)}
             disabled={isLoading || !input.trim()}
-            aria-label="Send message"
+            aria-label={t("chat.send")}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#3D2B1F] text-white shadow-[0_8px_20px_rgba(61,43,31,0.18)] transition-colors hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <svg

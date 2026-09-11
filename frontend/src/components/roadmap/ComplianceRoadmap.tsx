@@ -19,6 +19,7 @@
  * from BIS, and the page says so.
  */
 
+import { localizeTrack } from "@/lib/roadmap-hi";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -235,11 +236,11 @@ function Roadmap({
   onEdit: () => void;
   onStartOver: () => void;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { done, toggle, reset, isDone } = useRoadmapProgress();
   const [openId, setOpenId] = useState<string | null>(null);
 
-  const track = TRACKS[pickScheme(profile)];
+  const track = localizeTrack(TRACKS[pickScheme(profile)], language);
   const percent = progressPercent(done, track.steps);
   const completed = track.steps.filter((step) => isDone(step.id)).length;
   const nextStep = track.steps.find((step) => !isDone(step.id));

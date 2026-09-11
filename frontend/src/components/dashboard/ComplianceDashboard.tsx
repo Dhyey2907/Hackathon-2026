@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { fill, greetingKey } from "@/lib/i18n/format";
 import Reveal from "@/components/motion/Reveal";
 import { useCountUp } from "@/components/motion/useCountUp";
 import QuickUpload from "@/components/documents/QuickUpload";
@@ -123,12 +125,6 @@ const AMENDMENTS: AmendmentItem[] = [
 
 // ─── Greeting helper ──────────────────────────────────────────────────────────
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
 
 // ─── Radial Score ─────────────────────────────────────────────────────────────
 
@@ -195,12 +191,8 @@ function ScoreCard({
   missingCount: number;
   expiringCount: number;
 }) {
-  const label =
-    score >= 80
-      ? "Satisfactory Health"
-      : score >= 55
-      ? "Needs Attention"
-      : "Critical — Action Required";
+  const { t } = useLanguage();
+  const label = score >= 80 ? t("dash.healthy") : score >= 55 ? t("dash.attention") : t("dash.critical");
 
   const criticalPatches = missingCount + expiringCount;
 
@@ -209,24 +201,24 @@ function ScoreCard({
       href="/documents"
       id="dashboard-score-card"
       className="group relative flex flex-col items-center justify-between gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-cream-card)] p-6 text-center shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-powder-blue)] focus:ring-offset-2 sm:col-span-2 lg:col-span-1"
-      aria-label={`Compliance Score: ${score} out of 100. ${label}. ${criticalPatches} critical patches needed.`}
+      aria-label={fill(t("dash.scoreAria"), { score, label })}
     >
       <div className="flex flex-col items-center gap-3 w-full">
         <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">
-          Compliance Score
+          {t("dash.score")}
         </p>
         <RadialScore score={score} />
         <div>
           <p className="text-sm font-semibold text-[var(--color-text-primary)]">{label}</p>
           {criticalPatches > 0 && (
             <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-              {criticalPatches} critical patch{criticalPatches !== 1 ? "es" : ""} needed
+              {fill(t("dash.patches"), { n: criticalPatches })}
             </p>
           )}
         </div>
       </div>
       <span className="text-xs font-semibold text-[var(--color-text-muted)] group-hover:text-[var(--color-text-primary)] transition-colors">
-        View full overview →
+        {t("dash.overview")}
       </span>
     </Link>
   );
@@ -246,6 +238,7 @@ type StatCardProps = {
 };
 
 function StatCard({ id, href, label, value, valueColor = "default", subtitle, icon, badge }: StatCardProps) {
+  const { t } = useLanguage();
   const valueColorClass = {
     green: "text-green-600",
     amber: "text-amber-600",
@@ -272,7 +265,7 @@ function StatCard({ id, href, label, value, valueColor = "default", subtitle, ic
         <p className="mt-1.5 text-xs text-gray-500 leading-snug">{subtitle}</p>
       </div>
       <span className="mt-auto text-xs font-semibold text-[var(--color-navy)] opacity-0 group-hover:opacity-100 transition-opacity">
-        View details →
+        {t("common.viewDetails")}
       </span>
     </Link>
   );
@@ -283,6 +276,7 @@ function StatCard({ id, href, label, value, valueColor = "default", subtitle, ic
 export default function ComplianceDashboard() {
   const { user } = useAuth();
   const { documents } = useDocuments();
+  const { t } = useLanguage();
 
   if (!user) return null;
 
@@ -322,19 +316,19 @@ export default function ComplianceDashboard() {
   return (
     <section
       className="rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm sm:p-6"
-      aria-label="Compliance health dashboard"
+      aria-label={t("dash.aria")}
     >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-navy)]">
-            Compliance Health
+            {t("dash.eyebrow")}
           </p>
           <h2 className="mt-1 text-xl font-bold text-gray-900">
-            {getGreeting()}, {displayName}
+            {t(greetingKey())}, {displayName}
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            Here is your regulatory and certification compliance health.
+            {t("dash.sub")}
           </p>
         </div>
         <QuickUpload />
@@ -352,10 +346,10 @@ export default function ComplianceDashboard() {
           <StatCard
             id="dashboard-active-card"
             href="/documents?filter=valid"
-            label="Active Certifications"
+            label={t("dash.active")}
             value={activeCount}
             valueColor={activeCount > 0 ? "green" : "default"}
-            subtitle={activeCount > 0 ? "All compliant" : "No active documents"}
+            subtitle={activeCount > 0 ? t("dash.allCompliant") : t("dash.noActive")}
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
@@ -369,15 +363,17 @@ export default function ComplianceDashboard() {
           <StatCard
             id="dashboard-expiring-card"
             href="/documents?filter=expiring"
-            label="Expiring Soon"
+            label={t("docs.expiringSoon")}
             value={expiringCount}
             valueColor={expiringCount > 0 ? (expiringCount >= 2 ? "red" : "amber") : "green"}
             subtitle={
               nearestDaysLeft !== null && nearestDaysLeft >= 0
-                ? `Renewal in ${nearestDaysLeft} day${nearestDaysLeft !== 1 ? "s" : ""}`
+                ? nearestDaysLeft === 1
+                  ? t("dash.renewalInOne")
+                  : fill(t("dash.renewalIn"), { n: nearestDaysLeft })
                 : expiringCount > 0
-                ? "Some already expired"
-                : "Nothing expiring"
+                ? t("dash.someExpired")
+                : t("dash.nothingExpiring")
             }
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -387,7 +383,7 @@ export default function ComplianceDashboard() {
             badge={
               expiringCount > 0 ? (
                 <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                  Action needed
+                  {t("dash.actionNeeded")}
                 </span>
               ) : undefined
             }
@@ -399,10 +395,10 @@ export default function ComplianceDashboard() {
           <StatCard
             id="dashboard-missing-card"
             href="/missing-requirements"
-            label="Missing Requirements"
+            label={t("dash.missing")}
             value={missingCount}
             valueColor={missingCount === 0 ? "green" : "red"}
-            subtitle={urgentMissingCount > 0 ? `${urgentMissingCount} urgent — needs action now` : "Review recommended"}
+            subtitle={urgentMissingCount > 0 ? fill(t("dash.urgentNow"), { n: urgentMissingCount }) : t("dash.review")}
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
@@ -411,7 +407,7 @@ export default function ComplianceDashboard() {
             badge={
               urgentMissingCount > 0 ? (
                 <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
-                  {urgentMissingCount} urgent
+                  {fill(t("dash.urgent"), { n: urgentMissingCount })}
                 </span>
               ) : undefined
             }
@@ -423,10 +419,10 @@ export default function ComplianceDashboard() {
           <StatCard
             id="dashboard-amendments-card"
             href="/updates"
-            label="New Amendments"
+            label={t("dash.amendments")}
             value={AMENDMENTS.length}
             valueColor="navy"
-            subtitle="Applicable to Sector"
+            subtitle={t("dash.sector")}
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
@@ -434,7 +430,7 @@ export default function ComplianceDashboard() {
             }
             badge={
               <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                New
+                {t("dash.new")}
               </span>
             }
           />

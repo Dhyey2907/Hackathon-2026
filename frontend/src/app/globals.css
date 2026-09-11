@@ -40,7 +40,10 @@
   --color-text-muted: #7C8A93;
 
   /* Fonts */
-  --font-sans: var(--font-inter, "Inter", system-ui, -apple-system, sans-serif);
+  /* Inter has no Devanagari, so name the fonts that do - Nirmala UI on
+     Windows, Kohinoor on Apple, Noto on Android and Linux - before the generic
+     fallback picks one at random. Latin text still renders in Inter. */
+  --font-sans: var(--font-inter, "Inter"), "Noto Sans Devanagari", "Nirmala UI", "Kohinoor Devanagari", "Mangal", system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, "Cascadia Code", "Fira Code", monospace;
   /* Background image */
 
@@ -774,4 +777,19 @@ textarea:focus {
 }
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #7A8B9C;
+}
+
+/* ── Hindi ─────────────────────────────────────────────────────────────────
+   Devanagari hangs vowel signs above and below the line and joins each word
+   with a headline stroke. Display leading tight enough for Latin clips those
+   signs, and letter-spacing pulls the headline apart into separate letters -
+   so when the interface is in Hindi, relax both. <html lang> is kept in step
+   with the chosen language by LanguageProvider. */
+html:lang(hi) :is(h1, h2, h3) {
+  line-height: 1.4;
+}
+
+html:lang(hi) body,
+html:lang(hi) body * {
+  letter-spacing: normal !important;
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import type { Language } from "@/lib/i18n/strings";
 
-type Language = "en" | "hi";
 type ThemeMode = "light" | "dark";
 
 export default function SettingsForm() {
@@ -16,7 +17,9 @@ export default function SettingsForm() {
     }
     return "light";
   });
-  const [language, setLanguage] = useState<Language>("en");
+  // The real interface language. This select used to keep its own copy in
+  // local state, so choosing Hindi here changed nothing anywhere.
+  const { language, setLanguage, t } = useLanguage();
   const [expiryReminders, setExpiryReminders] = useState(true);
   const [productUpdates, setProductUpdates] = useState(true);
   const [password, setPassword] = useState("");
@@ -64,18 +67,18 @@ export default function SettingsForm() {
 
   const passwordError =
     passwordSubmitted && !password
-      ? "Enter a new password."
+      ? t("settings.pwEmpty")
       : passwordSubmitted && password !== passwordConfirmation
-      ? "Passwords do not match."
+      ? t("settings.pwMismatch")
       : "";
 
   return (
     <main className="flex-1 overflow-y-auto bg-gray-50" id="main-content">
       <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-7">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-navy)]">Account</p>
-          <h1 className="mt-1 text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="mt-2 text-sm text-gray-600">Control your BIS Sahayak preferences for this session.</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-navy)]">{t("settings.account")}</p>
+          <h1 className="mt-1 text-2xl font-bold text-gray-900">{t("settings.title")}</h1>
+          <p className="mt-2 text-sm text-gray-600">{t("settings.subtitle")}</p>
         </div>
 
         <div className="space-y-5">
@@ -92,9 +95,9 @@ export default function SettingsForm() {
                     />
                   </svg>
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">Theme &amp; Appearance</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{t("settings.theme")}</h2>
               </div>
-              <p className="mt-1 text-sm text-gray-600">Choose your preferred aesthetic style for BIS Sahayak.</p>
+              <p className="mt-1 text-sm text-gray-600">{t("settings.themeHint")}</p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -121,8 +124,8 @@ export default function SettingsForm() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-900">Butter-Cream</h3>
-                      <span className="text-[11px] font-medium text-gray-500">Light Mode</span>
+                      <h3 className="text-sm font-semibold text-gray-900">{t("settings.lightName")}</h3>
+                      <span className="text-[11px] font-medium text-gray-500">{t("settings.lightMode")}</span>
                     </div>
                   </div>
                   {theme === "light" && (
@@ -132,7 +135,7 @@ export default function SettingsForm() {
                   )}
                 </div>
                 <p className="text-xs text-gray-600 leading-relaxed">
-                  Soft butter-cream surface with rich muted espresso brown authority and pastel jewelry accents.
+                  {t("settings.lightDesc")}
                 </p>
                 {/* Palette Swatches */}
                 <div className="mt-3 flex items-center gap-1.5 pt-2 border-t border-gray-100">
@@ -181,8 +184,8 @@ export default function SettingsForm() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-900">Midnight Espresso</h3>
-                      <span className="text-[11px] font-medium text-gray-500">Dark Mode</span>
+                      <h3 className="text-sm font-semibold text-gray-900">{t("settings.darkName")}</h3>
+                      <span className="text-[11px] font-medium text-gray-500">{t("settings.darkMode")}</span>
                     </div>
                   </div>
                   {theme === "dark" && (
@@ -192,7 +195,7 @@ export default function SettingsForm() {
                   )}
                 </div>
                 <p className="text-xs text-gray-600 leading-relaxed">
-                  Deep charcoal-brown background with soft oat-cream text, steel blue and dusty mauve accents.
+                  {t("settings.darkDesc")}
                 </p>
                 {/* Palette Swatches */}
                 <div className="mt-3 flex items-center gap-1.5 pt-2 border-t border-gray-100">
@@ -224,12 +227,12 @@ export default function SettingsForm() {
           {/* ── Preferences Section (Language) ─────────────────────────────── */}
           <section className="rounded-xl border border-[var(--color-border)] bg-white p-6 shadow-sm sm:p-8">
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Preferences</h2>
-              <p className="mt-1 text-sm text-gray-600">Choose how BIS Sahayak communicates with you.</p>
+              <h2 className="text-lg font-semibold text-gray-900">{t("settings.prefs")}</h2>
+              <p className="mt-1 text-sm text-gray-600">{t("settings.prefsHint")}</p>
             </div>
             <div>
               <label htmlFor="settings-language" className="text-sm font-semibold text-gray-900">
-                Language
+                {t("settings.language")}
               </label>
               <select
                 id="settings-language"
@@ -243,22 +246,22 @@ export default function SettingsForm() {
                 <option value="en">English</option>
                 <option value="hi">हिंदी</option>
               </select>
-              <p className="mt-1 text-xs text-gray-500">Language preference is currently local to this interface.</p>
+              <p className="mt-1 text-xs text-gray-500">{t("settings.languageHint")}</p>
             </div>
           </section>
 
           {/* ── Notifications Section ─────────────────────────────────────── */}
           <section className="rounded-xl border border-[var(--color-border)] bg-white p-6 shadow-sm sm:p-8">
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
-              <p className="mt-1 text-sm text-gray-600">Choose which updates you would like to see in the future.</p>
+              <h2 className="text-lg font-semibold text-gray-900">{t("settings.notifications")}</h2>
+              <p className="mt-1 text-sm text-gray-600">{t("settings.notificationsHint")}</p>
             </div>
             <div className="divide-y divide-gray-100">
               <label className="flex cursor-pointer items-center justify-between gap-4 py-4 first:pt-0">
                 <span>
-                  <span className="block text-sm font-semibold text-gray-900">Document expiry reminders</span>
+                  <span className="block text-sm font-semibold text-gray-900">{t("settings.expiry")}</span>
                   <span className="mt-1 block text-xs text-gray-500">
-                    Get a reminder when saved documents or certifications need attention.
+                    {t("settings.expiryHint")}
                   </span>
                 </span>
                 <input
@@ -273,9 +276,9 @@ export default function SettingsForm() {
               </label>
               <label className="flex cursor-pointer items-center justify-between gap-4 py-4 last:pb-0">
                 <span>
-                  <span className="block text-sm font-semibold text-gray-900">Chat/product updates</span>
+                  <span className="block text-sm font-semibold text-gray-900">{t("settings.updates")}</span>
                   <span className="mt-1 block text-xs text-gray-500">
-                    Hear about new assistant capabilities and BIS product guidance.
+                    {t("settings.updatesHint")}
                   </span>
                 </span>
                 <input
@@ -294,33 +297,33 @@ export default function SettingsForm() {
           {/* ── Account Section ───────────────────────────────────────────── */}
           <section className="rounded-xl border border-[var(--color-border)] bg-white p-6 shadow-sm sm:p-8">
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Account</h2>
-              <p className="mt-1 text-sm text-gray-600">These controls are mock-only in this prototype.</p>
+              <h2 className="text-lg font-semibold text-gray-900">{t("settings.account")}</h2>
+              <p className="mt-1 text-sm text-gray-600">{t("settings.accountHint")}</p>
             </div>
             <form onSubmit={changePassword} className="space-y-4">
               <div>
                 <label htmlFor="new-password" className="text-sm font-semibold text-gray-900">
-                  Change password
+                  {t("settings.changePw")}
                 </label>
                 <input
                   id="new-password"
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="New password"
+                  placeholder={t("settings.newPw")}
                   className="mt-2 h-11 w-full rounded-lg border border-gray-300 px-3 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]/20"
                 />
               </div>
               <div>
                 <label htmlFor="confirm-password" className="sr-only">
-                  Confirm new password
+                  {t("settings.confirmPw")}
                 </label>
                 <input
                   id="confirm-password"
                   type="password"
                   value={passwordConfirmation}
                   onChange={(event) => setPasswordConfirmation(event.target.value)}
-                  placeholder="Confirm new password"
+                  placeholder={t("settings.confirmPw")}
                   className="h-11 w-full rounded-lg border border-gray-300 px-3 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]/20"
                 />
                 {passwordError && <p className="mt-1 text-xs text-red-700">{passwordError}</p>}
@@ -330,26 +333,26 @@ export default function SettingsForm() {
                   type="submit"
                   className="h-10 rounded-lg bg-[var(--color-navy)] px-4 text-sm font-semibold text-white hover:bg-[var(--color-navy-light)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)] focus:ring-offset-2"
                 >
-                  Update password
+                  {t("settings.updatePw")}
                 </button>
                 {saved && (
                   <p className="text-sm font-medium text-green-700" role="status" aria-live="polite">
-                    Saved.
+                    {t("settings.saved")}
                   </p>
                 )}
               </div>
             </form>
             <div className="mt-7 flex flex-col gap-3 border-t border-gray-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">Delete Account</h3>
-                <p className="mt-1 text-xs text-gray-500">This prototype will not delete anything.</p>
+                <h3 className="text-sm font-semibold text-gray-900">{t("settings.deleteAccount")}</h3>
+                <p className="mt-1 text-xs text-gray-500">{t("settings.deleteHint")}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setDeleteDialogOpen(true)}
                 className="h-10 rounded-lg border border-red-200 px-4 text-sm font-semibold text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               >
-                Delete Account
+                {t("settings.deleteAccount")}
               </button>
             </div>
           </section>
@@ -365,10 +368,10 @@ export default function SettingsForm() {
             className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-6 shadow-xl"
           >
             <h2 id="delete-account-title" className="text-lg font-semibold text-gray-900">
-              Delete this account?
+              {t("settings.deleteTitle")}
             </h2>
             <p className="mt-2 text-sm leading-6 text-gray-600">
-              This is a mock action. No account or data will be deleted.
+              {t("settings.deleteBody")}
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
@@ -376,14 +379,14 @@ export default function SettingsForm() {
                 onClick={() => setDeleteDialogOpen(false)}
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="button"
                 onClick={() => setDeleteDialogOpen(false)}
                 className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
-                Close
+                {t("common.close")}
               </button>
             </div>
           </div>

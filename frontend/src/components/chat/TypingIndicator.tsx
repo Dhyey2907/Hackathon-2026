@@ -1,14 +1,19 @@
+"use client";
+
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+
 /**
  * Animated typing indicator shown while the assistant is generating a response.
  */
 
 export default function TypingIndicator() {
+  const { t } = useLanguage();
   return (
     <div
       className="flex items-start gap-3"
       role="status"
       aria-live="polite"
-      aria-label="Assistant is typing"
+      aria-label={t("chat.typing")}
     >
       {/* Avatar */}
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm">

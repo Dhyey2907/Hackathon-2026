@@ -1,5 +1,8 @@
 "use client";
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import T from "@/components/i18n/T";
+import { categoryKey, fill, formatDate as formatDateIn } from "@/lib/i18n/format";
 import Link from "next/link";
 import { Suspense, useRef, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
@@ -19,10 +22,6 @@ function formatSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" }).format(new Date(date));
-}
-
 /** Lower priority number = surfaces higher in the sorted list. */
 function expiryPriority(doc: DocumentRecord): number {
   const { status } = getExpiryStatus(doc.expiryDate);
@@ -34,6 +33,10 @@ function expiryPriority(doc: DocumentRecord): number {
 
 function DocumentsManagerInner() {
   const { documents, addDocument, deleteDocument, savesToAccount } = useDocuments();
+  const { t, language } = useLanguage();
+  const formatDate = (date: string) => formatDateIn(date, language);
+  // Categories are stored in English; only their label follows the language.
+  const catLabel = (category: string) => (category === "All" ? t("docs.all") : t(categoryKey(category)));
   // Real progress now: true while any file is still on its way to the account.
   const uploading = documents.some((d) => d.syncing);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -58,12 +61,12 @@ function DocumentsManagerInner() {
 
   function upload(file: File) {
     if (file.size > 20 * 1024 * 1024) {
-      setUploadMessage(`${file.name} is larger than 20 MB.`);
+      setUploadMessage(fill(t("docs.tooLarge"), { name: file.name }));
       return;
     }
     const newDoc = addDocument(file, category, expiryDateInput || undefined);
     setUploadMessage(
-      savesToAccount ? `${file.name} is uploading to your account.` : `${file.name} saved in this browser.`,
+      fill(t(savesToAccount ? "docs.uploadingAccount" : "docs.savedBrowser"), { name: file.name }),
     );
     setExpiryDateInput("");
     setSelectedId(newDoc.id);
@@ -125,9 +128,9 @@ function DocumentsManagerInner() {
 
       {/* ── Atmospheric hero with peeking blur: 8px → 0px on scroll */}
       <ScrollOverHero
-        eyebrow="Compliance Vault"
-        title="Documents"
-        subtitle="Your licences, certificates, and test reports — tracked, inspected, and expiry-aware."
+        eyebrow={t("docs.heroEyebrow")}
+        title={t("nav.documents")}
+        subtitle={t("docs.heroSubtitle")}
         scrollContainerRef={mainRef}
         startBlur={8}
         endBlur={0}
@@ -139,13 +142,13 @@ function DocumentsManagerInner() {
         {/* ── Page Header ─────────────────────────────────────────────── */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#3D2B1F]/60">Workspace</p>
-            <h1 className="mt-1 text-2xl font-bold text-[#3D2B1F]">Documents Vault</h1>
+            <p className="text-xs font-semibold uppercase tracking-wider text-[#3D2B1F]/60">{t("docs.workspace")}</p>
+            <h1 className="mt-1 text-2xl font-bold text-[#3D2B1F]">{t("docs.vault")}</h1>
             <p className="mt-1.5 text-sm text-[#5C4A3E]">
-              Split-pane document manager and compliance inspector.
+              {t("docs.vaultHint")}
               {filterValid && (
                 <span className="ml-2 inline-flex items-center rounded-full bg-[#B0C4DE]/30 border border-[#B0C4DE]/50 px-2.5 py-0.5 text-[10px] font-semibold text-[#3D2B1F]">
-                  Active only
+                  {t("docs.activeOnly")}
                 </span>
               )}
             </p>
@@ -160,15 +163,15 @@ function DocumentsManagerInner() {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              <span>{showUploadDrawer ? "Hide Upload" : "Upload Document"}</span>
+              <span>{showUploadDrawer ? t("docs.hideUpload") : t("docs.upload")}</span>
             </button>
             <div className="text-right">
               <span className="block text-sm font-semibold text-[#3D2B1F]">
-                {documents.length} records
+                {fill(t("docs.records"), { n: documents.length })}
               </span>
               {expiringSoonCount > 0 && (
                 <span className="text-xs font-semibold text-[#DCAEB5]">
-                  {expiringSoonCount} need attention
+                  {fill(t("docs.needAttention"), { n: expiringSoonCount })}
                 </span>
               )}
             </div>
@@ -180,23 +183,23 @@ function DocumentsManagerInner() {
           <section className="mb-6 rounded-2xl border border-white/50 bg-[#FDFBF7]/90 p-5 shadow-sm backdrop-blur-xl sm:p-6 transition-all animate-in fade-in slide-in-from-top-2">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h2 className="text-base font-bold text-[#3D2B1F]">Upload a new compliance document</h2>
-                <p className="mt-0.5 text-xs text-[#5C4A3E]">Files stay local in your browser session for testing and verification.</p>
+                <h2 className="text-base font-bold text-[#3D2B1F]">{t("docs.uploadTitle")}</h2>
+                <p className="mt-0.5 text-xs text-[#5C4A3E]">{t("upload.privacy")}</p>
               </div>
               <div className="flex flex-wrap items-end gap-3">
                 <label className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-[#5C4A3E]">Category</span>
+                  <span className="text-xs font-semibold text-[#5C4A3E]">{t("upload.category")}</span>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as DocumentCategory)}
                     className="h-10 rounded-lg border border-white/60 bg-[#FDFBF7]/90 px-3 text-sm text-[#3D2B1F] focus:border-[#B0C4DE] focus:outline-none focus:ring-2 focus:ring-[#B0C4DE]/25"
                   >
-                    {CATEGORIES.map((item) => <option key={item}>{item}</option>)}
+                    {CATEGORIES.map((item) => <option key={item} value={item}>{catLabel(item)}</option>)}
                   </select>
                 </label>
                 <label className="flex flex-col gap-1">
                   <span className="text-xs font-semibold text-[#5C4A3E]">
-                    Expiry Date <span className="font-normal text-[#8C7B6F]">(optional)</span>
+                    {t("docs.expiry")} <span className="font-normal text-[#8C7B6F]">{t("common.optional")}</span>
                   </span>
                   <input
                     type="date"
@@ -211,7 +214,7 @@ function DocumentsManagerInner() {
                   disabled={uploading}
                   className="h-10 rounded-lg bg-[#3D2B1F] px-4 text-sm font-semibold text-[#FDFBF7] hover:bg-[#4E382A] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Browse Files
+                  {t("docs.browse")}
                 </button>
               </div>
             </div>
@@ -239,8 +242,8 @@ function DocumentsManagerInner() {
               <svg className="h-6 w-6 text-[#3D2B1F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4 4 4M5 20h14" />
               </svg>
-              <span className="mt-1.5 text-sm font-semibold text-[#3D2B1F]">Drop a file here or browse</span>
-              <span className="text-xs text-[#8C7B6F]">PDFs, Certificates, Test Reports</span>
+              <span className="mt-1.5 text-sm font-semibold text-[#3D2B1F]">{t("upload.dropHere")}</span>
+              <span className="text-xs text-[#8C7B6F]">{t("upload.formats")}</span>
             </button>
 
             {uploadMessage && (
@@ -266,7 +269,7 @@ function DocumentsManagerInner() {
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search by file name..."
+                    placeholder={t("docs.search")}
                     className="h-9 w-full rounded-lg border border-white/60 bg-[#FDFBF7]/90 pl-9 pr-3 text-sm text-[#3D2B1F] placeholder:text-[#8C7B6F] focus:border-[#B0C4DE] focus:outline-none focus:ring-2 focus:ring-[#B0C4DE]/25"
                   />
                 </div>
@@ -283,7 +286,7 @@ function DocumentsManagerInner() {
                     }`}
                   >
                     <span className="h-2 w-2 rounded-full bg-[#3D2B1F]/80" />
-                    Expiring Soon
+                    {t("docs.expiringSoon")}
                     {expiringSoonCount > 0 && (
                       <span className="rounded-full bg-white/40 px-1.5 py-0.2 text-[10px] font-bold">
                         {expiringSoonCount}
@@ -292,12 +295,12 @@ function DocumentsManagerInner() {
                   </button>
 
                   <span className="text-xs text-[#8C7B6F]">
-                    {filtered.length} of {documents.length}
+                    {fill(t("docs.countOf"), { a: filtered.length, b: documents.length })}
                   </span>
                 </div>
 
                 {/* Category Pills */}
-                <div className="flex flex-wrap gap-1.5 pt-1" role="group" aria-label="Filter by category">
+                <div className="flex flex-wrap gap-1.5 pt-1" role="group" aria-label={t("docs.filterCategory")}>
                   {ALL_CATEGORIES.map((cat) => (
                     <button
                       key={cat}
@@ -310,7 +313,7 @@ function DocumentsManagerInner() {
                           : "border border-white/60 bg-[#FDFBF7]/70 text-[#5C4A3E] hover:border-[#B0C4DE] hover:text-[#3D2B1F]"
                       }`}
                     >
-                      {cat}
+                      {catLabel(cat)}
                     </button>
                   ))}
                 </div>
@@ -318,7 +321,7 @@ function DocumentsManagerInner() {
             </section>
 
             {/* List items */}
-            <div className="space-y-3" role="list" aria-label="Documents">
+            <div className="space-y-3" role="list" aria-label={t("nav.documents")}>
               {filtered.length > 0 ? (
                 filtered.map((doc) => {
                   const isSelected = activeDoc?.id === doc.id;
@@ -356,13 +359,13 @@ function DocumentsManagerInner() {
                               {doc.name}
                             </h2>
                             <p className="flex items-center gap-1.5 text-xs text-[#8C7B6F]">
-                              {doc.category} · {formatSize(doc.size)}
+                              {catLabel(doc.category)} · {formatSize(doc.size)}
                               {/* An example row the app ships with. Left
                                   unmarked it sits beside a real licence and
                                   reads as one. */}
                               {doc.isSample && (
                                 <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
-                                  Sample
+                                  {t("docs.sample")}
                                 </span>
                               )}
                               <StorageBadge document={doc} />
@@ -379,8 +382,8 @@ function DocumentsManagerInner() {
                               deleteDocument(doc.id);
                             }}
                             className="rounded p-1 text-[#8C7B6F] hover:bg-[#DCAEB5]/30 hover:text-red-700 focus:outline-none"
-                            aria-label={`Delete ${doc.name}`}
-                            title="Delete document"
+                            aria-label={`${t("common.delete")} ${doc.name}`}
+                            title={t("docs.deleteDoc")}
                           >
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -390,10 +393,10 @@ function DocumentsManagerInner() {
                       </div>
 
                       <div className="mt-2.5 flex items-center justify-between text-[11px] text-[#8C7B6F]">
-                        <span>Uploaded {formatDate(doc.uploadedAt)}</span>
+                        <span>{fill(t("docs.uploadedOn"), { date: formatDate(doc.uploadedAt) })}</span>
                         {doc.expiryDate && (
                           <span className={isUrgent ? "font-semibold text-[#3D2B1F]" : ""}>
-                            Expires {formatDate(doc.expiryDate)}
+                            {fill(t("docs.expiresOn"), { date: formatDate(doc.expiryDate) })}
                           </span>
                         )}
                       </div>
@@ -402,13 +405,13 @@ function DocumentsManagerInner() {
                 })
               ) : (
                 <EmptyState
-                  title="No documents found"
+                  title={t("docs.noneFound")}
                   description={
                     showExpiringSoon
-                      ? "No documents are currently expired or expiring soon."
-                      : "No documents match your query. Try clearing filters or upload a file."
+                      ? t("docs.noneExpiring")
+                      : t("docs.noneMatch")
                   }
-                  actionLabel="Get Started"
+                  actionLabel={t("common.getStarted")}
                   onAction={() => {
                     setQuery("");
                     setFilterCategory("All");
@@ -430,7 +433,7 @@ function DocumentsManagerInner() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="rounded-md bg-[rgba(176,196,222,0.3)] px-2 py-0.5 text-xs font-semibold text-[#3D2B1F]">
-                          {activeDoc.category}
+                          {catLabel(activeDoc.category)}
                         </span>
                         <ExpiryBadge expiryDate={activeDoc.expiryDate} size="md" />
                       </div>
@@ -438,8 +441,8 @@ function DocumentsManagerInner() {
                         {activeDoc.name}
                       </h2>
                       <p className="mt-1 text-xs text-[#5C4A3E]">
-                        Format: {activeDoc.type} · Size: {formatSize(activeDoc.size)} · Uploaded: {formatDate(activeDoc.uploadedAt)}
-                        {activeDoc.expiryDate ? ` · Validity until ${formatDate(activeDoc.expiryDate)}` : ""}
+                        {fill(t("docs.meta"), { type: activeDoc.type, size: formatSize(activeDoc.size), date: formatDate(activeDoc.uploadedAt) })}
+                        {activeDoc.expiryDate ? fill(t("docs.validUntil"), { date: formatDate(activeDoc.expiryDate) }) : ""}
                       </p>
                     </div>
 
@@ -447,17 +450,17 @@ function DocumentsManagerInner() {
                       <Link
                         href={`/documents/${activeDoc.id}`}
                         className="rounded-xl border border-white/60 bg-[#FDFBF7]/80 px-3 py-1.5 text-xs font-semibold text-[#3D2B1F] shadow-sm hover:border-[#B0C4DE] hover:bg-[#B0C4DE]/20"
-                        title="Open full page view"
+                        title={t("docs.fullViewTitle")}
                       >
-                        Full View ↗
+                        {t("docs.fullView")}
                       </Link>
                       <button
                         type="button"
                         onClick={() => deleteDocument(activeDoc.id)}
                         className="rounded-xl border border-red-200/60 bg-red-50/50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
-                        title="Delete document"
+                        title={t("docs.deleteDoc")}
                       >
-                        Delete
+                        {t("common.delete")}
                       </button>
                     </div>
                   </div>
@@ -470,9 +473,9 @@ function DocumentsManagerInner() {
               ) : (
                 <div className="my-auto">
                   <EmptyState
-                    title="No document selected"
-                    description="Select a document from the list on the left to preview its content, inspect validity, and verify compliance."
-                    actionLabel="Get Started"
+                    title={t("docs.noneSelected")}
+                    description={t("docs.noneSelectedHint")}
+                    actionLabel={t("common.getStarted")}
                     onAction={() => inputRef.current?.click()}
                   />
                 </div>
@@ -493,7 +496,7 @@ export default function DocumentsManager() {
       fallback={
         <main className="flex-1 overflow-y-auto bg-transparent" id="main-content">
           <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <p className="text-sm font-semibold text-[#3D2B1F]">Loading documents vault...</p>
+            <p className="text-sm font-semibold text-[#3D2B1F]"><T k="docs.loading" /></p>
           </div>
         </main>
       }

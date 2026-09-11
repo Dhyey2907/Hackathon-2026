@@ -9,6 +9,8 @@
  * else gets a working download rather than a promise of one.
  */
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { fill } from "@/lib/i18n/format";
 import { useEffect, useMemo, useState } from "react";
 import { extractDocument } from "@/lib/api";
 import { useDocuments, type DocumentRecord } from "./DocumentProvider";
@@ -33,14 +35,15 @@ type Result =
   | { id: string; status: "error"; message: string };
 
 export function StorageBadge({ document }: { document: DocumentRecord }) {
+  const { t } = useLanguage();
   if (document.storage === "sample") return null;
   const [label, tone] = document.syncing
-    ? ["Uploading…", "bg-sky-100 text-sky-800"]
+    ? [t("docv.uploading"), "bg-sky-100 text-sky-800"]
     : document.syncError
-    ? ["Saved in this browser only", "bg-amber-100 text-amber-800"]
+    ? [t("docv.browserOnly"), "bg-amber-100 text-amber-800"]
     : document.storage === "cloud"
-    ? ["Saved to your account", "bg-emerald-100 text-emerald-800"]
-    : ["Saved in this browser", "bg-slate-100 text-slate-700"];
+    ? [t("docv.account"), "bg-emerald-100 text-emerald-800"]
+    : [t("docv.browser"), "bg-slate-100 text-slate-700"];
   return (
     <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${tone}`} title={document.syncError}>
       {label}
@@ -50,6 +53,7 @@ export function StorageBadge({ document }: { document: DocumentRecord }) {
 
 export default function DocumentViewer({ document, height = 520 }: { document: DocumentRecord; height?: number }) {
   const { getFile } = useDocuments();
+  const { t } = useLanguage();
   const kind = kindOf(document);
   const [result, setResult] = useState<Result | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -72,7 +76,7 @@ export default function DocumentViewer({ document, height = 520 }: { document: D
         const blob = await getFile(target);
         if (!live) return;
         if (!blob) {
-          setResult({ id: target.id, status: "error", message: "The file for this record is not available." });
+          setResult({ id: target.id, status: "error", message: "docv.noFile" });
           return;
         }
         url = URL.createObjectURL(blob);
@@ -81,16 +85,16 @@ export default function DocumentViewer({ document, height = 520 }: { document: D
         if (kind === "text") {
           const raw = await blob.text();
           text = raw.slice(0, MAX_TEXT);
-          if (raw.length > MAX_TEXT) note = "Showing the first part of a long file. Download it to see the rest.";
+          if (raw.length > MAX_TEXT) note = "docv.longText";
         } else if (kind === "docx") {
           const read = await extractDocument(new File([blob], target.name, { type: blob.type }));
           if (read.readable) {
             text = read.text;
             note = read.truncated
-              ? "Text preview of the first part of this Word document. Download it to see the formatting and the rest."
-              : "Text preview - download the file to see its formatting.";
+              ? "docv.docxTruncated"
+              : "docv.docxNote";
           } else {
-            note = read.message ?? "The text of this document could not be read.";
+            note = read.message ?? "docv.unreadable";
           }
         }
         if (!live) {
@@ -103,7 +107,7 @@ export default function DocumentViewer({ document, height = 520 }: { document: D
         const message =
           error && typeof error === "object" && "message" in error
             ? String((error as { message: unknown }).message)
-            : "The preview could not be loaded.";
+            : "docv.loadFailed";
         setResult({ id: target.id, status: "error", message });
       }
     })();
@@ -117,10 +121,9 @@ export default function DocumentViewer({ document, height = 520 }: { document: D
   if (document.storage === "sample") {
     return (
       <Panel>
-        <p className="font-semibold text-[var(--color-text-primary)]">Sample record - no file attached</p>
+        <p className="font-semibold text-[var(--color-text-primary)]">{t("docv.sampleTitle")}</p>
         <p className="mt-1.5 max-w-md text-xs leading-relaxed text-[var(--color-text-muted)]">
-          This example shows how expiry tracking works. Upload your own licence, certificate or test report to
-          preview it here.
+          {t("docv.sampleBody")}
         </p>
       </Panel>
     );
@@ -131,7 +134,7 @@ export default function DocumentViewer({ document, height = 520 }: { document: D
   if (!current) {
     return (
       <Panel>
-        <p className="text-sm text-[var(--color-text-muted)]">Loading preview…</p>
+        <p className="text-sm text-[var(--color-text-muted)]">{t("docv.loading")}</p>
       </Panel>
     );
   }
@@ -139,14 +142,14 @@ export default function DocumentViewer({ document, height = 520 }: { document: D
   if (current.status === "error") {
     return (
       <Panel>
-        <p className="font-semibold text-[var(--color-text-primary)]">Preview unavailable</p>
-        <p className="mt-1.5 max-w-md text-xs leading-relaxed text-[var(--color-text-muted)]">{current.message}</p>
+        <p className="font-semibold text-[var(--color-text-primary)]">{t("docv.unavailable")}</p>
+        <p className="mt-1.5 max-w-md text-xs leading-relaxed text-[var(--color-text-muted)]">{t(current.message)}</p>
         <button
           type="button"
           onClick={() => setAttempt((n) => n + 1)}
           className="mt-4 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-surface)]"
         >
-          Try again
+          {t("docv.tryAgain")}
         </button>
       </Panel>
     );
@@ -162,7 +165,7 @@ export default function DocumentViewer({ document, height = 520 }: { document: D
             rel="noopener noreferrer"
             className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-surface)]"
           >
-            Open in new tab ↗
+            {t("docv.newTab")}
           </a>
         )}
         <a
@@ -170,14 +173,14 @@ export default function DocumentViewer({ document, height = 520 }: { document: D
           download={document.name}
           className="rounded-lg bg-[var(--color-navy)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--color-navy-light)]"
         >
-          Download ↓
+          {t("docv.download")}
         </a>
       </div>
 
       {kind === "pdf" && (
         <iframe
           src={current.url}
-          title={`Preview of ${document.name}`}
+          title={fill(t("docv.previewOf"), { name: document.name })}
           style={{ height }}
           className="w-full rounded-xl border border-[var(--color-border)] bg-white"
         />
@@ -187,7 +190,7 @@ export default function DocumentViewer({ document, height = 520 }: { document: D
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={current.url}
-          alt={`Preview of ${document.name}`}
+          alt={fill(t("docv.previewOf"), { name: document.name })}
           style={{ maxHeight: height }}
           className="mx-auto max-w-full rounded-xl border border-[var(--color-border)] object-contain"
         />
@@ -204,16 +207,16 @@ export default function DocumentViewer({ document, height = 520 }: { document: D
 
       {(kind === "other" || ((kind === "text" || kind === "docx") && !current.text)) && (
         <Panel>
-          <p className="font-semibold text-[var(--color-text-primary)]">No preview for this file type</p>
+          <p className="font-semibold text-[var(--color-text-primary)]">{t("docv.noPreview")}</p>
           <p className="mt-1.5 max-w-md text-xs leading-relaxed text-[var(--color-text-muted)]">
             {kind === "other" && document.name.toLowerCase().endsWith(".doc")
-              ? "Older .doc files cannot be shown in the browser. Download it to open it, or save it as .docx or PDF for a preview."
-              : "Download the file to open it."}
+              ? t("docv.docOld")
+              : t("docv.downloadToOpen")}
           </p>
         </Panel>
       )}
 
-      {current.note && <p className="text-[11px] text-[var(--color-text-muted)]">{current.note}</p>}
+      {current.note && <p className="text-[11px] text-[var(--color-text-muted)]">{t(current.note)}</p>}
     </div>
   );
 }

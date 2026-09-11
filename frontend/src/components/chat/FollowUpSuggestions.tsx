@@ -18,10 +18,12 @@
  * honest end of one.
  */
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { useChat } from "./ChatProvider";
 
 export default function FollowUpSuggestions() {
   const { suggestions, sendMessage, isLoading, messages, hasConversation } = useChat();
+  const { t } = useLanguage();
 
   const last = messages[messages.length - 1];
   const lastWasAnAnswer = last?.role === "assistant" && !last.abstained;
@@ -33,7 +35,7 @@ export default function FollowUpSuggestions() {
   return (
     <div className="mt-1">
       <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-        You may also want to check
+        {t("chat.followUps")}
       </p>
       <div className="flex flex-wrap gap-2">
         {suggestions.slice(0, 4).map((suggestion) => (

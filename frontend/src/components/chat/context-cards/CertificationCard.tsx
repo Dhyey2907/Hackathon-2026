@@ -30,13 +30,6 @@ import { useLanguage } from "@/components/i18n/LanguageProvider";
 /** Document kinds that actually describe schemes and obligations. */
 const SCHEME_DOC_TYPES: DocType[] = ["scheme_guideline", "qco", "act_rules", "hallmarking"];
 
-const DOC_TYPE_LABEL: Partial<Record<DocType, string>> = {
-  scheme_guideline: "Scheme guideline",
-  qco: "Quality Control Order",
-  act_rules: "Act & Rules",
-  hallmarking: "Hallmarking",
-};
-
 export default function CertificationCard() {
   const answer = useLatestAnswer();
   const { user } = useAuth();
@@ -47,8 +40,8 @@ export default function CertificationCard() {
   );
 
   const stated = [
-    { label: "Certifications", value: user?.onboardingData?.certifications },
-    { label: "Standards", value: user?.onboardingData?.standards },
+    { label: t("cert.certifications"), value: user?.onboardingData?.certifications },
+    { label: t("cert.standards"), value: user?.onboardingData?.standards },
   ].filter((entry) => entry.value && entry.value.trim().length > 0);
 
   if (schemeSources.length === 0 && stated.length === 0) {
@@ -78,7 +71,7 @@ export default function CertificationCard() {
                   )}
                   {source.doc_type && (
                     <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
-                      {DOC_TYPE_LABEL[source.doc_type] ?? source.doc_type}
+                      {t(`src.type.${source.doc_type}`)}
                     </span>
                   )}
                 </div>

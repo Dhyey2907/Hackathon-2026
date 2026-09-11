@@ -10,6 +10,8 @@
 
 "use client";
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { formatTime } from "@/lib/i18n/format";
 import { useMemo, useState } from "react";
 import type { Message, Source } from "@/lib/types";
 import SourceCard from "./SourceCard";
@@ -276,6 +278,7 @@ function inlineRender(
 // ---------------------------------------------------------------------------
 
 function AbstentionNotice() {
+  const { t } = useLanguage();
   return (
     <div className="mt-3 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
       <svg
@@ -293,18 +296,16 @@ function AbstentionNotice() {
         />
       </svg>
       <span>
-        I did not find sufficient evidence to answer this confidently. A wrong
-        answer about a certification requirement could be costly — so I&apos;m
-        not guessing. Please check the{" "}
+        {t("msg.abstainLead")}{" "}
         <a
           href="https://www.bis.gov.in"
           target="_blank"
           rel="noopener noreferrer"
           className="underline hover:text-amber-900 focus:outline-none focus:ring-1 focus:ring-amber-500 rounded"
         >
-          BIS website
+          {t("msg.bisWebsite")}
         </a>{" "}
-        directly for authoritative information.
+        {t("msg.abstainTail")}
       </span>
     </div>
   );
@@ -323,6 +324,11 @@ interface MessageBubbleProps {
 export default function MessageBubble({ message, autoTranslate = false }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const sources = message.sources ?? [];
+  const { t, language: uiLanguage } = useLanguage();
+  // The opening greeting is the app's own text, so it follows the interface
+  // language directly instead of going through answer translation.
+  const isGreeting = message.id === "seed-1";
+  const baseContent = isGreeting ? t("chat.greeting") : message.content;
 
   // A translation of this answer, when the reader has asked for one. The
   // English stays in `message.content` untouched, so "Show English" is a
@@ -331,18 +337,11 @@ export default function MessageBubble({ message, autoTranslate = false }: Messag
   const [language, setLanguage] = useState<string | null>(null);
 
   const renderedContent = useMemo(
-    () => renderMarkdown(translated ?? message.content, sources),
-    [translated, message.content, sources]
+    () => renderMarkdown(translated ?? baseContent, sources),
+    [translated, baseContent, sources]
   );
 
-  const time = useMemo(
-    () =>
-      new Date(message.timestamp).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    [message.timestamp]
-  );
+  const time = useMemo(() => formatTime(message.timestamp, uiLanguage), [message.timestamp, uiLanguage]);
 
   // ── USER MESSAGE ──────────────────────────────────────────────────────────
   if (isUser) {
@@ -408,7 +407,7 @@ export default function MessageBubble({ message, autoTranslate = false }: Messag
 
           {/* Offered on the finished answer, never before it: the citations
               were validated against the English, and it stays one tap away. */}
-          {!message.abstained && message.content.trim().length > 0 && (
+          {!isGreeting && !message.abstained && message.content.trim().length > 0 && (
             <TranslateAnswer
               source={message.content}
               active={language}
@@ -425,9 +424,9 @@ export default function MessageBubble({ message, autoTranslate = false }: Messag
         {sources.length > 0 && (
           <div className="mt-2 rounded-xl border border-gray-100 bg-gray-50 p-3">
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-              Sources
+              {t("chat.sources")}
             </p>
-            <div className="space-y-3" role="list" aria-label="Sources">
+            <div className="space-y-3" role="list" aria-label={t("chat.sources")}>
               {sources.map((source, idx) => (
                 <div
                   key={source.chunk_uid}

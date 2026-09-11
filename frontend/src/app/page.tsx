@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { greetingKey } from "@/lib/i18n/format";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ComplianceDashboard from "@/components/dashboard/ComplianceDashboard";
@@ -9,8 +11,8 @@ import { useChat } from "@/components/chat/ChatProvider";
 
 const FEATURES = [
   {
-    title: "Chat Assistant",
-    description: "Ask questions about standards, licensing, and hallmarking in plain language.",
+    titleKey: "nav.chat",
+    descKey: "home.f.chatDesc",
     href: "/chat",
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -19,8 +21,8 @@ const FEATURES = [
     ),
   },
   {
-    title: "Product Wizard",
-    description: "Find the applicable Indian Standards and certification requirements for your product.",
+    titleKey: "nav.wizard",
+    descKey: "home.f.wizardDesc",
     href: "/wizard",
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -29,8 +31,8 @@ const FEATURES = [
     ),
   },
   {
-    title: "Standards Lookup",
-    description: "Search the BIS catalogue to find standard codes, titles, and scopes.",
+    titleKey: "home.f.standards",
+    descKey: "home.f.standardsDesc",
     href: "/standards",
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -39,8 +41,8 @@ const FEATURES = [
     ),
   },
   {
-    title: "Lab Finder",
-    description: "Locate BIS-recognised testing laboratories by product scope and location.",
+    titleKey: "nav.labs",
+    descKey: "home.f.labsDesc",
     href: "/labs",
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,8 +52,8 @@ const FEATURES = [
     ),
   },
   {
-    title: "Verify License",
-    description: "Check the validity of an ISI license number or HUID hallmark.",
+    titleKey: "nav.verify",
+    descKey: "home.f.verifyDesc",
     href: "/verify",
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -64,6 +66,7 @@ const FEATURES = [
 export default function HomePage() {
   const router = useRouter();
   const { input, setInput, sendMessage, isLoading } = useChat();
+  const { t } = useLanguage();
 
   function continueInChat() {
     if (!input.trim() || isLoading) return;
@@ -78,24 +81,24 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-6xl">
           <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(380px,1.05fr)]">
             <div className="max-w-xl">
-              <p className="text-sm font-medium text-[var(--color-text-secondary)]">Good afternoon,</p>
+              <p className="text-sm font-medium text-[var(--color-text-secondary)]" suppressHydrationWarning>{t(greetingKey())},</p>
               <h1 className="mt-2 max-w-[12ch] text-4xl font-semibold leading-[1.05] tracking-[-0.04em] text-[var(--color-text-primary)] sm:text-5xl lg:text-[3.7rem]">
-                How can I help you with BIS <span className="text-[#E78B68]">today?</span>
+                {t("home.heroLead")} <span className="text-[#E78B68]">{t("home.heroAccent")}</span>
                 <span className="ml-2 text-[#F2B15D]" aria-hidden="true">✦</span>
               </h1>
               <p className="mt-5 max-w-md text-base leading-7 text-[var(--color-text-secondary)] sm:text-lg">
-                Find standards, check products, understand certification requirements — all in one place.
+                {t("home.heroSub")}
               </p>
 
               <div className="mt-6 flex flex-wrap gap-2 text-[11px] font-medium text-[var(--color-text-secondary)]">
                 <span className="hero-trust-pill inline-flex items-center gap-2 rounded-full px-3 py-2 shadow-sm ring-1 ring-white/80">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> Official BIS Source
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> {t("home.pillSource")}
                 </span>
                 <span className="hero-trust-pill inline-flex items-center gap-2 rounded-full px-3 py-2 shadow-sm ring-1 ring-white/80">
-                  <span aria-hidden="true">◈</span> Reliable Information
+                  <span aria-hidden="true">◈</span> {t("home.pillReliable")}
                 </span>
                 <span className="hero-trust-pill inline-flex items-center gap-2 rounded-full px-3 py-2 shadow-sm ring-1 ring-white/80">
-                  <span aria-hidden="true">♧</span> For Everyone
+                  <span aria-hidden="true">♧</span> {t("home.pillEveryone")}
                 </span>
               </div>
             </div>
@@ -113,11 +116,11 @@ export default function HomePage() {
               <span className="absolute right-[22%] top-[29%] h-2 w-2 rounded-full bg-[#E7A2A7]" />
               <span className="absolute bottom-[18%] left-[30%] h-2 w-2 rounded-full bg-[#F19B70]" />
 
-              <HeroActionCard className="left-0 top-0 rotate-[-7deg]" icon="▤" title="Search" subtitle="Standards" />
-              <HeroActionCard className="right-0 top-7 rotate-[6deg]" icon="⌾" title="Scan" subtitle="Product" />
-              <HeroActionCard className="bottom-0 right-4 rotate-[-5deg]" icon="◈" title="Get" subtitle="Guidance" />
+              <HeroActionCard className="left-0 top-0 rotate-[-7deg]" icon="▤" title={t("home.card.searchA")} subtitle={t("home.card.searchB")} />
+              <HeroActionCard className="right-0 top-7 rotate-[6deg]" icon="⌾" title={t("home.card.scanA")} subtitle={t("home.card.scanB")} />
+              <HeroActionCard className="bottom-0 right-4 rotate-[-5deg]" icon="◈" title={t("home.card.getA")} subtitle={t("home.card.getB")} />
               <p className="absolute bottom-8 left-[30%] max-w-[10ch] -rotate-[9deg] text-center font-serif text-sm italic leading-5 text-[#9B786C]">
-                Same Standards<br />Brighter Tomorrow
+                {t("home.motto1")}<br />{t("home.motto2")}
               </p>
             </div>
           </div>
@@ -128,7 +131,7 @@ export default function HomePage() {
               onChange={setInput}
               onSend={continueInChat}
               disabled={isLoading}
-              placeholder="Ask anything about BIS standards, products or certification..."
+              placeholder={t("home.placeholder")}
             />
           </div>
         </div>
@@ -140,7 +143,7 @@ export default function HomePage() {
 
         {/* Feature grid */}
         <div className="mt-10">
-          <Reveal as="h2" className="mb-5 text-lg font-semibold text-gray-900">Tools &amp; Features</Reveal>
+          <Reveal as="h2" className="mb-5 text-lg font-semibold text-gray-900">{t("home.tools")}</Reveal>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((feature, index) => (
               <Reveal key={feature.href} delayIndex={index} className="h-full [&>*]:h-full">
@@ -151,8 +154,8 @@ export default function HomePage() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--color-navy-lighter)] text-[var(--color-navy)] mb-4">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-sm text-gray-600 flex-1">{feature.description}</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t(feature.titleKey)}</h3>
+                <p className="text-sm text-gray-600 flex-1">{t(feature.descKey)}</p>
               </Link>
               </Reveal>
             ))}

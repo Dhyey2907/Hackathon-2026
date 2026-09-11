@@ -17,12 +17,15 @@
  * backend, generated from this user's context and their actual questions.
  */
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { fill } from "@/lib/i18n/format";
 import { useState } from "react";
 import { useChat } from "./ChatProvider";
 
 export default function ChatOpeningState() {
   const { businessContext, isNewUser, suggestions, sendMessage, isLoading } = useChat();
   const [draft, setDraft] = useState("");
+  const { t } = useLanguage();
 
   const headline = businessContext?.headline ?? null;
 
@@ -43,7 +46,7 @@ export default function ChatOpeningState() {
         className="rounded-xl border border-[var(--color-border)] bg-white/70 px-5 py-4 dark:bg-white/[0.03]"
       >
         <h2 id="chat-welcome" className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Welcome back
+          {t("auth.welcome")}
         </h2>
         {/*
           The wording comes pre-hedged from the backend - "you're working with"
@@ -52,13 +55,13 @@ export default function ChatOpeningState() {
           user never told us.
         */}
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Based on your previous conversations, it looks like {headline}.
+          {fill(t("open.basedOn"), { headline })}
         </p>
 
         {suggestions.length > 0 && (
           <>
             <p className="mt-4 text-xs font-medium uppercase tracking-wider text-gray-400">
-              How can I help today?
+              {t("open.howHelp")}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {suggestions.map((suggestion) => (
@@ -77,7 +80,7 @@ export default function ChatOpeningState() {
         )}
 
         <p className="mt-4 text-xs text-gray-400">
-          Or ask anything about BIS — standards, certification, hallmarking, labs.
+          {t("open.orAsk")}
         </p>
       </section>
     );
@@ -91,19 +94,19 @@ export default function ChatOpeningState() {
       className="rounded-xl border border-[var(--color-border)] bg-white/70 px-5 py-4 dark:bg-white/[0.03]"
     >
       <h2 id="chat-onboarding" className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-        Let&rsquo;s start with your business
+        {t("open.start")}
       </h2>
       <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-        What type of business or product do you have?
+        {t("open.whatBusiness")}
       </p>
 
       <form onSubmit={submitBusiness} className="mt-3 flex flex-col gap-2 sm:flex-row">
         <label className="flex-1">
-          <span className="sr-only">Describe your business or product</span>
+          <span className="sr-only">{t("open.describe")}</span>
           <input
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            placeholder="e.g. I manufacture electrical cables"
+            placeholder={t("open.ph")}
             className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-gray-100"
           />
         </label>
@@ -112,14 +115,12 @@ export default function ChatOpeningState() {
           disabled={!draft.trim() || isLoading}
           className="h-10 shrink-0 rounded-lg bg-[var(--color-navy)] px-4 text-sm font-medium text-white transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]/40 disabled:opacity-40"
         >
-          Continue
+          {t("common.continue")}
         </button>
       </form>
 
       <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-        Tell me what you manufacture, sell, or work with and I&rsquo;ll use it to find
-        relevant standards, certification and testing requirements. Or skip this and ask
-        me anything about BIS.
+        {t("open.tell")}
       </p>
     </section>
   );

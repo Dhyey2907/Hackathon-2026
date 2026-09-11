@@ -32,6 +32,8 @@ class ContextRequest(BaseModel):
     # Capped so a long-running account cannot send an unbounded transcript.
     messages: list[HistoryMessage] = Field(default_factory=list, max_length=200)
     last_question: str | None = Field(default=None, max_length=2000)
+    # The interface language; the headline and suggestions are written in it.
+    language: str = Field(default="en", pattern="^(en|hi)$")
 
 
 class ContextResponse(BaseModel):
@@ -54,10 +56,12 @@ def get_context(request: ContextRequest) -> ContextResponse:
     """
     messages = [m.model_dump() for m in request.messages]
     context = business_context.extract(messages)
-    suggestions = business_context.suggest(context, last_question=request.last_question)
+    suggestions = business_context.suggest(
+        context, last_question=request.last_question, language=request.language
+    )
 
     return ContextResponse(
         is_new_user=not context.is_usable,
-        business_context=context.to_dict(),
+        business_context=context.to_dict(request.language),
         suggestions=suggestions,
     )

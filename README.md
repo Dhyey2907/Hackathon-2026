@@ -62,7 +62,7 @@ Every file has a working **preview and download**: PDFs and images render in pla
 A compliance score that counts up to its value, missing requirements, expiring documents, and a quick upload box.
 
 ### Interface
-- **English / हिन्दी toggle** for the navigation, chat, roadmap, labs, updates and upload screens.
+- **English / हिन्दी toggle** that switches every screen instantly - navigation, chat, documents, verification, standards, wizard, roadmap (including its step content), labs, updates, dashboard, settings, profile, sign-in and onboarding - in both themes. The newest answer is translated automatically, follow-up suggestions and the business summary come back from the API in Hindi, and IS numbers, BIS, ISI, HUID, scheme names and data from BIS stay as written. Devanagari fonts and spacing are set so vowel signs are not clipped.
 - Light and dark themes, and subtle scroll-reveal animation that respects *reduced motion*.
 - Signup with onboarding for consumers, running businesses and new businesses.
 
@@ -363,14 +363,13 @@ Two files carry most of the design weight:
 - [x] Web app — chat, sources, context panel, follow-ups, chat history
 - [x] Answer cache and FAQ fast path
 - [x] Personalisation from the user's own conversation
-- [x] Answer translation into eight Indian languages; Hindi interface
+- [x] Answer translation into eight Indian languages; the whole interface in Hindi
 - [x] Compliance Roadmap with five certification tracks and progress tracking
 - [x] Document upload — read by the assistant in chat, stored in the vault, added at signup
 - [x] Document vault in the user's account, with previews for PDF, images, text and Word
 - [x] Real chat history — conversations under Recents, New chat, reset, live across tabs and devices
 - [ ] OCR for scanned documents and photos
 - [ ] Live data for the product wizard, licence verification and standard detail pages
-- [ ] Hindi for the remaining screens (wizard, verification, documents, profile, settings, onboarding)
 - [ ] Map view for nearby labs (needs a Google Maps key)
 - [ ] Consumer-complaint data
 - [ ] Evaluation harness — recall@k, citation precision, refusal rate

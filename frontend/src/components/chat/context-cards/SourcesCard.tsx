@@ -43,7 +43,7 @@ export default function SourcesCard() {
 
   return (
     <ContextCard title={t("panel.sources")} badge={`${sources.length}`}>
-      <div className="space-y-3" role="list" aria-label="Sources for the current answer">
+      <div className="space-y-3" role="list" aria-label={t("panel.sourcesAria")}>
         {sources.map((source, index) => (
           <div key={source.chunk_uid} role="listitem">
             <SourceCard source={source} index={index} />

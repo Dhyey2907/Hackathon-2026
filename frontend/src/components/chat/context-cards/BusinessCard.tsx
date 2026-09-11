@@ -39,7 +39,7 @@ export default function BusinessCard() {
   }
 
   const { headline, products, role, industry, business_type, topics, evidence } = businessContext;
-  const roleLabel = ROLE_LABEL[role];
+  const roleLabel = ROLE_LABEL[role] ? t(`biz.role.${role}`) : undefined;
   const facts = [roleLabel, industry, business_type].filter(Boolean) as string[];
 
   return (
@@ -51,7 +51,7 @@ export default function BusinessCard() {
       )}
 
       {products.length > 0 && (
-        <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Products">
+        <ul className="mt-3 flex flex-wrap gap-1.5" aria-label={t("biz.products")}>
           {products.map((product) => (
             <li
               key={product}

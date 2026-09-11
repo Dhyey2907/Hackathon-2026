@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Renders a single source citation as a compact card.
  *
@@ -5,21 +7,13 @@
  * are reading catalogue metadata, not the paywalled full standard text.
  */
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { fill } from "@/lib/i18n/format";
 import type { Source, DocType } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const DOC_TYPE_LABELS: Record<DocType, string> = {
-  catalogue: "Catalogue entry",
-  scheme_guideline: "Scheme guideline",
-  qco: "Quality Control Order",
-  act_rules: "Act / Rules",
-  faq: "FAQ",
-  consumer: "Consumer document",
-  hallmarking: "Hallmarking scheme",
-};
 
 const DOC_TYPE_COLORS: Record<DocType, string> = {
   catalogue: "bg-amber-50 border-amber-200 text-amber-800",
@@ -41,8 +35,10 @@ interface SourceCardProps {
 }
 
 export default function SourceCard({ source, index }: SourceCardProps) {
+  const { t } = useLanguage();
   const docType = source.doc_type ?? "catalogue";
-  const label = DOC_TYPE_LABELS[docType as DocType] ?? docType;
+  const labelKey = `src.type.${docType}`;
+  const label = t(labelKey) === labelKey ? docType : t(labelKey);
   const colorClass =
     DOC_TYPE_COLORS[docType as DocType] ??
     "bg-gray-50 border-gray-200 text-gray-700";
@@ -53,7 +49,7 @@ export default function SourceCard({ source, index }: SourceCardProps) {
       <span
         className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-semibold text-white"
         style={{ backgroundColor: "#3D2B1F" }}
-        aria-label={`Source ${index + 1}`}
+        aria-label={fill(t("src.source"), { n: index + 1 })}
       >
         {index + 1}
       </span>
@@ -67,11 +63,11 @@ export default function SourceCard({ source, index }: SourceCardProps) {
             rel="noopener noreferrer"
             className="font-medium text-gray-900 hover:text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
           >
-            {source.title ?? "Untitled document"}
+            {source.title ?? t("src.untitled")}
           </a>
         ) : (
           <span className="font-medium text-gray-900">
-            {source.title ?? "Untitled document"}
+            {source.title ?? t("src.untitled")}
           </span>
         )}
 
@@ -100,7 +96,7 @@ export default function SourceCard({ source, index }: SourceCardProps) {
         {/* Catalogue-only notice */}
         {docType === "catalogue" && (
           <p className="mt-1 text-[11px] text-amber-700">
-            Catalogue metadata only — full standard text is paywalled.
+            {t("src.catalogueOnly")}
           </p>
         )}
       </div>

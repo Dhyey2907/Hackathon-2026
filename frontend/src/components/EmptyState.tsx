@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import Link from "next/link";
 import React from "react";
 
@@ -17,13 +18,14 @@ interface EmptyStateProps {
  * Muted Espresso Brown (#3D2B1F) styling and Frosted Glass frame.
  */
 export default function EmptyState({
-  title = "Nothing here yet",
-  description = "Get started by adding or exploring items in this workspace.",
-  actionLabel = "Get Started",
+  title,
+  description,
+  actionLabel,
   actionHref,
   onAction,
   icon,
 }: EmptyStateProps) {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border border-white/50 bg-[#FDFBF7]/90 p-8 text-center shadow-sm backdrop-blur-xl sm:p-10">
       {/* Icon frame with muted espresso-brown tone */}
@@ -46,8 +48,8 @@ export default function EmptyState({
         )}
       </div>
 
-      <h3 className="text-lg font-bold text-[#3D2B1F] tracking-tight">{title}</h3>
-      <p className="mt-2 max-w-sm text-sm text-[#5C4A3E] leading-relaxed">{description}</p>
+      <h3 className="text-lg font-bold text-[#3D2B1F] tracking-tight">{title ?? t("empty.title")}</h3>
+      <p className="mt-2 max-w-sm text-sm text-[#5C4A3E] leading-relaxed">{description ?? t("empty.desc")}</p>
 
       {/* 'Get Started' CTA Button */}
       {(actionHref || onAction) && (
@@ -57,7 +59,7 @@ export default function EmptyState({
               href={actionHref}
               className="inline-flex items-center gap-2 rounded-xl bg-[#3D2B1F] px-5 py-2.5 text-sm font-semibold text-[#FDFBF7] shadow-sm transition-all hover:bg-[#4E382A] hover:shadow-md hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#B0C4DE]"
             >
-              <span>{actionLabel}</span>
+              <span>{actionLabel ?? t("common.getStarted")}</span>
               <span aria-hidden="true">→</span>
             </Link>
           ) : (
@@ -66,7 +68,7 @@ export default function EmptyState({
               onClick={onAction}
               className="inline-flex items-center gap-2 rounded-xl bg-[#3D2B1F] px-5 py-2.5 text-sm font-semibold text-[#FDFBF7] shadow-sm transition-all hover:bg-[#4E382A] hover:shadow-md hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#B0C4DE]"
             >
-              <span>{actionLabel}</span>
+              <span>{actionLabel ?? t("common.getStarted")}</span>
               <span aria-hidden="true">→</span>
             </button>
           )}
